@@ -11,24 +11,12 @@ class ProviderStats extends BaseWidget
     protected function getStats(): array
     {
         $total = Provider::count();
-        $active = Provider::where('active', true)->count();
-        $inactive = Provider::where('active', false)->count();
 
         return [
             Stat::make('Total Providers', $total)
-                ->description('All providers in system')
-                ->descriptionIcon('heroicon-o-rectangle-stack')
+                ->description('All providers in the system')
+                ->descriptionIcon('heroicon-o-building-office')
                 ->color('primary'),
-
-            Stat::make('Active Providers', $active)
-                ->description('Currently enabled')
-                ->descriptionIcon('heroicon-o-check-circle')
-                ->color('success'),
-
-            Stat::make('Inactive Providers', $inactive)
-                ->description('Disabled or inactive')
-                ->descriptionIcon('heroicon-o-x-circle')
-                ->color('danger'),
         ];
     }
 }

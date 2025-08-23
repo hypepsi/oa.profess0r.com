@@ -12,23 +12,15 @@ class ClientStats extends BaseWidget
     protected function getStats(): array
     {
         return [
-            Stat::make('Active Clients', Customer::where('active', true)->count())
-                ->description('Currently enabled clients')
-                ->descriptionIcon('heroicon-m-user-group')
-                ->color('success'),
-
-            Stat::make(
-                'New Clients (Last 30 Days)',
-                Customer::where('created_at', '>=', Carbon::now()->subDays(30))->count()
-            )
+            Stat::make('New Clients (Last 30 days)', Customer::where('created_at', '>=', Carbon::now()->subDays(30))->count())
                 ->description('Clients added in the last 30 days')
-                ->descriptionIcon('heroicon-m-arrow-trending-up')
-                ->color('info'),
+                ->descriptionIcon('heroicon-m-user-plus')
+                ->color('primary'),
 
             Stat::make('Total Clients', Customer::count())
                 ->description('All clients in the system')
                 ->descriptionIcon('heroicon-m-users')
-                ->color('primary'),
+                ->color('info'),
         ];
     }
 }
