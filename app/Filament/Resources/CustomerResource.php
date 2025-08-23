@@ -21,6 +21,10 @@ class CustomerResource extends Resource
     // 菜单分组
     protected static ?string $navigationGroup = 'Asset Management';
 
+    // 页面标题显示
+    protected static ?string $modelLabel = 'Client';
+    protected static ?string $pluralModelLabel = 'Clients';
+
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
 
     public static function form(Form $form): Form

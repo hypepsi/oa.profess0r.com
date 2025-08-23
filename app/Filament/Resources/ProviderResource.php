@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProviderResource\Pages;
+use App\Filament\Resources\ProviderResource\Widgets\ProviderStats;
 use App\Models\Provider;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -14,28 +15,41 @@ class ProviderResource extends Resource
 {
     protected static ?string $model = Provider::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-building-office';
+    // 左边菜单显示的名字
+    protected static ?string $navigationLabel = 'IP Providers';
+
+    // 菜单分组
     protected static ?string $navigationGroup = 'Asset Management';
-    protected static ?string $navigationLabel = 'IP Providers';   // 修改菜单名
+
+    // 页面标题显示
+    protected static ?string $modelLabel = 'IP Provider';
+    protected static ?string $pluralModelLabel = 'IP Providers';
+
+    protected static ?string $navigationIcon = 'heroicon-o-building-office-2';
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')
-                    ->label('Provider Name')
                     ->required()
                     ->maxLength(255),
 
                 Forms\Components\TextInput::make('website')
-                    ->label('Website')
                     ->url()
-                    ->maxLength(255)
-                    ->placeholder('https://example.com'),
+                    ->nullable(),
 
-                Forms\Components\Toggle::make('active')
-                    ->label('Active')
-                    ->default(true),
+                Forms\Components\TextInput::make('email')
+                    ->email()
+                    ->nullable(),
+
+                Forms\Components\TextInput::make('phone')
+                    ->tel()
+                    ->nullable(),
+
+                Forms\Components\Textarea::make('notes')
+                    ->nullable()
+                    ->maxLength(1000),
             ]);
     }
 
@@ -43,40 +57,43 @@ class ProviderResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('id')
+                    ->sortable(),
+
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Provider Name')
                     ->searchable()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('website')
-                    ->label('Website')
-                    ->url(fn ($record) => $record->website)
-                    ->openUrlInNewTab()
+                    ->url(fn ($record) => $record->website, true)
                     ->sortable(),
 
-                Tables\Columns\IconColumn::make('active')
-                    ->label('Active')
-                    ->boolean(),
+                Tables\Columns\TextColumn::make('email')
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('phone'),
 
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Created At')
-                    ->dateTime('Y-m-d H:i')
+                    ->dateTime('Y-m-d H:i:s')
                     ->sortable(),
             ])
-            ->filters([])
+            ->filters([
+                //
+            ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                Tables\Actions\DeleteBulkAction::make(),
             ]);
     }
 
     public static function getRelations(): array
     {
-        return [];
+        return [
+            //
+        ];
     }
 
     public static function getPages(): array
@@ -85,6 +102,13 @@ class ProviderResource extends Resource
             'index' => Pages\ListProviders::route('/'),
             'create' => Pages\CreateProvider::route('/create'),
             'edit' => Pages\EditProvider::route('/{record}/edit'),
+        ];
+    }
+
+    public static function getWidgets(): array
+    {
+        return [
+            ProviderStats::class,
         ];
     }
 }
