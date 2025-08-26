@@ -2,27 +2,23 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\CustomerResource\Pages;
-use App\Filament\Resources\CustomerResource\Widgets\ClientStats;
-use App\Models\Customer;
+use App\Filament\Resources\LocationResource\Pages;
+use App\Models\Location;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 
-class CustomerResource extends Resource
+class LocationResource extends Resource
 {
-    protected static ?string $model = Customer::class;
+    protected static ?string $model = Location::class;
 
-    /** 放回侧边栏分组 */
     protected static ?string $navigationGroup = 'Asset Management';
-
-    /** 文案与图标 */
-    protected static ?string $navigationIcon = 'heroicon-o-user-group';
-    protected static ?string $modelLabel = 'Client';
-    protected static ?string $pluralModelLabel = 'Clients';
-    protected static ?string $navigationLabel = 'Clients';
+    protected static ?string $navigationIcon = 'heroicon-o-map-pin';
+    protected static ?string $navigationLabel = 'Locations';
+    protected static ?string $pluralModelLabel = 'Locations';
+    protected static ?string $modelLabel = 'Location';
 
     public static function form(Form $form): Form
     {
@@ -32,17 +28,21 @@ class CustomerResource extends Resource
                 ->required()
                 ->maxLength(255),
 
-            Forms\Components\TextInput::make('contact_email')
-                ->label('Contact Email')
-                ->email()
-                ->required()
+            Forms\Components\Select::make('type')
+                ->label('Type')
+                ->options([
+                    'Colocation' => 'Colocation',
+                    'Third-party' => 'Third-party',
+                ])
+                ->required(),
+
+            Forms\Components\TextInput::make('address')
+                ->label('Address')
                 ->maxLength(255),
 
-            Forms\Components\TextInput::make('abuse_email')
-                ->label('Abuse Contact Email')
-                ->email()
-                ->required()
-                ->maxLength(255),
+            Forms\Components\TextInput::make('country')
+                ->label('Country')
+                ->maxLength(64),
         ]);
     }
 
@@ -55,12 +55,12 @@ class CustomerResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('contact_email')
-                    ->label('Contact Email')
-                    ->searchable(),
+                Tables\Columns\TextColumn::make('type')
+                    ->label('Type')
+                    ->sortable(),
 
-                Tables\Columns\TextColumn::make('abuse_email')
-                    ->label('Abuse Contact Email')
+                Tables\Columns\TextColumn::make('country')
+                    ->label('Country')
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('created_at')
@@ -85,20 +85,12 @@ class CustomerResource extends Resource
         return [];
     }
 
-    public static function getWidgets(): array
-    {
-        // 保留统计卡片
-        return [
-            ClientStats::class,
-        ];
-    }
-
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListCustomers::route('/'),
-            'create' => Pages\CreateCustomer::route('/create'),
-            'edit' => Pages\EditCustomer::route('/{record}/edit'),
+            'index' => Pages\ListLocations::route('/'),
+            'create' => Pages\CreateLocation::route('/create'),
+            'edit' => Pages\EditLocation::route('/{record}/edit'),
         ];
     }
 }
