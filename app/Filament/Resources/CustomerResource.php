@@ -15,14 +15,11 @@ class CustomerResource extends Resource
 {
     protected static ?string $model = Customer::class;
 
-    /** 放回侧边栏分组 */
     protected static ?string $navigationGroup = 'Asset Management';
-
-    /** 文案与图标 */
-    protected static ?string $navigationIcon = 'heroicon-o-user-group';
-    protected static ?string $modelLabel = 'Client';
-    protected static ?string $pluralModelLabel = 'Clients';
+    protected static ?string $navigationIcon = 'heroicon-o-users';
     protected static ?string $navigationLabel = 'Clients';
+    protected static ?string $pluralModelLabel = 'Clients';
+    protected static ?string $modelLabel = 'Client';
 
     public static function form(Form $form): Form
     {
@@ -35,13 +32,12 @@ class CustomerResource extends Resource
             Forms\Components\TextInput::make('contact_email')
                 ->label('Contact Email')
                 ->email()
-                ->required()
                 ->maxLength(255),
 
+            // 注意：使用数据库中的字段名 abuse_email
             Forms\Components\TextInput::make('abuse_email')
-                ->label('Abuse Contact Email')
+                ->label('Abuse Email')
                 ->email()
-                ->required()
                 ->maxLength(255),
         ]);
     }
@@ -52,15 +48,17 @@ class CustomerResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->label('Name')
-                    ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->searchable(),
 
                 Tables\Columns\TextColumn::make('contact_email')
                     ->label('Contact Email')
+                    ->sortable()
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('abuse_email')
-                    ->label('Abuse Contact Email')
+                    ->label('Abuse Email')
+                    ->sortable()
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('created_at')
@@ -74,9 +72,7 @@ class CustomerResource extends Resource
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                Tables\Actions\DeleteBulkAction::make(),
             ]);
     }
 
@@ -85,9 +81,9 @@ class CustomerResource extends Resource
         return [];
     }
 
+    // 恢复顶部统计卡片
     public static function getWidgets(): array
     {
-        // 保留统计卡片
         return [
             ClientStats::class,
         ];
