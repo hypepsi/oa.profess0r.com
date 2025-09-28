@@ -67,7 +67,7 @@ class WorkflowResource extends Resource
                             '5' => 'In 5 days',
                             '7' => 'In 7 days',
                         ])
-                        ->dehydrated(false)   // 不入库
+                        ->dehydrated(false)
                         ->reactive()
                         ->afterStateUpdated(function (\Filament\Forms\Set $set, $state) {
                             if ($state) {
@@ -123,12 +123,36 @@ class WorkflowResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('title')->label('Title')->searchable(),
-                Tables\Columns\TextColumn::make('taskType.name')->label('Type')->badge(),
-                Tables\Columns\TextColumn::make('priority')->label('Priority')->badge(),
-                Tables\Columns\TextColumn::make('status')->label('Status')->badge(),
-                Tables\Columns\TextColumn::make('due_at')->label('Due')->dateTime('Y-m-d H:i'),
-                Tables\Columns\TextColumn::make('assignees_count')->label('Assignees')->counts('assignees')->badge(),
+                Tables\Columns\TextColumn::make('title')
+                    ->label('Title')
+                    ->searchable(),
+
+                Tables\Columns\TextColumn::make('taskType.name')
+                    ->label('Type')
+                    ->badge(),
+
+                Tables\Columns\TextColumn::make('priority')
+                    ->label('Priority')
+                    ->badge(),
+
+                Tables\Columns\TextColumn::make('status')
+                    ->label('Status')
+                    ->badge(),
+
+                Tables\Columns\TextColumn::make('due_at')
+                    ->label('Due')
+                    ->date('Y-m-d'),
+
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Created')
+                    ->date('Y-m-d')
+                    ->sortable(),
+
+                // 直接把多选员工的名字用逗号拼接显示
+                Tables\Columns\TextColumn::make('assignees_list')
+                    ->label('Assignees')
+                    ->getStateUsing(fn ($record) => $record->assignees->pluck('name')->join(', '))
+                    ->toggleable(false),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
