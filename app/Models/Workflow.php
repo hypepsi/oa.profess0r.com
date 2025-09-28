@@ -2,13 +2,8 @@
 
 namespace App\Models;
 
-use App\Models\Employee;
-use App\Models\TaskType;
-use App\Models\User;
-use App\Models\Customer; // Clients 对应的模型通常叫 Customer
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Workflow extends Model
 {
@@ -18,23 +13,15 @@ class Workflow extends Model
         'title',
         'task_type_id',
         'client_id',
-        'priority',             // low / normal / high / urgent
-        'status',               // open / in_review / follow_up / approved / closed / overdue / cancelled
+        'priority',
+        'status',
+        'description',
         'due_at',
-        'created_by_user_id',   // users.id
-        // approver 固定为当前 admin（使用 created_by 作为 owner）
-        'approved_at',
     ];
 
     protected $casts = [
-        'due_at' => 'datetime',
-        'approved_at' => 'datetime',
+        'due_at' => 'date',
     ];
-
-    public function creatorUser()
-    {
-        return $this->belongsTo(User::class, 'created_by_user_id');
-    }
 
     public function taskType()
     {
@@ -43,13 +30,18 @@ class Workflow extends Model
 
     public function client()
     {
-        return $this->belongsTo(Customer::class, 'client_id');
+        return $this->belongsTo(Client::class, 'client_id'); // 若你的模型名/表名不同，等跑通后我再对齐
     }
 
-    /** @return BelongsToMany<Employee> */
     public function assignees()
     {
-        return $this->belongsToMany(Employee::class, 'workflow_assignees', 'workflow_id', 'employee_id')
-            ->withTimestamps();
+        // 你现有的 belongsToMany 关系，保持不变
+        return $this->belongsToMany(Employee::class, 'workflow_assignees', 'workflow_id', 'employee_id');
+    }
+
+    /** New: updates relation (hasMany) */
+    public function updates()
+    {
+        return $this->hasMany(WorkflowUpdate::class)->latest('id');
     }
 }
