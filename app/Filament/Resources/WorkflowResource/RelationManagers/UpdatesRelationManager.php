@@ -56,7 +56,7 @@ class UpdatesRelationManager extends RelationManager
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()
-                    ->label('Submit update')
+                    ->label('Add update')
                     ->mutateFormDataUsing(function (array $data): array {
                         $data['user_id'] = Auth::id();
                         // normalize attachments to array

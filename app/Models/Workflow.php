@@ -17,6 +17,7 @@ class Workflow extends Model
         'status',
         'description',
         'due_at',
+        'created_by_user_id',
     ];
 
     protected $casts = [
@@ -30,7 +31,7 @@ class Workflow extends Model
 
     public function client()
     {
-        return $this->belongsTo(Client::class, 'client_id'); // 若你的模型名/表名不同，等跑通后我再对齐
+        return $this->belongsTo(Customer::class, 'client_id');
     }
 
     public function assignees()

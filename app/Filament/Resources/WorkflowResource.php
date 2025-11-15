@@ -3,8 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\WorkflowResource\Pages;
-use App\Models\TaskType;
 use App\Models\Workflow;
+use App\Filament\Resources\WorkflowResource\RelationManagers\UpdatesRelationManager;
+use App\Models\TaskType;
 use Filament\Forms;
 use Filament\Forms\Components\Actions\Action as FieldAction;
 use Filament\Forms\Form;
@@ -129,6 +130,13 @@ class WorkflowResource extends Resource
                     \Filament\Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            UpdatesRelationManager::class,
+        ];
     }
 
     public static function getPages(): array
