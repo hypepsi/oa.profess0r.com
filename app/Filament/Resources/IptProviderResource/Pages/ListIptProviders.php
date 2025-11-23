@@ -5,7 +5,7 @@ namespace App\Filament\Resources\IptProviderResource\Pages;
 use App\Filament\Resources\IptProviderResource;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Actions;
-use App\Filament\Widgets\IptProviderStats;
+use App\Filament\Resources\IptProviderResource\Widgets\IptProviderStats;
 
 class ListIptProviders extends ListRecords
 {

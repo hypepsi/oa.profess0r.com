@@ -11,23 +11,21 @@ class Workflow extends Model
 
     protected $fillable = [
         'title',
-        'task_type_id',
         'client_id',
         'priority',
         'status',
         'description',
         'due_at',
         'created_by_user_id',
+        'require_evidence',
+        'approved_at',
     ];
 
     protected $casts = [
         'due_at' => 'date',
+        'approved_at' => 'datetime',
+        'require_evidence' => 'boolean',
     ];
-
-    public function taskType()
-    {
-        return $this->belongsTo(TaskType::class, 'task_type_id');
-    }
 
     public function client()
     {
@@ -44,5 +42,14 @@ class Workflow extends Model
     public function updates()
     {
         return $this->hasMany(WorkflowUpdate::class)->latest('id');
+    }
+
+    /**
+     * Get the last update time
+     */
+    public function getLastUpdateAtAttribute()
+    {
+        $lastUpdate = $this->updates()->latest('created_at')->first();
+        return $lastUpdate ? $lastUpdate->created_at : null;
     }
 }

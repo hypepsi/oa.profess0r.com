@@ -12,7 +12,7 @@ use Filament\Forms\Form;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use App\Filament\Widgets\IptProviderStats;
+use App\Filament\Resources\IptProviderResource\Widgets\IptProviderStats;
 
 class IptProviderResource extends Resource
 {

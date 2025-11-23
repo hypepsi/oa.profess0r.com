@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Widgets;
+namespace App\Filament\Resources\IptProviderResource\Widgets;
 
 use App\Models\IptProvider;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;

@@ -9,27 +9,30 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class UpdatesRelationManager extends RelationManager
 {
     protected static string $relationship = 'updates';
-    protected static ?string $title = 'Updates'; // Tab label
-    protected static ?string $recordTitleAttribute = 'message';
+    protected static ?string $title = 'Updates';
+    protected static ?string $recordTitleAttribute = 'content';
 
     public function form(Form $form): Form
     {
-        // Parent record (Workflow) is available via $this->getOwnerRecord()
-        $requiresEvidence = (bool) ($this->getOwnerRecord()?->taskType?->requires_evidence);
-
+        $workflow = $this->getOwnerRecord();
+        $requiresEvidence = $workflow->require_evidence ?? false;
+        
         return $form
             ->schema([
-                Forms\Components\Textarea::make('message')
+                Forms\Components\Textarea::make('content')
                     ->label('Update message')
                     ->rows(3)
-                    ->required(),
+                    ->required()
+                    ->columnSpanFull()
+                    ->placeholder('Enter your update message...'),
 
                 Forms\Components\FileUpload::make('attachments')
-                    ->label('Evidence (required for this task type)')
+                    ->label($requiresEvidence ? 'Evidence (Required)' : 'Attachments')
                     ->multiple()
                     ->reorderable()
                     ->directory('workflow-updates/' . $this->getOwnerRecord()->id)
@@ -37,7 +40,14 @@ class UpdatesRelationManager extends RelationManager
                     ->preserveFilenames()
                     ->downloadable()
                     ->openable()
-                    ->visible($requiresEvidence), // only when task type requires evidence
+                    ->acceptedFileTypes(['image/*', 'application/pdf'])
+                    ->maxSize(10240) // 10MB
+                    ->required($requiresEvidence)
+                    ->helperText($requiresEvidence 
+                        ? 'Evidence is required for this workflow. You can paste images (Ctrl+V) or upload files.' 
+                        : 'Optional: Upload files or paste images (Ctrl+V) related to this update')
+                    ->hint($requiresEvidence ? 'At least one file is required' : null)
+                    ->hintColor('danger'),
             ])
             ->columns(1);
     }
@@ -46,19 +56,60 @@ class UpdatesRelationManager extends RelationManager
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('user.name')->label('User')->sortable(),
-                Tables\Columns\TextColumn::make('message')->label('Message')->limit(80),
+                Tables\Columns\TextColumn::make('user.name')
+                    ->label('User')
+                    ->sortable()
+                    ->searchable()
+                    ->badge()
+                    ->color('info'),
+                Tables\Columns\TextColumn::make('content')
+                    ->label('Message')
+                    ->limit(100)
+                    ->wrap()
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('attachments')
-                    ->label('Files')
-                    ->formatStateUsing(fn ($state) => is_array($state) ? count($state) . ' file(s)' : '0')
-                    ->badge(),
-                Tables\Columns\TextColumn::make('created_at')->label('Created')->dateTime('Y-m-d H:i'),
+                    ->label('Attachments')
+                    ->formatStateUsing(function ($state) {
+                        if (empty($state) || !is_array($state)) {
+                            return '—';
+                        }
+                        $count = count($state);
+                        return $count . ' file' . ($count > 1 ? 's' : '');
+                    })
+                    ->badge()
+                    ->color(function ($state) {
+                        if (empty($state) || !is_array($state) || count($state) === 0) {
+                            return 'gray';
+                        }
+                        return 'success';
+                    }),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Created')
+                    ->dateTime('Y-m-d H:i', 'Asia/Shanghai')
+                    ->sortable()
+                    ->since()
+                    ->tooltip(fn ($record) => $record->created_at->setTimezone('Asia/Shanghai')->format('Y-m-d H:i:s')),
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()
                     ->label('Add update')
+                    ->icon('heroicon-o-plus')
                     ->mutateFormDataUsing(function (array $data): array {
                         $data['user_id'] = Auth::id();
+                        $data['workflow_id'] = $this->getOwnerRecord()->id;
+                        
+                        // Validate evidence requirement
+                        $workflow = $this->getOwnerRecord();
+                        if ($workflow->require_evidence) {
+                            if (empty($data['attachments']) || 
+                                (is_array($data['attachments']) && count(array_filter($data['attachments'])) === 0)) {
+                                throw new \Illuminate\Validation\ValidationException(
+                                    validator([], []),
+                                    ['attachments' => ['Evidence is required for this workflow. Please upload at least one file.']]
+                                );
+                            }
+                        }
+                        
                         // normalize attachments to array
                         if (!empty($data['attachments']) && !is_array($data['attachments'])) {
                             $data['attachments'] = [$data['attachments']];
@@ -74,9 +125,16 @@ class UpdatesRelationManager extends RelationManager
                     }),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->modalHeading('Update Details')
+                    ->modalContent(fn ($record) => view('filament.resources.workflow-resource.relation-managers.update-details', ['record' => $record])),
+                Tables\Actions\DeleteAction::make()
+                    ->requiresConfirmation()
+                    ->visible(fn () => auth()->user()->email === 'admin@bunnycommunications.com'),
             ])
+            ->emptyStateHeading('No updates yet')
+            ->emptyStateDescription('Add an update to track progress on this workflow.')
+            ->emptyStateIcon('heroicon-o-chat-bubble-left-right')
             ->paginated([10, 25, 50])
             ->defaultPaginationPageOption(10);
     }

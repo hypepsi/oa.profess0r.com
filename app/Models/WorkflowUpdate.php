@@ -9,8 +9,10 @@ class WorkflowUpdate extends Model
     protected $fillable = [
         'workflow_id',
         'user_id',
+        'content',
         'message',
         'attachments',
+        'evidence',
     ];
 
     protected $casts = [

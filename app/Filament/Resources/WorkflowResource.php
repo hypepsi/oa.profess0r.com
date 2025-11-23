@@ -5,7 +5,6 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\WorkflowResource\Pages;
 use App\Models\Workflow;
 use App\Filament\Resources\WorkflowResource\RelationManagers\UpdatesRelationManager;
-use App\Models\TaskType;
 use Filament\Forms;
 use Filament\Forms\Components\Actions\Action as FieldAction;
 use Filament\Forms\Form;
@@ -45,62 +44,121 @@ class WorkflowResource extends Resource
 
     public static function form(Form $form): Form
     {
+        $isAdmin = auth()->check() && auth()->user()->email === 'admin@bunnycommunications.com';
+        
         return $form->schema([
-            \Filament\Forms\Components\Section::make('Basic')
-                ->columns(2)
+            \Filament\Forms\Components\Section::make('Basic Information')
+                ->description('Enter the basic details for this workflow')
                 ->schema([
                     \Filament\Forms\Components\TextInput::make('title')
-                        ->label('Title')->required()->maxLength(255),
-
-                    \Filament\Forms\Components\Select::make('task_type_id')
-                        ->label('Task Type')
-                        ->options(fn () => \App\Models\TaskType::query()
-                            ->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all())
-                        ->searchable()->preload()->native(false)->required(),
+                        ->label('Title')
+                        ->required()
+                        ->maxLength(255)
+                        ->placeholder('Enter workflow title')
+                        ->disabled(fn ($record) => $record && !$isAdmin)
+                        ->columnSpanFull(),
 
                     \Filament\Forms\Components\Select::make('client_id')
-                        ->label('Clients')
-                        ->relationship('client', 'name')->searchable()->preload()->native(false)
-                        ->placeholder('Select a client'),
+                        ->label('Client')
+                        ->relationship('client', 'name', fn ($query) => $query->where('active', true))
+                        ->searchable()
+                        ->preload()
+                        ->native(false)
+                        ->placeholder('No client (optional)')
+                        ->helperText('Optional: Select a client for this workflow')
+                        ->disabled(fn ($record) => $record && !$isAdmin),
 
                     \Filament\Forms\Components\Select::make('assignees')
                         ->label('Assignees')
-                        ->relationship('assignees', 'name')->multiple()->searchable()->preload()->native(false)
-                        ->helperText('Select one or more employees'),
+                        ->relationship('assignees', 'name', fn ($query) => $query->where('is_active', true))
+                        ->multiple()
+                        ->searchable()
+                        ->preload()
+                        ->native(false)
+                        ->placeholder('Select employees')
+                        ->helperText('Select one or more employees to assign this workflow')
+                        ->required()
+                        ->disabled(fn ($record) => $record && !$isAdmin),
 
                     \Filament\Forms\Components\Textarea::make('description')
-                        ->label('Task description')->rows(3)->columnSpanFull(),
+                        ->label('Description')
+                        ->rows(4)
+                        ->placeholder('Enter workflow description')
+                        ->columnSpanFull()
+                        ->disabled(fn ($record) => $record && !$isAdmin),
 
                     \Filament\Forms\Components\DatePicker::make('due_at')
-                        ->label('Due (Date)')->native(false)->required()
+                        ->label('Due Date')
+                        ->native(false)
+                        ->required()
+                        ->displayFormat('Y-m-d')
                         ->suffixActions([
-                            FieldAction::make('due_3d')->label('3d')->button()->color('gray')
+                            FieldAction::make('due_3d')
+                                ->label('3d')
+                                ->button()
+                                ->color('gray')
+                                ->size('sm')
                                 ->extraAttributes(['class'=>'text-xs'])
-                                ->action(fn (Set $set) => $set('due_at', \Illuminate\Support\Carbon::now()->addDays(3)->toDateString())),
-                            FieldAction::make('due_7d')->label('7d')->button()->color('gray')
+                                ->action(fn (Set $set) => $set('due_at', \Illuminate\Support\Carbon::now('Asia/Shanghai')->addDays(3)->startOfDay()->toDateString())),
+                            FieldAction::make('due_7d')
+                                ->label('7d')
+                                ->button()
+                                ->color('gray')
+                                ->size('sm')
                                 ->extraAttributes(['class'=>'text-xs'])
-                                ->action(fn (Set $set) => $set('due_at', \Illuminate\Support\Carbon::now()->addDays(7)->toDateString())),
-                            FieldAction::make('due_14d')->label('14d')->button()->color('gray')
+                                ->action(fn (Set $set) => $set('due_at', \Illuminate\Support\Carbon::now('Asia/Shanghai')->addDays(7)->startOfDay()->toDateString())),
+                            FieldAction::make('due_14d')
+                                ->label('14d')
+                                ->button()
+                                ->color('gray')
+                                ->size('sm')
                                 ->extraAttributes(['class'=>'text-xs'])
-                                ->action(fn (Set $set) => $set('due_at', \Illuminate\Support\Carbon::now()->addDays(14)->toDateString())),
+                                ->action(fn (Set $set) => $set('due_at', \Illuminate\Support\Carbon::now('Asia/Shanghai')->addDays(14)->startOfDay()->toDateString())),
                         ])
-                        ->default(fn () => \Illuminate\Support\Carbon::now()->addDays(3)),
-                ]),
+                        ->default(fn () => \Illuminate\Support\Carbon::now('Asia/Shanghai')->addDays(3)->startOfDay())
+                        ->helperText('Set the due date for this workflow (will be set to 00:00:00 on the selected day)')
+                        ->disabled(fn ($record) => $record && !$isAdmin),
+                    
+                    \Filament\Forms\Components\Toggle::make('require_evidence')
+                        ->label('Require Evidence')
+                        ->helperText('If enabled, employees must upload evidence (screenshots/files) when updating this workflow')
+                        ->default(false)
+                        ->disabled(fn ($record) => $record && !$isAdmin)
+                        ->columnSpanFull(),
+                ])
+                ->columns(2),
 
-            \Filament\Forms\Components\Section::make('Status & priority')
-                ->columns(3)
+            \Filament\Forms\Components\Section::make('Status & Priority')
+                ->columns(2)
                 ->schema([
                     \Filament\Forms\Components\Select::make('priority')
                         ->label('Priority')
-                        ->options(['low'=>'Low','medium'=>'Medium','high'=>'High'])
-                        ->default('medium')->native(false),
+                        ->options([
+                            'low' => 'Low',
+                            'normal' => 'Normal',
+                            'high' => 'High',
+                            'urgent' => 'Urgent',
+                        ])
+                        ->default('normal')
+                        ->native(false)
+                        ->required()
+                        ->disabled(fn ($record) => $record && !$isAdmin)
+                        ->helperText('Set the priority level for this workflow'),
 
                     \Filament\Forms\Components\Select::make('status')
                         ->label('Status')
                         ->options([
-                            'open'=>'Open','updated'=>'Updated','follow_up'=>'Follow Up',
-                            'approved'=>'Approved','overdue'=>'Overdue','cancelled'=>'Cancelled',
-                        ])->default('open')->native(false),
+                            'open' => 'Open',
+                            'updated' => 'Updated',
+                            'approved' => 'Approved',
+                            'overdue' => 'Overdue',
+                            'cancelled' => 'Cancelled',
+                        ])
+                        ->default('open')
+                        ->native(false)
+                        ->required()
+                        ->disabled(fn ($record) => $record && !$isAdmin)
+                        ->helperText('Current status of the workflow'),
                 ]),
         ]);
     }
@@ -109,21 +167,43 @@ class WorkflowResource extends Resource
     {
         return $table
             ->columns([
-                \Filament\Tables\Columns\TextColumn::make('title')->label('Title')->searchable(),
-                \Filament\Tables\Columns\TextColumn::make('taskType.name')->label('Type')->badge(),
-                \Filament\Tables\Columns\TextColumn::make('client.name')->label('Client')->limit(30),
+                \Filament\Tables\Columns\TextColumn::make('title')
+                    ->label('Title')
+                    ->searchable()
+                    ->sortable()
+                    ->weight('medium')
+                    ->limit(50),
+                \Filament\Tables\Columns\TextColumn::make('client.name')
+                    ->label('Client')
+                    ->placeholder('—')
+                    ->default('No client')
+                    ->badge()
+                    ->color('gray')
+                    ->limit(30)
+                    ->sortable(),
                 \Filament\Tables\Columns\TextColumn::make('assignees_list')
                     ->label('Assignees')
-                    ->getStateUsing(fn (Workflow $record) => $record->assignees->pluck('name')->join(', '))
+                    ->getStateUsing(fn (Workflow $record) => $record->assignees->pluck('name')->join(', ') ?: '—')
+                    ->badge()
+                    ->color('info')
                     ->limit(30),
-                \Filament\Tables\Columns\TextColumn::make('priority')->label('Priority')->badge(),
+                \Filament\Tables\Columns\TextColumn::make('priority')
+                    ->label('Priority')
+                    ->badge()
+                    ->color(fn (string $state) => match ($state) {
+                        'low' => 'gray',
+                        'normal' => 'info',
+                        'high' => 'warning',
+                        'urgent' => 'danger',
+                        default => 'gray',
+                    })
+                    ->sortable(),
                 \Filament\Tables\Columns\TextColumn::make('status')
                     ->label('Status')
                     ->badge()
                     ->formatStateUsing(fn (string $state, Workflow $record) => match ($state) {
                         'open' => ($record->due_at && $record->due_at->isPast()) ? 'Overdue' : 'Open',
                         'updated' => 'Updated',
-                        'follow_up' => 'Follow Up',
                         'approved' => 'Approved',
                         'overdue' => 'Overdue',
                         'cancelled' => 'Cancelled',
@@ -134,16 +214,87 @@ class WorkflowResource extends Resource
                         'overdue' => 'danger',
                         'approved' => 'success',
                         'updated' => 'warning',
-                        'follow_up' => 'warning',
                         'cancelled' => 'danger',
                         default => 'gray',
-                    }),
-                \Filament\Tables\Columns\TextColumn::make('due_at')->label('Due')->date('Y-m-d')->sortable(),
-                \Filament\Tables\Columns\TextColumn::make('created_at')->label('Created')->date('Y-m-d')->sortable(),
+                    })
+                    ->sortable(),
+                \Filament\Tables\Columns\TextColumn::make('due_at')
+                    ->label('Due Date')
+                    ->date('Y-m-d', 'Asia/Shanghai')
+                    ->sortable()
+                    ->color(fn (Workflow $record) => $record->due_at && $record->due_at->isPast() && $record->status !== 'approved' ? 'danger' : null),
+                \Filament\Tables\Columns\TextColumn::make('created_at')
+                    ->label('Created')
+                    ->date('Y-m-d', 'Asia/Shanghai')
+                    ->sortable()
+                    ->default('—'),
+                \Filament\Tables\Columns\TextColumn::make('approved_at')
+                    ->label('Approved')
+                    ->date('Y-m-d', 'Asia/Shanghai')
+                    ->sortable()
+                    ->placeholder('—')
+                    ->toggleable(),
+                \Filament\Tables\Columns\TextColumn::make('last_update_at')
+                    ->label('Last Update')
+                    ->getStateUsing(function (Workflow $record) {
+                        $lastUpdate = $record->updates()->latest('created_at')->first();
+                        if (!$lastUpdate) {
+                            return null;
+                        }
+                        return $lastUpdate->created_at->setTimezone('Asia/Shanghai')->format('Y-m-d');
+                    })
+                    ->placeholder('—')
+                    ->sortable()
+                    ->toggleable(),
             ])
             ->actions([
-                \Filament\Tables\Actions\EditAction::make(),
-                \Filament\Tables\Actions\DeleteAction::make(),
+                \Filament\Tables\Actions\Action::make('approve')
+                    ->label('Approve')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('Approve Workflow')
+                    ->modalDescription('Are you sure you want to approve this workflow? This action will mark it as completed.')
+                    ->visible(fn (Workflow $record) => 
+                        $record->status === 'updated' && 
+                        auth()->user()->email === 'admin@bunnycommunications.com'
+                    )
+                    ->action(function (Workflow $record) {
+                        $record->update([
+                            'status' => 'approved',
+                            'approved_at' => \Illuminate\Support\Carbon::now('Asia/Shanghai'),
+                        ]);
+                        \Filament\Notifications\Notification::make()
+                            ->success()
+                            ->title('Workflow approved')
+                            ->body('The workflow has been approved and marked as completed.')
+                            ->send();
+                    }),
+                \Filament\Tables\Actions\EditAction::make()
+                    ->icon('heroicon-o-pencil'),
+                \Filament\Tables\Actions\DeleteAction::make()
+                    ->icon('heroicon-o-trash')
+                    ->visible(fn () => auth()->user()->email === 'admin@bunnycommunications.com'),
+            ])
+            ->defaultSort('created_at', 'desc')
+            ->filters([
+                \Filament\Tables\Filters\SelectFilter::make('status')
+                    ->options([
+                        'open' => 'Open',
+                        'updated' => 'Updated',
+                        'approved' => 'Approved',
+                        'overdue' => 'Overdue',
+                        'cancelled' => 'Cancelled',
+                    ])
+                    ->multiple(),
+                \Filament\Tables\Filters\SelectFilter::make('priority')
+                    ->options([
+                        'low' => 'Low',
+                        'normal' => 'Normal',
+                        'high' => 'High',
+                        'urgent' => 'Urgent',
+                    ])
+                    ->multiple(),
             ])
             ->bulkActions([
                 \Filament\Tables\Actions\BulkActionGroup::make([
