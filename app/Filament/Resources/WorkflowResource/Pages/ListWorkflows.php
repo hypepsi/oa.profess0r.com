@@ -34,7 +34,7 @@ class ListWorkflows extends ListRecords
     {
         $query = parent::getTableQuery();
         
-        // 如果不是管理员，只显示分配给当前用户的 workflow
+        // If not admin, only show workflows assigned to current user
         if (!$this->isAdmin()) {
             $employee = Employee::where('email', auth()->user()->email)->first();
             if ($employee) {
@@ -42,12 +42,27 @@ class ListWorkflows extends ListRecords
                     $q->where('employees.id', $employee->id);
                 });
             } else {
-                // 如果没有找到对应的员工记录，返回空结果
+                // If no employee record found, return empty results
                 $query->whereRaw('1 = 0');
             }
         }
         
         return $query;
+    }
+
+    public function getDefaultTableGrouping(): ?string
+    {
+        return 'created_at';
+    }
+
+    public function getDefaultTableSortColumn(): ?string
+    {
+        return 'created_at';
+    }
+
+    public function getDefaultTableSortDirection(): ?string
+    {
+        return 'desc';
     }
 
     protected function isAdmin(): bool

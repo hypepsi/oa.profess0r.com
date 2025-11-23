@@ -43,7 +43,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->renderHook(
                 'panels::body.end',
-                fn () => view('filament.paste-upload-script')
+                fn () => view('filament.workflow-table-scripts')
             )
             ->middleware([
                 EncryptCookies::class,

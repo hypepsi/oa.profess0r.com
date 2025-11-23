@@ -99,23 +99,23 @@ class WorkflowResource extends Resource
                                 ->color('gray')
                                 ->size('sm')
                                 ->extraAttributes(['class'=>'text-xs'])
-                                ->action(fn (Set $set) => $set('due_at', \Illuminate\Support\Carbon::now('Asia/Shanghai')->addDays(3)->startOfDay()->toDateString())),
+                                ->action(fn (Set $set) => $set('due_at', Carbon::now('Asia/Shanghai')->addDays(3)->startOfDay()->toDateString())),
                             FieldAction::make('due_7d')
                                 ->label('7d')
                                 ->button()
                                 ->color('gray')
                                 ->size('sm')
                                 ->extraAttributes(['class'=>'text-xs'])
-                                ->action(fn (Set $set) => $set('due_at', \Illuminate\Support\Carbon::now('Asia/Shanghai')->addDays(7)->startOfDay()->toDateString())),
+                                ->action(fn (Set $set) => $set('due_at', Carbon::now('Asia/Shanghai')->addDays(7)->startOfDay()->toDateString())),
                             FieldAction::make('due_14d')
                                 ->label('14d')
                                 ->button()
                                 ->color('gray')
                                 ->size('sm')
                                 ->extraAttributes(['class'=>'text-xs'])
-                                ->action(fn (Set $set) => $set('due_at', \Illuminate\Support\Carbon::now('Asia/Shanghai')->addDays(14)->startOfDay()->toDateString())),
+                                ->action(fn (Set $set) => $set('due_at', Carbon::now('Asia/Shanghai')->addDays(14)->startOfDay()->toDateString())),
                         ])
-                        ->default(fn () => \Illuminate\Support\Carbon::now('Asia/Shanghai')->addDays(3)->startOfDay())
+                        ->default(fn () => Carbon::now('Asia/Shanghai')->addDays(3)->startOfDay())
                         ->helperText('Set the due date for this workflow (will be set to 00:00:00 on the selected day)')
                         ->disabled(fn ($record) => $record && !$isAdmin),
                     
@@ -160,33 +160,47 @@ class WorkflowResource extends Resource
                         ->disabled(fn ($record) => $record && !$isAdmin)
                         ->helperText('Current status of the workflow'),
                 ]),
+
         ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(function ($query) {
+                $query->with(['updates.user', 'client', 'assignees'])
+                    ->withCount('updates');
+            })
             ->columns([
                 \Filament\Tables\Columns\TextColumn::make('title')
                     ->label('Title')
-                    ->searchable()
+                    ->searchable(query: function ($query, $search) {
+                        return $query->where('title', 'like', "%{$search}%")
+                            ->orWhere('description', 'like', "%{$search}%")
+                            ->orWhereHas('client', function ($q) use ($search) {
+                                $q->where('name', 'like', "%{$search}%");
+                            })
+                            ->orWhereHas('assignees', function ($q) use ($search) {
+                                $q->where('name', 'like', "%{$search}%");
+                            });
+                    })
                     ->sortable()
                     ->weight('medium')
-                    ->limit(50),
+                    ->limit(40),
                 \Filament\Tables\Columns\TextColumn::make('client.name')
                     ->label('Client')
                     ->placeholder('—')
                     ->default('No client')
                     ->badge()
                     ->color('gray')
-                    ->limit(30)
+                    ->limit(20)
                     ->sortable(),
                 \Filament\Tables\Columns\TextColumn::make('assignees_list')
                     ->label('Assignees')
                     ->getStateUsing(fn (Workflow $record) => $record->assignees->pluck('name')->join(', ') ?: '—')
                     ->badge()
                     ->color('info')
-                    ->limit(30),
+                    ->limit(20),
                 \Filament\Tables\Columns\TextColumn::make('priority')
                     ->label('Priority')
                     ->badge()
@@ -227,25 +241,54 @@ class WorkflowResource extends Resource
                     ->label('Created')
                     ->date('Y-m-d', 'Asia/Shanghai')
                     ->sortable()
-                    ->default('—'),
+                    ->default('—')
+                    ->toggleable(),
                 \Filament\Tables\Columns\TextColumn::make('approved_at')
                     ->label('Approved')
                     ->date('Y-m-d', 'Asia/Shanghai')
                     ->sortable()
                     ->placeholder('—')
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 \Filament\Tables\Columns\TextColumn::make('last_update_at')
                     ->label('Last Update')
                     ->getStateUsing(function (Workflow $record) {
-                        $lastUpdate = $record->updates()->latest('created_at')->first();
+                        $lastUpdate = $record->updates()->with('user')->latest('created_at')->first();
                         if (!$lastUpdate) {
                             return null;
                         }
-                        return $lastUpdate->created_at->setTimezone('Asia/Shanghai')->format('Y-m-d');
+                        $now = Carbon::now('Asia/Shanghai');
+                        $lastUpdateTime = $lastUpdate->created_at->setTimezone('Asia/Shanghai');
+                        $userName = $lastUpdate->user->name ?? 'Unknown';
+                        
+                        // Calculate hours and minutes
+                        $totalMinutes = (int) $lastUpdateTime->diffInMinutes($now);
+                        $hours = (int) floor($totalMinutes / 60);
+                        $minutes = $totalMinutes % 60;
+                        
+                        // Format time display in English
+                        if ($totalMinutes < 1) {
+                            $timeAgo = 'just now';
+                        } elseif ($hours < 1) {
+                            $timeAgo = $minutes . ' min' . ($minutes > 1 ? 's' : '') . ' ago';
+                        } elseif ($minutes == 0) {
+                            $timeAgo = $hours . ' hr' . ($hours > 1 ? 's' : '') . ' ago';
+                        } else {
+                            $timeAgo = $hours . ' hr' . ($hours > 1 ? 's' : '') . ' ' . $minutes . ' min' . ($minutes > 1 ? 's' : '') . ' ago';
+                        }
+                        
+                        return $userName . ' • ' . $timeAgo;
                     })
                     ->placeholder('—')
                     ->sortable()
-                    ->toggleable(),
+                    ->tooltip(function (Workflow $record) {
+                        $lastUpdate = $record->updates()->with('user')->latest('created_at')->first();
+                        if (!$lastUpdate) {
+                            return null;
+                        }
+                        $userName = $lastUpdate->user->name ?? 'Unknown';
+                        $dateTime = $lastUpdate->created_at->setTimezone('Asia/Shanghai')->format('Y-m-d H:i:s');
+                        return $userName . ' • ' . $dateTime;
+                    }),
             ])
             ->actions([
                 \Filament\Tables\Actions\Action::make('approve')
@@ -256,13 +299,13 @@ class WorkflowResource extends Resource
                     ->modalHeading('Approve Workflow')
                     ->modalDescription('Are you sure you want to approve this workflow? This action will mark it as completed.')
                     ->visible(fn (Workflow $record) => 
-                        $record->status === 'updated' && 
+                        in_array($record->status, ['open', 'updated']) && 
                         auth()->user()->email === 'admin@bunnycommunications.com'
                     )
                     ->action(function (Workflow $record) {
                         $record->update([
                             'status' => 'approved',
-                            'approved_at' => \Illuminate\Support\Carbon::now('Asia/Shanghai'),
+                            'approved_at' => Carbon::now('Asia/Shanghai'),
                         ]);
                         \Filament\Notifications\Notification::make()
                             ->success()
@@ -300,7 +343,17 @@ class WorkflowResource extends Resource
                 \Filament\Tables\Actions\BulkActionGroup::make([
                     \Filament\Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->groups([
+                \Filament\Tables\Grouping\Group::make('created_at')
+                    ->label('')
+                    ->collapsible()
+                    ->getTitleFromRecordUsing(function (Workflow $record) {
+                        $date = $record->created_at->setTimezone('Asia/Shanghai');
+                        return 'Month: ' . $date->format('F Y');
+                    }),
+            ])
+            ->defaultGroup('created_at');
     }
 
     public static function getRelations(): array

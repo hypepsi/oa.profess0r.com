@@ -26,7 +26,7 @@ class UpdatesRelationManager extends RelationManager
             ->schema([
                 Forms\Components\Textarea::make('content')
                     ->label('Update message')
-                    ->rows(3)
+                    ->rows(4)
                     ->required()
                     ->columnSpanFull()
                     ->placeholder('Enter your update message...'),
@@ -44,8 +44,8 @@ class UpdatesRelationManager extends RelationManager
                     ->maxSize(10240) // 10MB
                     ->required($requiresEvidence)
                     ->helperText($requiresEvidence 
-                        ? 'Evidence is required for this workflow. You can paste images (Ctrl+V) or upload files.' 
-                        : 'Optional: Upload files or paste images (Ctrl+V) related to this update')
+                        ? 'Evidence is required for this workflow. Please upload files.' 
+                        : 'Optional: Upload files related to this update')
                     ->hint($requiresEvidence ? 'At least one file is required' : null)
                     ->hintColor('danger'),
             ])
@@ -127,7 +127,8 @@ class UpdatesRelationManager extends RelationManager
             ->actions([
                 Tables\Actions\ViewAction::make()
                     ->modalHeading('Update Details')
-                    ->modalContent(fn ($record) => view('filament.resources.workflow-resource.relation-managers.update-details', ['record' => $record])),
+                    ->modalContent(fn ($record) => view('filament.resources.workflow-resource.relation-managers.update-details', ['record' => $record]))
+                    ->form([]),
                 Tables\Actions\DeleteAction::make()
                     ->requiresConfirmation()
                     ->visible(fn () => auth()->user()->email === 'admin@bunnycommunications.com'),

@@ -8,7 +8,7 @@ use Filament\Widgets\StatsOverviewWidget\Card;
 
 class WorkflowStatsOverview extends BaseWidget
 {
-    protected static ?string $pollingInterval = null; // 不自动刷新，手动刷新页面即可
+    protected static ?string $pollingInterval = null; // No auto-refresh, manual page refresh
     protected static bool $isLazy = true;
 
     protected function getCards(): array

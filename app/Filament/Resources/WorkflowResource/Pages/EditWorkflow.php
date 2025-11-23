@@ -23,7 +23,7 @@ class EditWorkflow extends EditRecord
                 ->modalHeading('Approve Workflow')
                 ->modalDescription('Are you sure you want to approve this workflow? This will mark it as completed.')
                 ->modalSubmitActionLabel('Yes, approve')
-                ->visible(fn () => $isAdmin && $this->record->status === 'updated')
+                ->visible(fn () => $isAdmin && in_array($this->record->status, ['open', 'updated']))
                 ->action(function () {
                     $this->record->update([
                         'status' => 'approved',
@@ -46,10 +46,11 @@ class EditWorkflow extends EditRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        // 员工不能修改字段，只能查看
+        // Employees cannot edit fields, only view
         if (!$this->isAdmin()) {
             $this->form->disabled();
         }
+        
         return $data;
     }
 
