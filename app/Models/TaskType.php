@@ -13,6 +13,7 @@ class TaskType extends Model
         'name',
         'description',
         'requires_evidence', // 仅要求必须上传证据，不限制数量
+        'min_attachments',
         'is_active',
     ];
 

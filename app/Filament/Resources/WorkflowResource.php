@@ -117,7 +117,27 @@ class WorkflowResource extends Resource
                     ->getStateUsing(fn (Workflow $record) => $record->assignees->pluck('name')->join(', '))
                     ->limit(30),
                 \Filament\Tables\Columns\TextColumn::make('priority')->label('Priority')->badge(),
-                \Filament\Tables\Columns\TextColumn::make('status')->label('Status')->badge(),
+                \Filament\Tables\Columns\TextColumn::make('status')
+                    ->label('Status')
+                    ->badge()
+                    ->formatStateUsing(fn (string $state, Workflow $record) => match ($state) {
+                        'open' => ($record->due_at && $record->due_at->isPast()) ? 'Overdue' : 'Open',
+                        'updated' => 'Updated',
+                        'follow_up' => 'Follow Up',
+                        'approved' => 'Approved',
+                        'overdue' => 'Overdue',
+                        'cancelled' => 'Cancelled',
+                        default => ucfirst(str_replace('_', ' ', $state)),
+                    })
+                    ->color(fn (string $state, Workflow $record) => match ($state) {
+                        'open' => ($record->due_at && $record->due_at->isPast()) ? 'danger' : 'gray',
+                        'overdue' => 'danger',
+                        'approved' => 'success',
+                        'updated' => 'warning',
+                        'follow_up' => 'warning',
+                        'cancelled' => 'danger',
+                        default => 'gray',
+                    }),
                 \Filament\Tables\Columns\TextColumn::make('due_at')->label('Due')->date('Y-m-d')->sortable(),
                 \Filament\Tables\Columns\TextColumn::make('created_at')->label('Created')->date('Y-m-d')->sortable(),
             ])
