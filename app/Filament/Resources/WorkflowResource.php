@@ -42,6 +42,12 @@ class WorkflowResource extends Resource
     protected static ?string $modelLabel = 'Workflow';
     protected static ?string $pluralModelLabel = 'Workflows';
 
+    // Hide default navigation item, we'll use custom month-based navigation
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
+
     public static function form(Form $form): Form
     {
         $isAdmin = auth()->check() && auth()->user()->email === 'admin@bunnycommunications.com';
@@ -343,17 +349,7 @@ class WorkflowResource extends Resource
                 \Filament\Tables\Actions\BulkActionGroup::make([
                     \Filament\Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ])
-            ->groups([
-                \Filament\Tables\Grouping\Group::make('created_at')
-                    ->label('')
-                    ->collapsible()
-                    ->getTitleFromRecordUsing(function (Workflow $record) {
-                        $date = $record->created_at->setTimezone('Asia/Shanghai');
-                        return 'Month: ' . $date->format('F Y');
-                    }),
-            ])
-            ->defaultGroup('created_at');
+            ]);
     }
 
     public static function getRelations(): array
@@ -367,6 +363,7 @@ class WorkflowResource extends Resource
     {
         return [
             'index'  => Pages\ListWorkflows::route('/'),
+            'month'  => Pages\ListWorkflowsByMonth::route('/month/{year}/{month}'),
             'create' => Pages\CreateWorkflow::route('/create'),
             'edit'   => Pages\EditWorkflow::route('/{record}/edit'),
         ];

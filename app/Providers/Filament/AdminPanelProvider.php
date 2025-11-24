@@ -6,11 +6,13 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationItem;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Widgets;
+use Illuminate\Support\Carbon;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -45,6 +47,7 @@ class AdminPanelProvider extends PanelProvider
                 'panels::body.end',
                 fn () => view('filament.workflow-table-scripts')
             )
+            ->navigationItems($this->getWorkflowNavigationItems())
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -59,5 +62,28 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ]);
+    }
+
+    protected function getWorkflowNavigationItems(): array
+    {
+        $items = [];
+        $now = Carbon::now('Asia/Shanghai');
+        
+        // Generate navigation items for current month and next 2 months (3 months total)
+        for ($i = 0; $i < 3; $i++) {
+            $date = $now->copy()->addMonths($i);
+            $month = $date->format('n'); // 1-12
+            $year = $date->format('Y');
+            $monthName = $date->format('F Y'); // e.g., "November 2025"
+            
+            $items[] = NavigationItem::make("workflows-{$year}-{$month}")
+                ->label($monthName)
+                ->icon('heroicon-o-clipboard-document-check')
+                ->group('Workflows')
+                ->sort(100 + $i) // Keep workflows together
+                ->url("/admin/workflows/month/{$year}/{$month}");
+        }
+        
+        return $items;
     }
 }
