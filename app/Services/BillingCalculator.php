@@ -11,13 +11,17 @@ use Illuminate\Support\Collection;
 
 class BillingCalculator
 {
+    protected const HISTORY_MONTHS = 3;
+    protected const FUTURE_MONTHS = 0;
+
     public static function ensureCustomerMonths(Customer $customer): void
     {
-        $start = self::resolveStartOfBilling($customer);
         $current = Carbon::now('Asia/Shanghai')->startOfMonth();
+        $start = $current->copy()->subMonths(self::HISTORY_MONTHS);
+        $end = $current->copy()->addMonths(self::FUTURE_MONTHS);
         $cursor = $start->copy();
 
-        while ($cursor <= $current) {
+        while ($cursor <= $end) {
             CustomerBillingPayment::firstOrCreate(
                 [
                     'customer_id' => $customer->id,
@@ -43,19 +47,22 @@ class BillingCalculator
             ->orderByDesc('billing_month')
             ->get();
 
-        return $payments->map(function (CustomerBillingPayment $payment) use ($customer) {
-            $period = self::makePeriodCarbon($payment->billing_year, $payment->billing_month);
-            $expected = self::getCustomerExpectedTotalsForMonth($customer, $period);
+        return $payments
+            ->map(function (CustomerBillingPayment $payment) use ($customer) {
+                $period = self::makePeriodCarbon($payment->billing_year, $payment->billing_month);
+                $expected = self::getCustomerExpectedTotalsForMonth($customer, $period);
 
-            return [
-                'payment' => $payment,
-                'period' => $period,
-                'subnet_count' => $expected['subnet_count'],
-                'subnet_total' => $expected['subnet_total'],
-                'other_total' => $expected['other_total'],
-                'expected_total' => $expected['expected_total'],
-            ];
-        });
+                return [
+                    'payment' => $payment,
+                    'period' => $period,
+                    'subnet_count' => $expected['subnet_count'],
+                    'subnet_total' => $expected['subnet_total'],
+                    'other_total' => $expected['other_total'],
+                    'expected_total' => $expected['expected_total'],
+                ];
+            })
+            ->sortByDesc(fn (array $row) => $row['period']->format('Y-m'))
+            ->values();
     }
 
     public static function getCustomerExpectedTotalsForMonth(Customer $customer, Carbon $period): array
@@ -63,11 +70,28 @@ class BillingCalculator
         $subnetCount = (int) $customer->ipAssets()->count();
         $subnetTotal = (float) $customer->ipAssets()->sum('price');
 
-        $otherTotal = (float) BillingOtherItem::query()
+        $otherTotal = BillingOtherItem::query()
             ->where('customer_id', $customer->id)
-            ->where('billing_year', $period->year)
-            ->where('billing_month', $period->month)
-            ->sum('amount');
+            ->get()
+            ->reduce(function (float $carry, BillingOtherItem $item) use ($period) {
+                $start = $item->starts_on
+                    ? $item->starts_on->copy()->startOfMonth()
+                    : Carbon::create($item->billing_year, $item->billing_month, $item->billing_day ?? 1, 'Asia/Shanghai')->startOfMonth();
+
+                if ($period->lt($start)) {
+                    return $carry;
+                }
+
+                $releaseStart = $item->releaseStartDate();
+
+                if ($item->status === 'released') {
+                    if (!$releaseStart || $period->greaterThanOrEqualTo($releaseStart)) {
+                        return $carry;
+                    }
+                }
+
+                return $carry + (float) $item->amount;
+            }, 0.0);
 
         return [
             'subnet_count' => $subnetCount,
@@ -131,6 +155,9 @@ class BillingCalculator
             ->values()
             ->all();
 
+        $summary['overdue_amount_total'] = collect($summary['overdue'])
+            ->sum('amount');
+
         return $summary;
     }
 
@@ -149,7 +176,7 @@ class BillingCalculator
             ->get();
 
         foreach ($payments as $payment) {
-            if ($payment->is_paid) {
+            if ($payment->is_paid || $payment->is_waived) {
                 continue;
             }
 
@@ -159,36 +186,6 @@ class BillingCalculator
         }
 
         return $overdueTotal;
-    }
-
-    protected static function resolveStartOfBilling(Customer $customer): Carbon
-    {
-        $dates = new Collection();
-
-        $firstAsset = $customer->ipAssets()->orderBy('created_at')->value('created_at');
-        if ($firstAsset) {
-            $dates->push(Carbon::parse($firstAsset)->startOfMonth());
-        }
-
-        $firstOtherItem = BillingOtherItem::query()
-            ->where('customer_id', $customer->id)
-            ->orderBy('billing_year')
-            ->orderBy('billing_month')
-            ->first();
-        if ($firstOtherItem) {
-            $dates->push(self::makePeriodCarbon($firstOtherItem->billing_year, $firstOtherItem->billing_month));
-        }
-
-        $firstPayment = CustomerBillingPayment::query()
-            ->where('customer_id', $customer->id)
-            ->orderBy('billing_year')
-            ->orderBy('billing_month')
-            ->first();
-        if ($firstPayment) {
-            $dates->push(self::makePeriodCarbon($firstPayment->billing_year, $firstPayment->billing_month));
-        }
-
-        return $dates->min() ?? Carbon::now('Asia/Shanghai')->startOfMonth();
     }
 
     protected static function makePeriodCarbon(int $year, int $month): Carbon

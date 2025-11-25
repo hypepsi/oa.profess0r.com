@@ -17,8 +17,11 @@ class CustomerBillingPayment extends Model
         'billing_month',
         'actual_amount',
         'is_paid',
+        'is_waived',
         'paid_at',
+        'waived_at',
         'recorded_by_user_id',
+        'waived_by_user_id',
         'notes',
         'meta',
     ];
@@ -28,7 +31,9 @@ class CustomerBillingPayment extends Model
         'billing_month' => 'integer',
         'actual_amount' => 'decimal:2',
         'is_paid' => 'boolean',
+        'is_waived' => 'boolean',
         'paid_at' => 'datetime',
+        'waived_at' => 'datetime',
         'meta' => 'array',
     ];
 
@@ -40,6 +45,11 @@ class CustomerBillingPayment extends Model
     public function recordedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'recorded_by_user_id');
+    }
+
+    public function waivedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'waived_by_user_id');
     }
 
     public function scopeForMonth(Builder $query, int $year, int $month): Builder

@@ -146,8 +146,8 @@ class AdminPanelProvider extends PanelProvider
                 ->url('/admin/billing/customer?customer=' . $customer->id);
         }
 
-        $items[] = NavigationItem::make('billing-other-items')
-            ->label('Other Items')
+        $items[] = NavigationItem::make('billing-add-ons')
+            ->label('Add-ons')
             ->icon('heroicon-o-plus-circle')
             ->group('Billing')
             ->sort(900)

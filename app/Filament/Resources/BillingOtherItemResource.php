@@ -20,11 +20,11 @@ class BillingOtherItemResource extends Resource
 
     protected static ?string $navigationGroup = 'Billing';
 
-    protected static ?string $navigationLabel = 'Other Items';
+    protected static ?string $navigationLabel = 'Add-ons';
 
-    protected static ?string $pluralModelLabel = 'Other Items';
+    protected static ?string $pluralModelLabel = 'Add-ons';
 
-    protected static ?int $navigationSort = 20;
+    protected static ?int $navigationSort = 900;
 
     public static function form(Form $form): Form
     {
@@ -47,7 +47,7 @@ class BillingOtherItemResource extends Resource
                             ->label('Category')
                             ->maxLength(255)
                             ->placeholder('Bandwidth / Hosting / Agency / ...'),
-                        Forms\Components\Grid::make(2)
+                        Forms\Components\Grid::make(3)
                             ->schema([
                                 Forms\Components\Select::make('billing_year')
                                     ->label('Year')
@@ -59,7 +59,25 @@ class BillingOtherItemResource extends Resource
                                     ->options(self::getMonthOptions())
                                     ->required()
                                     ->default(now('Asia/Shanghai')->month),
+                                Forms\Components\Select::make('billing_day')
+                                    ->label('Day')
+                                    ->options(self::getDayOptions())
+                                    ->required()
+                                    ->default(now('Asia/Shanghai')->day),
                             ]),
+                        Forms\Components\DatePicker::make('starts_on')
+                            ->label('Effective from')
+                            ->helperText('Applies every month from this date until you release it.')
+                            ->default(now('Asia/Shanghai'))
+                            ->reactive()
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                if ($state) {
+                                    $date = Carbon::parse($state);
+                                    $set('billing_year', $date->year);
+                                    $set('billing_month', $date->month);
+                                    $set('billing_day', $date->day);
+                                }
+                            }),
                         Forms\Components\TextInput::make('amount')
                             ->label('Amount (USD)')
                             ->numeric()
@@ -74,19 +92,19 @@ class BillingOtherItemResource extends Resource
                         Forms\Components\ToggleButtons::make('status')
                             ->label('Status')
                             ->options([
-                                'pending' => 'Pending',
-                                'confirmed' => 'Confirmed',
+                                'active' => 'Active',
+                                'released' => 'Released',
                             ])
                             ->colors([
-                                'pending' => 'warning',
-                                'confirmed' => 'success',
+                                'active' => 'success',
+                                'released' => 'gray',
                             ])
                             ->icons([
-                                'pending' => 'heroicon-o-clock',
-                                'confirmed' => 'heroicon-o-check',
+                                'active' => 'heroicon-o-bolt',
+                                'released' => 'heroicon-o-archive-box-x-mark',
                             ])
                             ->inline()
-                            ->default('pending')
+                            ->default('active')
                             ->required(),
                     ]),
             ]);
@@ -109,8 +127,8 @@ class BillingOtherItemResource extends Resource
                     ->badge()
                     ->color('gray'),
                 Tables\Columns\TextColumn::make('billing_period')
-                    ->label('Billing Month')
-                    ->getStateUsing(fn (BillingOtherItem $record) => Carbon::createFromDate($record->billing_year, $record->billing_month, 1, 'Asia/Shanghai')->format('F Y'))
+                    ->label('Starts from')
+                    ->getStateUsing(fn (BillingOtherItem $record) => Carbon::createFromDate($record->billing_year, $record->billing_month, $record->billing_day ?? 1, 'Asia/Shanghai')->format('M d, Y'))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('amount')
                     ->label('Amount')
@@ -120,12 +138,12 @@ class BillingOtherItemResource extends Resource
                     ->label('Status')
                     ->badge()
                     ->colors([
-                        'pending' => 'warning',
-                        'confirmed' => 'success',
+                        'active' => 'success',
+                        'released' => 'gray',
                     ])
                     ->icons([
-                        'pending' => 'heroicon-o-clock',
-                        'confirmed' => 'heroicon-o-check-circle',
+                        'active' => 'heroicon-o-bolt',
+                        'released' => 'heroicon-o-archive-box-x-mark',
                     ]),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->label('Updated at')
@@ -139,8 +157,8 @@ class BillingOtherItemResource extends Resource
                 Tables\Filters\SelectFilter::make('status')
                     ->label('Status')
                     ->options([
-                        'pending' => 'Pending',
-                        'confirmed' => 'Confirmed',
+                        'active' => 'Active',
+                        'released' => 'Released',
                     ]),
                 Tables\Filters\Filter::make('billing_period')
                     ->form([
@@ -159,6 +177,29 @@ class BillingOtherItemResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('release')
+                    ->label('Release')
+                    ->color('gray')
+                    ->visible(fn (BillingOtherItem $record) => $record->status === 'active')
+                    ->requiresConfirmation()
+                    ->action(function (BillingOtherItem $record) {
+                        $record->update([
+                            'status' => 'released',
+                            'released_at' => now('Asia/Shanghai'),
+                            'released_by_user_id' => auth()->id(),
+                        ]);
+                    }),
+                Tables\Actions\Action::make('reactivate')
+                    ->label('Reactivate')
+                    ->color('success')
+                    ->visible(fn (BillingOtherItem $record) => $record->status === 'released')
+                    ->action(function (BillingOtherItem $record) {
+                        $record->update([
+                            'status' => 'active',
+                            'released_at' => null,
+                            'released_by_user_id' => null,
+                        ]);
+                    }),
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
@@ -166,7 +207,10 @@ class BillingOtherItemResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
-            ->modifyQueryUsing(fn (Builder $query) => $query->orderByDesc('billing_year')->orderByDesc('billing_month'));
+            ->modifyQueryUsing(fn (Builder $query) => $query
+                ->orderByDesc('billing_year')
+                ->orderByDesc('billing_month')
+                ->orderByDesc('billing_day'));
     }
 
     public static function getRelations(): array
@@ -181,6 +225,42 @@ class BillingOtherItemResource extends Resource
             'create' => Pages\CreateBillingOtherItem::route('/create'),
             'edit' => Pages\EditBillingOtherItem::route('/{record}/edit'),
         ];
+    }
+
+    protected static function mutateFormData(array $data): array
+    {
+        if (isset($data['billing_year'], $data['billing_month'], $data['billing_day'])) {
+            $year = (int) $data['billing_year'];
+            $month = (int) $data['billing_month'];
+            $day = (int) $data['billing_day'];
+            $daysInMonth = Carbon::create($year, $month, 1, 'Asia/Shanghai')->daysInMonth;
+            $day = min($day, $daysInMonth);
+
+            $date = Carbon::create(
+                $year,
+                $month,
+                $day,
+                0,
+                0,
+                0,
+                'Asia/Shanghai'
+            );
+
+            $data['starts_on'] = $date->toDateString();
+            $data['billing_day'] = $day;
+        }
+
+        return $data;
+    }
+
+    public static function mutateFormDataBeforeCreate(array $data): array
+    {
+        return self::mutateFormData($data);
+    }
+
+    public static function mutateFormDataBeforeSave(array $data): array
+    {
+        return self::mutateFormData($data);
     }
 
     protected static function getYearOptions(): array
@@ -202,5 +282,15 @@ class BillingOtherItemResource extends Resource
         }
 
         return $months;
+    }
+
+    protected static function getDayOptions(): array
+    {
+        $days = [];
+        for ($i = 1; $i <= 31; $i++) {
+            $days[$i] = sprintf('%02d', $i);
+        }
+
+        return $days;
     }
 }

@@ -31,6 +31,10 @@ class CustomerBilling extends Page
 
     public array $stats = [];
 
+    public ?int $editingPaymentId = null;
+
+    public ?int $detailsPaymentId = null;
+
     public function mount(): void
     {
         $customerId = request()->integer('customer');
@@ -65,16 +69,50 @@ class CustomerBilling extends Page
         $payment->update([
             'actual_amount' => $amountValue,
             'is_paid' => true,
+            'is_waived' => false,
             'paid_at' => Carbon::now('Asia/Shanghai'),
             'recorded_by_user_id' => Auth::id(),
+            'waived_at' => null,
+            'waived_by_user_id' => null,
             'notes' => $this->paymentNotes[$paymentId] ?? null,
         ]);
 
         unset($this->paymentInputs[$paymentId], $this->paymentNotes[$paymentId]);
+        $this->editingPaymentId = null;
 
         Notification::make()
             ->title('Payment recorded')
             ->success()
+            ->send();
+
+        $this->loadSnapshots();
+    }
+
+    public function waivePayment(int $paymentId): void
+    {
+        $payment = CustomerBillingPayment::findOrFail($paymentId);
+        if ($payment->is_paid) {
+            Notification::make()
+                ->title('This month is already marked as paid.')
+                ->danger()
+                ->send();
+            return;
+        }
+
+        $payment->update([
+            'is_paid' => false,
+            'actual_amount' => null,
+            'is_waived' => true,
+            'waived_at' => Carbon::now('Asia/Shanghai'),
+            'waived_by_user_id' => Auth::id(),
+            'notes' => $this->paymentNotes[$paymentId] ?? $payment->notes,
+        ]);
+
+        $this->editingPaymentId = null;
+
+        Notification::make()
+            ->title('Marked as waived')
+            ->warning()
             ->send();
 
         $this->loadSnapshots();
@@ -86,11 +124,15 @@ class CustomerBilling extends Page
         $payment->update([
             'actual_amount' => null,
             'is_paid' => false,
+            'is_waived' => false,
             'paid_at' => null,
+            'waived_at' => null,
+            'waived_by_user_id' => null,
             'notes' => null,
         ]);
 
         unset($this->paymentInputs[$paymentId], $this->paymentNotes[$paymentId]);
+        $this->editingPaymentId = null;
 
         Notification::make()
             ->title('Payment reset')
@@ -102,7 +144,18 @@ class CustomerBilling extends Page
 
     protected function loadSnapshots(): void
     {
-        $this->snapshots = BillingCalculator::getCustomerMonthlySnapshots($this->customer);
+        $snapshots = BillingCalculator::getCustomerMonthlySnapshots($this->customer);
+
+        $currentKey = Carbon::now('Asia/Shanghai')->format('Y-m');
+        $ordered = collect();
+
+        $current = $snapshots->firstWhere(fn ($snapshot) => $snapshot['period']->format('Y-m') === $currentKey);
+        if ($current) {
+            $ordered->push($current);
+        }
+
+        $remaining = $snapshots->filter(fn ($snapshot) => $snapshot !== $current);
+        $this->snapshots = $ordered->merge($remaining)->values();
         $this->stats = $this->buildStats();
     }
 
@@ -112,6 +165,8 @@ class CustomerBilling extends Page
         $currentExpected = 0.0;
         $currentReceived = 0.0;
         $overdueFlag = false;
+        $overdueCount = 0;
+        $waivedTotal = 0.0;
 
         foreach ($this->snapshots as $snapshot) {
             /** @var Carbon $period */
@@ -125,8 +180,17 @@ class CustomerBilling extends Page
                 }
             }
 
-            if ($period->lessThan(Carbon::now('Asia/Shanghai')->startOfMonth()) && !$snapshot['payment']->is_paid) {
+            if ($snapshot['payment']->is_waived) {
+                $waivedTotal += (float) $snapshot['expected_total'];
+            }
+
+            if (
+                $period->lessThan(Carbon::now('Asia/Shanghai')->startOfMonth())
+                && !$snapshot['payment']->is_paid
+                && !$snapshot['payment']->is_waived
+            ) {
                 $overdueFlag = true;
+                $overdueCount++;
             }
         }
 
@@ -134,6 +198,36 @@ class CustomerBilling extends Page
             'current_expected' => $currentExpected,
             'current_received' => $currentReceived,
             'has_overdue' => $overdueFlag,
+            'overdue_count' => $overdueCount,
+            'waived_total' => $waivedTotal,
         ];
+    }
+
+    public function toggleDetails(int $paymentId): void
+    {
+        $this->detailsPaymentId = $this->detailsPaymentId === $paymentId ? null : $paymentId;
+    }
+
+    public function startEditing(int $paymentId): void
+    {
+        $this->editingPaymentId = $paymentId;
+        $payment = CustomerBillingPayment::findOrFail($paymentId);
+
+        if ($payment->is_paid || $payment->is_waived) {
+            $this->editingPaymentId = null;
+            Notification::make()
+                ->title('This month is already closed.')
+                ->warning()
+                ->send();
+            return;
+        }
+
+        $this->paymentInputs[$paymentId] = $payment->actual_amount ?? null;
+        $this->paymentNotes[$paymentId] = $payment->notes ?? null;
+    }
+
+    public function cancelEditing(): void
+    {
+        $this->editingPaymentId = null;
     }
 }
