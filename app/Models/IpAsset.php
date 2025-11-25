@@ -13,6 +13,7 @@ class IpAsset extends Model
         'cidr',
         'ip_provider_id',
         'client_id',
+        'sales_person_id',
         'location_id',
         'ipt_provider_id',
         'type',
@@ -45,5 +46,11 @@ class IpAsset extends Model
     public function iptProvider()
     {
         return $this->belongsTo(IptProvider::class, 'ipt_provider_id');
+    }
+
+    // 关联销售人员
+    public function salesPerson()
+    {
+        return $this->belongsTo(Employee::class, 'sales_person_id');
     }
 }

@@ -1,0 +1,22 @@
+---
+description: FilamentPHP v3 开发规范与 OA 系统业务逻辑指南
+globs: **/*.php
+---
+
+# Project Context
+当前项目是一个基于 Laravel 11 和 Filament v3 开发的 OA 系统。
+
+# Documentation Rules
+- 在编写任何 Resource、Page、Widget 或 Action 时，**必须** 检索并参考已索引的官方文档 @Filament 。
+- 禁止使用过时的 Filament v2 语法（如 `Filament::registerResources`），必须严格遵循 v3 的 `->schema()` 和 `->form()` 链式调用风格。
+
+# Code Standards
+1. **Schema Builder**: 严禁在 Filament 页面中手写 Blade/HTML，必须使用 `$form->schema([...])` 和 `$table->columns([...])`。
+2. **Type Safety**: 尽可能使用 PHP 8.2+ 的类型提示（Type Hinting）。
+3. **Naming**: 
+    - Resource 文件名必须以 `Resource.php` 结尾。
+    - 数据库迁移文件应遵循 Laravel 标准命名。
+
+# Troubleshooting Strategy
+- 如果遇到报错，首先检查是否遗漏了 `use` 引用。
+- 其次检查 @Filament 文档中的 "Upgrade Guide" 或 "Common Pitfalls"。

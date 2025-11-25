@@ -8,6 +8,7 @@ use App\Models\Provider;
 use App\Models\Customer;
 use App\Models\Location;
 use App\Models\IptProvider;
+use App\Models\Employee;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -43,6 +44,12 @@ class IpAssetResource extends Resource
                 ->label('Client')
                 ->options(Customer::all()->pluck('name', 'id'))
                 ->searchable(),
+
+            Forms\Components\Select::make('sales_person_id')
+                ->label('Sales Person')
+                ->options(Employee::where('department', 'sales')->where('is_active', true)->get()->pluck('name', 'id'))
+                ->searchable()
+                ->placeholder('Select sales person'),
 
             Forms\Components\Select::make('location_id')
                 ->label('Location')
@@ -99,11 +106,11 @@ class IpAssetResource extends Resource
                     ->label('Export CSV')
                     ->color('primary')
                     ->action(function () {
-                        $records = IpAsset::with(['ipProvider', 'client', 'location', 'iptProvider'])->get();
+                        $records = IpAsset::with(['ipProvider', 'client', 'salesPerson', 'location', 'iptProvider'])->get();
 
                         $csvData = [];
                         $csvData[] = [
-                            'CIDR', 'IP Provider', 'Client', 'Location', 'IPT Provider',
+                            'CIDR', 'IP Provider', 'Client', 'Sales Person', 'Location', 'IPT Provider',
                             'Type', 'ASN', 'Status', 'Cost', 'Price', 'Notes', 'Created At'
                         ];
 
@@ -112,6 +119,7 @@ class IpAssetResource extends Resource
                                 $record->cidr,
                                 optional($record->ipProvider)->name,
                                 optional($record->client)->name,
+                                optional($record->salesPerson)->name,
                                 optional($record->location)->name,
                                 optional($record->iptProvider)->name,
                                 $record->type,
@@ -144,13 +152,14 @@ class IpAssetResource extends Resource
                     ->label('Export Excel')
                     ->color('primary')
                     ->action(function () {
-                        $records = IpAsset::with(['ipProvider', 'client', 'location', 'iptProvider'])->get();
+                        $records = IpAsset::with(['ipProvider', 'client', 'salesPerson', 'location', 'iptProvider'])->get();
 
                         $data = $records->map(function ($record) {
                             return [
                                 'CIDR' => $record->cidr,
                                 'IP Provider' => optional($record->ipProvider)->name,
                                 'Client' => optional($record->client)->name,
+                                'Sales Person' => optional($record->salesPerson)->name,
                                 'Location' => optional($record->location)->name,
                                 'IPT Provider' => optional($record->iptProvider)->name,
                                 'Type' => $record->type,
@@ -174,13 +183,14 @@ class IpAssetResource extends Resource
             ])
             ->columns([
                 Tables\Columns\TextColumn::make('cidr')->label('CIDR')->sortable()->searchable(),
-                Tables\Columns\TextColumn::make('ipProvider.name')->label('IP Provider'),
-                Tables\Columns\TextColumn::make('client.name')->label('Client'),
-                Tables\Columns\TextColumn::make('location.name')->label('Location'),
-                Tables\Columns\TextColumn::make('iptProvider.name')->label('IPT Provider'),
-                Tables\Columns\TextColumn::make('type')->label('Type'),
-                Tables\Columns\TextColumn::make('asn')->label('ASN'),
-                Tables\Columns\TextColumn::make('status')->label('Status'),
+                Tables\Columns\TextColumn::make('ipProvider.name')->label('IP Provider')->searchable(),
+                Tables\Columns\TextColumn::make('client.name')->label('Client')->searchable(),
+                Tables\Columns\TextColumn::make('salesPerson.name')->label('Sales Person')->searchable(),
+                Tables\Columns\TextColumn::make('location.name')->label('Location')->searchable(),
+                Tables\Columns\TextColumn::make('iptProvider.name')->label('IPT Provider')->searchable(),
+                Tables\Columns\TextColumn::make('type')->label('Type')->searchable(),
+                Tables\Columns\TextColumn::make('asn')->label('ASN')->searchable(),
+                Tables\Columns\TextColumn::make('status')->label('Status')->searchable(),
                 Tables\Columns\TextColumn::make('cost')->label('Cost'),
                 Tables\Columns\TextColumn::make('price')->label('Price'),
                 Tables\Columns\TextColumn::make('created_at')->label('Created at')->dateTime('Y-m-d H:i:s')->sortable(),

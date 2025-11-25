@@ -18,5 +18,11 @@ class Customer extends Model
         'abuse_email',
         'active',
     ];
+
+    // 关联IP资产
+    public function ipAssets()
+    {
+        return $this->hasMany(IpAsset::class, 'client_id');
+    }
 }
 
