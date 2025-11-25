@@ -1,6 +1,7 @@
 <x-filament-panels::page>
     @php
         $summary = $summary ?? [];
+        $previousSummary = $previousSummary ?? [];
         $topCustomers = $summary['top_customers'] ?? [];
         $overdueList = $summary['overdue'] ?? [];
 
@@ -9,7 +10,7 @@
 
     <div class="flex flex-col gap-2 mb-6 md:flex-row md:items-center md:justify-between">
         <div>
-            <p class="text-sm text-gray-500">Natural month</p>
+            <p class="text-sm text-gray-500">Current month</p>
             <p class="text-2xl font-semibold text-gray-900 dark:text-gray-100">{{ $periodLabel }}</p>
         </div>
 
@@ -18,7 +19,7 @@
         </x-filament::button>
     </div>
 
-    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4 mb-6">
         <x-filament::card>
             <div class="flex items-start gap-3">
                 <x-filament::icon icon="heroicon-o-users" class="w-6 h-6 text-indigo-500" />
@@ -112,4 +113,38 @@
             </ul>
         </x-filament::section>
     </div>
+
+    @if (!empty($previousSummary))
+        <x-filament::section class="mt-6">
+            <x-slot name="heading">{{ $previousPeriodLabel }} Summary</x-slot>
+            <x-slot name="description">Previous month overview (for reference and updates)</x-slot>
+
+            <div class="grid gap-4 md:grid-cols-4">
+                <div>
+                    <p class="text-xs text-gray-500">Customers</p>
+                    <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                        {{ $previousSummary['customers_due'] ?? 0 }}
+                    </p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500">Expected</p>
+                    <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                        {{ $formatCurrency($previousSummary['expected_total'] ?? 0) }}
+                    </p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500">Received</p>
+                    <p class="text-lg font-semibold text-sky-600 dark:text-sky-400">
+                        {{ $formatCurrency($previousSummary['received_total'] ?? 0) }}
+                    </p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500">Overdue</p>
+                    <p class="text-lg font-semibold {{ ($previousSummary['overdue_amount_total'] ?? 0) > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-gray-900 dark:text-gray-100' }}">
+                        {{ $formatCurrency($previousSummary['overdue_amount_total'] ?? 0) }}
+                    </p>
+                </div>
+            </div>
+        </x-filament::section>
+    @endif
 </x-filament-panels::page>

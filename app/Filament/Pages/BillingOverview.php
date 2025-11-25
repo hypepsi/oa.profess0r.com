@@ -17,8 +17,10 @@ class BillingOverview extends Page
     protected static string $view = 'filament.pages.billing-overview';
 
     public array $summary = [];
+    public array $previousSummary = [];
 
     public string $periodLabel = '';
+    public string $previousPeriodLabel = '';
 
     public function mount(): void
     {
@@ -27,9 +29,13 @@ class BillingOverview extends Page
 
     public function loadSummary(): void
     {
-        $period = Carbon::now('Asia/Shanghai')->startOfMonth();
-        $this->periodLabel = $period->format('F Y');
-        $this->summary = BillingCalculator::getOverviewForMonth($period);
+        $current = Carbon::now('Asia/Shanghai')->startOfMonth();
+        $previous = $current->copy()->subMonth();
+
+        $this->periodLabel = $current->format('F Y');
+        $this->previousPeriodLabel = $previous->format('F Y');
+        $this->summary = BillingCalculator::getOverviewForMonth($current);
+        $this->previousSummary = BillingCalculator::getOverviewForMonth($previous);
     }
 
     public function refreshSummary(): void

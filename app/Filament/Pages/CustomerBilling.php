@@ -24,16 +24,10 @@ class CustomerBilling extends Page
     public Customer $customer;
 
     public Collection $snapshots;
-
-    public array $paymentInputs = [];
-
-    public array $paymentNotes = [];
+    public Collection $currentMonthSnapshots;
+    public Collection $historicalSnapshots;
 
     public array $stats = [];
-
-    public ?int $editingPaymentId = null;
-
-    public ?int $detailsPaymentId = null;
 
     public function mount(): void
     {
@@ -50,43 +44,6 @@ class CustomerBilling extends Page
         return 'Billing • ' . $this->customer->name;
     }
 
-    public function recordPayment(int $paymentId): void
-    {
-        $amount = $this->paymentInputs[$paymentId] ?? null;
-
-        if ($amount === null || $amount === '') {
-            $this->addError("paymentInputs.{$paymentId}", 'Amount is required');
-            return;
-        }
-
-        $amountValue = (float) $amount;
-        if ($amountValue < 0) {
-            $this->addError("paymentInputs.{$paymentId}", 'Amount must be positive');
-            return;
-        }
-
-        $payment = CustomerBillingPayment::findOrFail($paymentId);
-        $payment->update([
-            'actual_amount' => $amountValue,
-            'is_paid' => true,
-            'is_waived' => false,
-            'paid_at' => Carbon::now('Asia/Shanghai'),
-            'recorded_by_user_id' => Auth::id(),
-            'waived_at' => null,
-            'waived_by_user_id' => null,
-            'notes' => $this->paymentNotes[$paymentId] ?? null,
-        ]);
-
-        unset($this->paymentInputs[$paymentId], $this->paymentNotes[$paymentId]);
-        $this->editingPaymentId = null;
-
-        Notification::make()
-            ->title('Payment recorded')
-            ->success()
-            ->send();
-
-        $this->loadSnapshots();
-    }
 
     public function waivePayment(int $paymentId): void
     {
@@ -147,50 +104,51 @@ class CustomerBilling extends Page
         $snapshots = BillingCalculator::getCustomerMonthlySnapshots($this->customer);
 
         $currentKey = Carbon::now('Asia/Shanghai')->format('Y-m');
-        $ordered = collect();
-
-        $current = $snapshots->firstWhere(fn ($snapshot) => $snapshot['period']->format('Y-m') === $currentKey);
-        if ($current) {
-            $ordered->push($current);
-        }
-
-        $remaining = $snapshots->filter(fn ($snapshot) => $snapshot !== $current);
-        $this->snapshots = $ordered->merge($remaining)->values();
+        
+        // Separate current month and historical months
+        $this->currentMonthSnapshots = $snapshots->filter(fn ($snapshot) => $snapshot['period']->format('Y-m') === $currentKey)->values();
+        $this->historicalSnapshots = $snapshots->filter(fn ($snapshot) => $snapshot['period']->format('Y-m') !== $currentKey)->values();
+        
+        // Keep snapshots for backward compatibility
+        $this->snapshots = $this->currentMonthSnapshots->merge($this->historicalSnapshots);
         $this->stats = $this->buildStats();
     }
 
     protected function buildStats(): array
     {
         $currentMonthKey = Carbon::now('Asia/Shanghai')->format('Y-m');
+        $now = Carbon::now('Asia/Shanghai');
         $currentExpected = 0.0;
         $currentReceived = 0.0;
         $overdueFlag = false;
-        $overdueCount = 0;
         $waivedTotal = 0.0;
 
-        foreach ($this->snapshots as $snapshot) {
-            /** @var Carbon $period */
-            $period = $snapshot['period'];
-            $key = $period->format('Y-m');
-
-            if ($key === $currentMonthKey) {
-                $currentExpected = $snapshot['expected_total'];
-                if ($snapshot['payment']->is_paid) {
-                    $currentReceived = (float) ($snapshot['payment']->actual_amount ?? 0);
-                }
+        // Only check current month for overdue
+        $currentSnapshot = $this->snapshots->firstWhere(fn ($snapshot) => $snapshot['period']->format('Y-m') === $currentMonthKey);
+        
+        if ($currentSnapshot) {
+            $currentExpected = $currentSnapshot['expected_total'];
+            if ($currentSnapshot['payment']->is_paid) {
+                $currentReceived = (float) ($currentSnapshot['payment']->actual_amount ?? 0);
             }
 
-            if ($snapshot['payment']->is_waived) {
-                $waivedTotal += (float) $snapshot['expected_total'];
-            }
-
+            // Overdue logic: only for current month, after 20th, if not paid and not waived
+            $periodDay20 = $currentSnapshot['period']->copy()->day(20);
+            $isPast20th = $now->greaterThan($periodDay20);
+            
             if (
-                $period->lessThan(Carbon::now('Asia/Shanghai')->startOfMonth())
-                && !$snapshot['payment']->is_paid
-                && !$snapshot['payment']->is_waived
+                $isPast20th
+                && !$currentSnapshot['payment']->is_paid
+                && !$currentSnapshot['payment']->is_waived
             ) {
                 $overdueFlag = true;
-                $overdueCount++;
+            }
+        }
+
+        // Calculate waived total from all snapshots
+        foreach ($this->snapshots as $snapshot) {
+            if ($snapshot['payment']->is_waived) {
+                $waivedTotal += (float) $snapshot['expected_total'];
             }
         }
 
@@ -198,36 +156,9 @@ class CustomerBilling extends Page
             'current_expected' => $currentExpected,
             'current_received' => $currentReceived,
             'has_overdue' => $overdueFlag,
-            'overdue_count' => $overdueCount,
             'waived_total' => $waivedTotal,
+            'overdue_message' => $overdueFlag ? 'Action needed' : 'All good',
         ];
     }
 
-    public function toggleDetails(int $paymentId): void
-    {
-        $this->detailsPaymentId = $this->detailsPaymentId === $paymentId ? null : $paymentId;
-    }
-
-    public function startEditing(int $paymentId): void
-    {
-        $this->editingPaymentId = $paymentId;
-        $payment = CustomerBillingPayment::findOrFail($paymentId);
-
-        if ($payment->is_paid || $payment->is_waived) {
-            $this->editingPaymentId = null;
-            Notification::make()
-                ->title('This month is already closed.')
-                ->warning()
-                ->send();
-            return;
-        }
-
-        $this->paymentInputs[$paymentId] = $payment->actual_amount ?? null;
-        $this->paymentNotes[$paymentId] = $payment->notes ?? null;
-    }
-
-    public function cancelEditing(): void
-    {
-        $this->editingPaymentId = null;
-    }
 }

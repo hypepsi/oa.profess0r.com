@@ -11,38 +11,58 @@ use Illuminate\Support\Collection;
 
 class BillingCalculator
 {
-    protected const HISTORY_MONTHS = 3;
-    protected const FUTURE_MONTHS = 0;
+    protected const HISTORY_MONTHS = 6;
 
     public static function ensureCustomerMonths(Customer $customer): void
     {
         $current = Carbon::now('Asia/Shanghai')->startOfMonth();
-        $start = $current->copy()->subMonths(self::HISTORY_MONTHS);
-        $end = $current->copy()->addMonths(self::FUTURE_MONTHS);
-        $cursor = $start->copy();
-
-        while ($cursor <= $end) {
-            CustomerBillingPayment::firstOrCreate(
-                [
-                    'customer_id' => $customer->id,
-                    'billing_year' => (int) $cursor->year,
-                    'billing_month' => (int) $cursor->month,
-                ],
-                [
-                    'is_paid' => false,
-                ]
-            );
-
-            $cursor->addMonth();
-        }
+        // Only generate current month's billing
+        CustomerBillingPayment::firstOrCreate(
+            [
+                'customer_id' => $customer->id,
+                'billing_year' => (int) $current->year,
+                'billing_month' => (int) $current->month,
+            ],
+            [
+                'is_paid' => false,
+            ]
+        );
     }
 
     public static function getCustomerMonthlySnapshots(Customer $customer): Collection
     {
         self::ensureCustomerMonths($customer);
 
+        $current = Carbon::now('Asia/Shanghai')->startOfMonth();
+        $cutoff = $current->copy()->subMonths(self::HISTORY_MONTHS);
+
+        // Get current month + historical months (up to 6 months back, but only existing records)
         $payments = CustomerBillingPayment::query()
             ->where('customer_id', $customer->id)
+            ->where(function ($query) use ($current, $cutoff) {
+                // Current month
+                $query->where(function ($q) use ($current) {
+                    $q->where('billing_year', $current->year)
+                        ->where('billing_month', $current->month);
+                })
+                // Historical months (only existing records, not auto-generated)
+                ->orWhere(function ($q) use ($cutoff, $current) {
+                    $q->where(function ($sub) use ($cutoff) {
+                        $sub->where('billing_year', '>', $cutoff->year)
+                            ->orWhere(function ($s) use ($cutoff) {
+                                $s->where('billing_year', $cutoff->year)
+                                    ->where('billing_month', '>=', $cutoff->month);
+                            });
+                    })
+                    ->where(function ($sub) use ($current) {
+                        $sub->where('billing_year', '<', $current->year)
+                            ->orWhere(function ($s) use ($current) {
+                                $s->where('billing_year', $current->year)
+                                    ->where('billing_month', '<', $current->month);
+                            });
+                    });
+                });
+            })
             ->orderByDesc('billing_year')
             ->orderByDesc('billing_month')
             ->get();
