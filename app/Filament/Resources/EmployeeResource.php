@@ -19,11 +19,8 @@ class EmployeeResource extends Resource
     protected static ?string $pluralLabel = 'Employees';
     protected static ?string $modelLabel = 'Employee';
 
-    // 放到与 Asset Management 平级的新分组
-    protected static ?string $navigationGroup = 'Workflow Management';
-
-    // 根据你侧栏排序需要可调整
-    protected static ?int $navigationSort = 1;
+    protected static ?string $navigationGroup = 'Metadata';
+    protected static ?int $navigationSort = 60;
 
     public static function form(Form $form): Form
     {
@@ -82,6 +79,7 @@ class EmployeeResource extends Resource
 
                 Tables\Columns\BadgeColumn::make('department')
                     ->label('Department')
+                    ->formatStateUsing(fn (string $state) => ucfirst($state))
                     ->colors([
                         'primary' => 'sales',
                         'success' => 'technical',

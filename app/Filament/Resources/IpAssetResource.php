@@ -23,6 +23,7 @@ class IpAssetResource extends Resource
     protected static ?string $model = IpAsset::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?int $navigationSort = 2;
     protected static ?string $navigationLabel = 'IP Assets';
     protected static ?string $pluralModelLabel = 'IP Assets';
     protected static ?string $modelLabel = 'IP Asset';
@@ -193,7 +194,11 @@ class IpAssetResource extends Resource
                 Tables\Columns\TextColumn::make('status')->label('Status')->searchable(),
                 Tables\Columns\TextColumn::make('cost')->label('Cost'),
                 Tables\Columns\TextColumn::make('price')->label('Price'),
-                Tables\Columns\TextColumn::make('created_at')->label('Created at')->dateTime('Y-m-d H:i:s')->sortable(),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Created at')
+                    ->date('Y-m-d')
+                    ->sortable()
+                    ->tooltip(fn (IpAsset $record) => $record->created_at?->setTimezone('Asia/Shanghai')->format('Y-m-d H:i:s')),
             ])
             ->filters([])
             ->actions([

@@ -2,11 +2,14 @@
 
 namespace App\Providers\Filament;
 
+use App\Models\Customer;
+use App\Models\Workflow;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\NavigationItem;
+use Filament\Navigation\NavigationGroup;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -43,11 +46,24 @@ class AdminPanelProvider extends PanelProvider
                 Widgets\AccountWidget::class,
                 Widgets\FilamentInfoWidget::class,
             ])
+            ->navigationGroups([
+                NavigationGroup::make()
+                    ->label('Metadata')
+                    ->collapsed(),
+                NavigationGroup::make()
+                    ->label('Billing')
+                    ->collapsed(),
+                NavigationGroup::make()
+                    ->label('Workflows'),
+            ])
             ->renderHook(
                 'panels::body.end',
                 fn () => view('filament.workflow-table-scripts')
             )
-            ->navigationItems($this->getWorkflowNavigationItems())
+            ->navigationItems(array_merge(
+                $this->getBillingNavigationItems(),
+                $this->getWorkflowNavigationItems()
+            ))
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -66,24 +82,77 @@ class AdminPanelProvider extends PanelProvider
 
     protected function getWorkflowNavigationItems(): array
     {
-        $items = [];
-        $now = Carbon::now('Asia/Shanghai');
-        
-        // Generate navigation items for current month and next 2 months (3 months total)
-        for ($i = 0; $i < 3; $i++) {
-            $date = $now->copy()->addMonths($i);
-            $month = $date->format('n'); // 1-12
-            $year = $date->format('Y');
-            $monthName = $date->format('F Y'); // e.g., "November 2025"
-            
-            $items[] = NavigationItem::make("workflows-{$year}-{$month}")
-                ->label($monthName)
-                ->icon('heroicon-o-clipboard-document-check')
-                ->group('Workflows')
-                ->sort(100 + $i) // Keep workflows together
-                ->url("/admin/workflows/month/{$year}/{$month}");
+        $now = Carbon::now('Asia/Shanghai')->startOfMonth();
+        $months = collect([$now]);
+
+        $workflowMonths = Workflow::query()
+            ->orderByDesc('created_at')
+            ->pluck('created_at')
+            ->map(fn ($timestamp) => Carbon::parse($timestamp)->setTimezone('Asia/Shanghai')->startOfMonth())
+            ->unique(fn (Carbon $date) => $date->format('Y-m'))
+            ->values();
+
+        $previousMonth = $now->copy()->subMonth();
+        if ($workflowMonths->doesntContain(fn (Carbon $date) => $date->equalTo($previousMonth))) {
+            $workflowMonths->push($previousMonth);
         }
-        
+
+        $historicalMonths = $workflowMonths
+            ->filter(fn (Carbon $date) => $date->lessThanOrEqualTo($now))
+            ->sortByDesc(fn (Carbon $date) => $date->format('Y-m'))
+            ->take(12);
+
+        $orderedMonths = $months
+            ->merge($historicalMonths)
+            ->unique(fn (Carbon $date) => $date->format('Y-m'))
+            ->values();
+
+        return $orderedMonths
+            ->map(function (Carbon $date, int $index) {
+                $year = $date->format('Y');
+                $month = $date->format('n');
+
+                return NavigationItem::make("workflows-{$year}-{$month}")
+                    ->label($date->format('F Y'))
+                    ->icon('heroicon-o-clipboard-document-check')
+                    ->group('Workflows')
+                    ->sort(200 + $index)
+                    ->url("/admin/workflows/month/{$year}/{$month}");
+            })
+            ->toArray();
+    }
+
+    protected function getBillingNavigationItems(): array
+    {
+        $items = [];
+
+        $items[] = NavigationItem::make('billing-overview')
+            ->label('Billing Overview')
+            ->icon('heroicon-o-banknotes')
+            ->group('Billing')
+            ->sort(10)
+            ->url('/admin/billing/overview');
+
+        $customers = Customer::query()
+            ->orderBy('name')
+            ->get();
+
+        foreach ($customers as $index => $customer) {
+            $items[] = NavigationItem::make("billing-customer-{$customer->id}")
+                ->label($customer->name)
+                ->icon('heroicon-o-user-circle')
+                ->group('Billing')
+                ->sort(20 + $index)
+                ->url('/admin/billing/customer?customer=' . $customer->id);
+        }
+
+        $items[] = NavigationItem::make('billing-other-items')
+            ->label('Other Items')
+            ->icon('heroicon-o-plus-circle')
+            ->group('Billing')
+            ->sort(900)
+            ->url('/admin/billing-other-items');
+
         return $items;
     }
 }

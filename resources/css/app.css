@@ -9,3 +9,10 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/* 全局统一 Badge 字体与大小，保持界面一致 */
+.fi-badge {
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}

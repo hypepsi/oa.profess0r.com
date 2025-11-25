@@ -15,4 +15,13 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
-    })->create();
+    })
+    ->withSchedule(function ($schedule): void {
+        // 每天凌晨2点清理90天前的活动日志
+        $schedule->command('activity-logs:clean --days=90')
+            ->dailyAt('02:00')
+            ->timezone('Asia/Shanghai')
+            ->withoutOverlapping()
+            ->runInBackground();
+    })
+    ->create();

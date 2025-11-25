@@ -210,6 +210,7 @@ class WorkflowResource extends Resource
                 \Filament\Tables\Columns\TextColumn::make('priority')
                     ->label('Priority')
                     ->badge()
+                    ->formatStateUsing(fn (string $state) => ucfirst($state))
                     ->color(fn (string $state) => match ($state) {
                         'low' => 'gray',
                         'normal' => 'info',

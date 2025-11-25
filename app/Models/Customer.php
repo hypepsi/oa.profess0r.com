@@ -24,5 +24,15 @@ class Customer extends Model
     {
         return $this->hasMany(IpAsset::class, 'client_id');
     }
+
+    public function billingPayments()
+    {
+        return $this->hasMany(CustomerBillingPayment::class);
+    }
+
+    public function billingOtherItems()
+    {
+        return $this->hasMany(BillingOtherItem::class);
+    }
 }
 

@@ -16,7 +16,8 @@ class DeviceResource extends Resource
 {
     protected static ?string $model = Device::class;
 
-    protected static ?string $navigationGroup = 'Asset Management';
+    protected static ?string $navigationGroup = 'Metadata';
+    protected static ?int $navigationSort = 20;
     protected static ?string $navigationIcon = 'heroicon-o-cpu-chip';
     protected static ?string $navigationLabel = 'Devices';
     protected static ?string $pluralModelLabel = 'Devices';

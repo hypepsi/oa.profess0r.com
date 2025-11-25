@@ -19,7 +19,8 @@ class ProviderResource extends Resource
     protected static ?string $navigationLabel = 'IP Providers';
 
     // 菜单分组
-    protected static ?string $navigationGroup = 'Asset Management';
+    protected static ?string $navigationGroup = 'Metadata';
+    protected static ?int $navigationSort = 40;
 
     // 页面标题显示
     protected static ?string $modelLabel = 'IP Provider';

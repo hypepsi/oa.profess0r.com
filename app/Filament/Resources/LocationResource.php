@@ -14,7 +14,8 @@ class LocationResource extends Resource
 {
     protected static ?string $model = Location::class;
 
-    protected static ?string $navigationGroup = 'Asset Management';
+    protected static ?string $navigationGroup = 'Metadata';
+    protected static ?int $navigationSort = 30;
     protected static ?string $navigationIcon = 'heroicon-o-map-pin';
     protected static ?string $navigationLabel = 'Locations';
     protected static ?string $pluralModelLabel = 'Locations';
