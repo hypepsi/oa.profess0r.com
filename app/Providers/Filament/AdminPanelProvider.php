@@ -3,6 +3,8 @@
 namespace App\Providers\Filament;
 
 use App\Models\Customer;
+use App\Models\Provider;
+use App\Models\IptProvider;
 use App\Models\Workflow;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -51,7 +53,10 @@ class AdminPanelProvider extends PanelProvider
                     ->label('Metadata')
                     ->collapsed(),
                 NavigationGroup::make()
-                    ->label('Billing')
+                    ->label('Income')
+                    ->collapsed(),
+                NavigationGroup::make()
+                    ->label('Expense')
                     ->collapsed(),
                 NavigationGroup::make()
                     ->label('Workflows'),
@@ -126,10 +131,11 @@ class AdminPanelProvider extends PanelProvider
     {
         $items = [];
 
-        $items[] = NavigationItem::make('billing-overview')
-            ->label('Billing Overview')
+        // Income group items
+        $items[] = NavigationItem::make('income-overview')
+            ->label('Income Overview')
             ->icon('heroicon-o-banknotes')
-            ->group('Billing')
+            ->group('Income')
             ->sort(10)
             ->url('/admin/billing/overview');
 
@@ -138,20 +144,56 @@ class AdminPanelProvider extends PanelProvider
             ->get();
 
         foreach ($customers as $index => $customer) {
-            $items[] = NavigationItem::make("billing-customer-{$customer->id}")
+            $items[] = NavigationItem::make("income-customer-{$customer->id}")
                 ->label($customer->name)
                 ->icon('heroicon-o-user-circle')
-                ->group('Billing')
+                ->group('Income')
                 ->sort(20 + $index)
                 ->url('/admin/billing/customer?customer=' . $customer->id);
         }
 
-        $items[] = NavigationItem::make('billing-add-ons')
+        $items[] = NavigationItem::make('income-add-ons')
             ->label('Add-ons')
             ->icon('heroicon-o-plus-circle')
-            ->group('Billing')
+            ->group('Income')
             ->sort(900)
             ->url('/admin/billing-other-items');
+
+        // Expense group items
+        $items[] = NavigationItem::make('expense-overview')
+            ->label('Expense Overview')
+            ->icon('heroicon-o-arrow-trending-down')
+            ->group('Expense')
+            ->sort(10)
+            ->url('/admin/expense/overview');
+
+        // 动态添加 IP Providers
+        $providers = Provider::query()
+            ->orderBy('name')
+            ->get();
+
+        foreach ($providers as $index => $provider) {
+            $items[] = NavigationItem::make("expense-ip-provider-{$provider->id}")
+                ->label($provider->name)
+                ->icon('heroicon-o-building-office-2')
+                ->group('Expense')
+                ->sort(20 + $index)
+                ->url('/admin/expense/provider?provider=' . $provider->id . '&type=ip');
+        }
+
+        // 动态添加 IPT Providers
+        $iptProviders = IptProvider::query()
+            ->orderBy('name')
+            ->get();
+
+        foreach ($iptProviders as $index => $iptProvider) {
+            $items[] = NavigationItem::make("expense-ipt-provider-{$iptProvider->id}")
+                ->label($iptProvider->name)
+                ->icon('heroicon-o-server-stack')
+                ->group('Expense')
+                ->sort(100 + $index)
+                ->url('/admin/expense/provider?provider=' . $iptProvider->id . '&type=ipt');
+        }
 
         return $items;
     }

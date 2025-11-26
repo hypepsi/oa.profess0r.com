@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\BillingOtherItem;
+use App\Models\BillingPaymentRecord;
 use App\Models\Customer;
+use App\Models\CustomerBillingPayment;
 use App\Models\Device;
 use App\Models\Employee;
 use App\Models\IpAsset;
@@ -63,6 +66,9 @@ class AppServiceProvider extends ServiceProvider
             Employee::class,
             Workflow::class,
             WorkflowUpdate::class,
+            BillingOtherItem::class,
+            BillingPaymentRecord::class,
+            CustomerBillingPayment::class,
         ];
 
         foreach ($models as $model) {

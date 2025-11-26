@@ -176,9 +176,17 @@ class IpAssetResource extends Resource
                         $filename = 'ip_assets_export_' . now()->format('Ymd_His') . '.xlsx';
 
                         return Excel::download(new class($data) implements \Maatwebsite\Excel\Concerns\FromCollection {
-                            protected $data;
-                            public function __construct($data) { $this->data = $data; }
-                            public function collection() { return collect($this->data); }
+                            /** @var array<int, array<string, mixed>> */
+                            protected array $data;
+                            
+                            /** @param array<int, array<string, mixed>> $data */
+                            public function __construct(array $data) { 
+                                $this->data = $data; 
+                            }
+                            
+                            public function collection(): \Illuminate\Support\Collection { 
+                                return collect($this->data); 
+                            }
                         }, $filename);
                     }),
             ])

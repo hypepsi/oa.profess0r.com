@@ -103,6 +103,9 @@ class ActivityLogResource extends Resource
                         'App\\Models\\Employee' => 'Employee',
                         'App\\Models\\Workflow' => 'Workflow',
                         'App\\Models\\WorkflowUpdate' => 'Workflow Update',
+                        'App\\Models\\BillingOtherItem' => 'Billing Add-on',
+                        'App\\Models\\BillingPaymentRecord' => 'Payment Record',
+                        'App\\Models\\CustomerBillingPayment' => 'Billing Payment',
                     ])
                     ->multiple(),
 

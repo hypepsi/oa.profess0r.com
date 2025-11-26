@@ -18,7 +18,7 @@ class BillingOtherItemResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-list-bullet';
 
-    protected static ?string $navigationGroup = 'Billing';
+    protected static ?string $navigationGroup = 'Income';
 
     protected static ?string $navigationLabel = 'Add-ons';
 
@@ -69,7 +69,7 @@ class BillingOtherItemResource extends Resource
                             ->label('Effective from')
                             ->helperText('Applies every month from this date until you release it.')
                             ->default(now('Asia/Shanghai'))
-                            ->reactive()
+                            ->live()
                             ->afterStateUpdated(function ($state, callable $set) {
                                 if ($state) {
                                     $date = Carbon::parse($state);
@@ -263,6 +263,9 @@ class BillingOtherItemResource extends Resource
         return self::mutateFormData($data);
     }
 
+    /**
+     * @return array<int, string>
+     */
     protected static function getYearOptions(): array
     {
         $current = now('Asia/Shanghai')->year;
@@ -274,6 +277,9 @@ class BillingOtherItemResource extends Resource
         return $years;
     }
 
+    /**
+     * @return array<int, string>
+     */
     protected static function getMonthOptions(): array
     {
         $months = [];
@@ -284,6 +290,9 @@ class BillingOtherItemResource extends Resource
         return $months;
     }
 
+    /**
+     * @return array<int, string>
+     */
     protected static function getDayOptions(): array
     {
         $days = [];

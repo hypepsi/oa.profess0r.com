@@ -10,10 +10,15 @@ use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Tables\Actions\Action as TableAction;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
 
-class CustomerBillingDetail extends Page
+class CustomerBillingDetail extends Page implements HasTable
 {
+    use InteractsWithTable;
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
     protected static bool $shouldRegisterNavigation = false;
@@ -130,6 +135,38 @@ class CustomerBillingDetail extends Page
         ];
     }
 
+    public function table(Table $table): Table
+    {
+        return $table
+            ->query($this->payment->paymentRecords()->getQuery())
+            ->columns([
+                \Filament\Tables\Columns\TextColumn::make('paid_at')
+                    ->label('Date')
+                    ->dateTime('Y-m-d H:i')
+                    ->timezone('Asia/Shanghai')
+                    ->sortable(),
+                \Filament\Tables\Columns\TextColumn::make('amount')
+                    ->label('Amount')
+                    ->money('USD')
+                    ->sortable(),
+                \Filament\Tables\Columns\TextColumn::make('recordedBy.name')
+                    ->label('Recorded By')
+                    ->sortable(),
+            ])
+            ->filters([])
+            ->actions([
+                \Filament\Tables\Actions\DeleteAction::make()
+                    ->requiresConfirmation()
+                    ->modalHeading('Delete Payment Record')
+                    ->modalDescription('Are you sure you would like to do this?')
+                    ->action(function (BillingPaymentRecord $record) {
+                        $this->deletePaymentRecord($record->id);
+                    }),
+            ])
+            ->paginated(false)
+            ->defaultSort('paid_at', 'desc');
+    }
+
     public function updateInvoicedAmount(): void
     {
         $this->validate([
@@ -176,6 +213,34 @@ class CustomerBillingDetail extends Page
 
         $this->loadPaymentRecords();
     }
+
+    public function deletePaymentRecord(int $recordId): void
+    {
+        $record = BillingPaymentRecord::findOrFail($recordId);
+        
+        // 确保只能删除属于当前 payment 的记录
+        if ($record->customer_billing_payment_id !== $this->payment->id) {
+            Notification::make()
+                ->title('Unauthorized')
+                ->body('You cannot delete this payment record.')
+                ->danger()
+                ->send();
+            return;
+        }
+
+        $record->delete();
+
+        $this->updatePaymentStatus();
+
+        Notification::make()
+            ->title('Payment record deleted')
+            ->success()
+            ->send();
+
+        $this->loadPaymentRecords();
+    }
+
+
 
     public function partialWaive(): void
     {

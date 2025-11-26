@@ -34,7 +34,7 @@ class ActivityLogger
     /**
      * 记录登录
      */
-    public static function logLogin($user): void
+    public static function logLogin(\Illuminate\Contracts\Auth\Authenticatable $user): void
     {
         // 防止重复记录：检查最近1秒内是否有相同的登录记录
         $recentLogin = ActivityLog::where('user_id', $user->id)
@@ -62,7 +62,7 @@ class ActivityLogger
     /**
      * 记录登出
      */
-    public static function logLogout($user): void
+    public static function logLogout(\Illuminate\Contracts\Auth\Authenticatable $user): void
     {
         // 防止重复记录：检查最近1秒内是否有相同的登出记录
         $recentLogout = ActivityLog::where('user_id', $user->id)
