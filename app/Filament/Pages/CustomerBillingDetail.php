@@ -2,10 +2,12 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\BillingPaymentRecord;
 use App\Models\Customer;
 use App\Models\CustomerBillingPayment;
 use App\Services\BillingCalculator;
 use Carbon\Carbon;
+use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
@@ -23,9 +25,13 @@ class CustomerBillingDetail extends Page
     public Customer $customer;
     public CustomerBillingPayment $payment;
     public array $snapshot = [];
-    public array $paymentInput = [];
+    public array $paymentInput = ['amount' => ''];
     public string $paymentNote = '';
+    public ?float $invoicedAmount = null;
+    public ?float $partialWaiveAmount = null;
+    public string $waiveNote = '';
     public \Illuminate\Support\Collection $addOnsItems;
+    public \Illuminate\Support\Collection $paymentRecords;
 
     public function mount(int|Customer $customer, int $year, int $month): void
     {
@@ -78,10 +84,12 @@ class CustomerBillingDetail extends Page
             })
             ->values();
 
-        if ($this->payment->is_paid) {
-            $this->paymentInput = ['amount' => (string) ($this->payment->actual_amount ?? '')];
-            $this->paymentNote = $this->payment->notes ?? '';
-        }
+        // Load payment records
+        $this->payment->load('paymentRecords.recordedBy');
+        $this->paymentRecords = $this->payment->paymentRecords;
+
+        // Load invoiced amount
+        $this->invoicedAmount = $this->payment->invoiced_amount;
     }
 
     public function getHeading(): string
@@ -90,45 +98,132 @@ class CustomerBillingDetail extends Page
         return 'Billing • ' . $this->customer->name . ' • ' . $periodLabel;
     }
 
-    public function recordPayment(): void
+    protected function getHeaderActions(): array
     {
-        $amount = $this->paymentInput['amount'] ?? null;
+        return [
+            Action::make('reopen')
+                ->label('Reopen Payment')
+                ->icon('heroicon-o-arrow-path')
+                ->color('gray')
+                ->visible(fn () => $this->payment->is_paid || $this->payment->is_waived || $this->paymentRecords->isNotEmpty())
+                ->requiresConfirmation()
+                ->modalHeading('Reopen Payment')
+                ->modalDescription('Are you sure you want to reopen this payment? This will reset all payment records, waivers, and status.')
+                ->modalSubmitActionLabel('Yes, reopen')
+                ->modalCancelActionLabel('Cancel')
+                ->action(function () {
+                    $this->resetPayment();
+                }),
+            Action::make('fullWaive')
+                ->label('Full Waive')
+                ->icon('heroicon-o-x-circle')
+                ->color('danger')
+                ->visible(fn () => !$this->payment->is_waived)
+                ->requiresConfirmation()
+                ->modalHeading('Full Waive Payment')
+                ->modalDescription('Are you sure you want to fully waive this payment? This will clear all payment records and mark the entire amount as waived.')
+                ->modalSubmitActionLabel('Yes, waive')
+                ->modalCancelActionLabel('Cancel')
+                ->action(function () {
+                    $this->fullWaive();
+                }),
+        ];
+    }
 
-        if ($amount === null || $amount === '') {
-            $this->addError('paymentInput.amount', 'Amount is required');
-            return;
-        }
-
-        $amountValue = (float) $amount;
-        if ($amountValue < 0) {
-            $this->addError('paymentInput.amount', 'Amount must be positive');
-            return;
-        }
+    public function updateInvoicedAmount(): void
+    {
+        $this->validate([
+            'invoicedAmount' => 'nullable|numeric|min:0',
+        ]);
 
         $this->payment->update([
-            'actual_amount' => $amountValue,
-            'is_paid' => true,
-            'is_waived' => false,
+            'invoiced_amount' => $this->invoicedAmount,
+        ]);
+
+        Notification::make()
+            ->title('Invoiced amount updated')
+            ->success()
+            ->send();
+
+        $this->updatePaymentStatus();
+    }
+
+    public function recordPayment(): void
+    {
+        $this->validate([
+            'paymentInput.amount' => 'required|numeric|min:0.01',
+        ]);
+
+        $amountValue = (float) $this->paymentInput['amount'];
+
+        BillingPaymentRecord::create([
+            'customer_billing_payment_id' => $this->payment->id,
+            'amount' => $amountValue,
             'paid_at' => Carbon::now('Asia/Shanghai'),
             'recorded_by_user_id' => Auth::id(),
-            'waived_at' => null,
-            'waived_by_user_id' => null,
             'notes' => $this->paymentNote,
         ]);
+
+        $this->paymentInput = ['amount' => ''];
+        $this->paymentNote = '';
+
+        $this->updatePaymentStatus();
 
         Notification::make()
             ->title('Payment recorded')
             ->success()
             ->send();
 
-        $this->redirect('/admin/billing/customer?customer=' . $this->customer->id);
+        $this->loadPaymentRecords();
     }
 
-    public function waivePayment(): void
+    public function partialWaive(): void
     {
-        if ($this->payment->is_paid) {
+        $this->validate([
+            'partialWaiveAmount' => 'required|numeric|min:0.01',
+        ]);
+
+        $waiveAmount = (float) $this->partialWaiveAmount;
+        $expectedTotal = $this->snapshot['expected_total'];
+
+        if ($waiveAmount >= $expectedTotal) {
+            $this->addError('partialWaiveAmount', 'Partial waive amount must be less than expected total. Use "Full Waive" for complete waiver.');
+            return;
+        }
+
+        // Store waived amount in meta
+        $meta = $this->payment->meta ?? [];
+        $waivedAmount = ($meta['waived_amount'] ?? 0) + $waiveAmount;
+        $meta['waived_amount'] = $waivedAmount;
+        $meta['waive_records'][] = [
+            'amount' => $waiveAmount,
+            'waived_at' => Carbon::now('Asia/Shanghai')->toIso8601String(),
+            'waived_by_user_id' => Auth::id(),
+            'notes' => $this->waiveNote,
+        ];
+
+        $this->payment->update([
+            'meta' => $meta,
+            'notes' => $this->waiveNote ?: $this->payment->notes,
+        ]);
+
+        $this->partialWaiveAmount = null;
+        $this->waiveNote = '';
+
+        Notification::make()
+            ->title('Partially waived')
+            ->success()
+            ->send();
+
+        $this->loadPaymentRecords();
+    }
+
+    public function fullWaive(): void
+    {
+        if ($this->payment->is_paid && $this->paymentRecords->isNotEmpty()) {
             Notification::make()
-                ->title('This month is already marked as paid.')
+                ->title('Cannot waive paid payment')
+                ->body('Please reopen the payment first before waiving.')
                 ->danger()
                 ->send();
             return;
@@ -140,35 +235,132 @@ class CustomerBillingDetail extends Page
             'is_waived' => true,
             'waived_at' => Carbon::now('Asia/Shanghai'),
             'waived_by_user_id' => Auth::id(),
-            'notes' => $this->paymentNote,
+            'notes' => $this->waiveNote ?: $this->payment->notes,
         ]);
 
+        // Clear all payment records
+        $this->payment->paymentRecords()->delete();
+
+        $this->waiveNote = '';
+
         Notification::make()
-            ->title('Marked as waived')
+            ->title('Fully waived')
             ->warning()
             ->send();
 
-        $this->redirect('/admin/billing/customer?customer=' . $this->customer->id);
+        $this->loadPaymentRecords();
     }
 
     public function resetPayment(): void
     {
         $this->payment->update([
             'actual_amount' => null,
+            'invoiced_amount' => null,
             'is_paid' => false,
             'is_waived' => false,
             'paid_at' => null,
             'waived_at' => null,
             'waived_by_user_id' => null,
             'notes' => null,
+            'meta' => null,
         ]);
 
-        $this->paymentInput = [];
+        // Delete all payment records
+        $this->payment->paymentRecords()->delete();
+
+        $this->paymentInput = ['amount' => ''];
         $this->paymentNote = '';
+        $this->invoicedAmount = null;
+        $this->partialWaiveAmount = null;
+        $this->waiveNote = '';
 
         Notification::make()
             ->title('Payment reset')
             ->warning()
             ->send();
+
+        $this->loadPaymentRecords();
+    }
+
+    protected function updatePaymentStatus(): void
+    {
+        $totalReceived = $this->payment->total_received;
+        $invoicedAmount = $this->payment->invoiced_amount ?? $this->snapshot['expected_total'];
+        $expectedTotal = $this->snapshot['expected_total'];
+        $waivedAmount = ($this->payment->meta['waived_amount'] ?? 0);
+        $adjustedExpected = $expectedTotal - $waivedAmount;
+
+        // Calculate payment status
+        $isPaid = false;
+        $isPartialPaid = false;
+
+        if ($totalReceived >= $invoicedAmount) {
+            $isPaid = true;
+        } elseif ($totalReceived > 0) {
+            $difference = $adjustedExpected - $totalReceived;
+            $differencePercent = $adjustedExpected > 0 ? ($difference / $adjustedExpected) * 100 : 0;
+            
+            if ($differencePercent < 10) {
+                $isPaid = true;
+            } else {
+                $isPartialPaid = true;
+            }
+        }
+
+        $this->payment->update([
+            'is_paid' => $isPaid,
+            'actual_amount' => $totalReceived,
+            'paid_at' => $isPaid && $totalReceived > 0 ? Carbon::now('Asia/Shanghai') : null,
+        ]);
+    }
+
+    protected function loadPaymentRecords(): void
+    {
+        $this->payment->refresh();
+        $this->payment->load('paymentRecords.recordedBy');
+        $this->paymentRecords = $this->payment->paymentRecords;
+    }
+
+    public function getTotalReceived(): float
+    {
+        return $this->payment->total_received;
+    }
+
+    public function getWaivedAmount(): float
+    {
+        return (float) ($this->payment->meta['waived_amount'] ?? 0);
+    }
+
+    public function getAdjustedExpected(): float
+    {
+        return $this->snapshot['expected_total'] - $this->getWaivedAmount();
+    }
+
+    public function getPaymentStatus(): string
+    {
+        if ($this->payment->is_waived) {
+            return 'waived';
+        }
+
+        $totalReceived = $this->getTotalReceived();
+        $invoicedAmount = $this->payment->invoiced_amount ?? $this->snapshot['expected_total'];
+        $adjustedExpected = $this->getAdjustedExpected();
+
+        if ($totalReceived >= $invoicedAmount) {
+            return 'paid';
+        }
+
+        if ($totalReceived > 0) {
+            $difference = $adjustedExpected - $totalReceived;
+            $differencePercent = $adjustedExpected > 0 ? ($difference / $adjustedExpected) * 100 : 0;
+            
+            if ($differencePercent < 10) {
+                return 'paid';
+            }
+            
+            return 'partial_paid';
+        }
+
+        return 'pending';
     }
 }

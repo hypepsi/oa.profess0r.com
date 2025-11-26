@@ -128,8 +128,23 @@ class CustomerBilling extends Page
         
         if ($currentSnapshot) {
             $currentExpected = $currentSnapshot['expected_total'];
-            if ($currentSnapshot['payment']->is_paid) {
-                $currentReceived = (float) ($currentSnapshot['payment']->actual_amount ?? 0);
+            $payment = $currentSnapshot['payment'];
+            $payment->load('paymentRecords');
+            $totalReceived = (float) $payment->paymentRecords->sum('amount');
+            $currentReceived = $totalReceived;
+
+            // Calculate payment status for overdue check
+            $invoicedAmount = $payment->invoiced_amount ?? $currentExpected;
+            $waivedAmount = (float) ($payment->meta['waived_amount'] ?? 0);
+            $adjustedExpected = $currentExpected - $waivedAmount;
+            
+            $isPaid = false;
+            if ($totalReceived >= $invoicedAmount) {
+                $isPaid = true;
+            } elseif ($totalReceived > 0) {
+                $difference = $adjustedExpected - $totalReceived;
+                $differencePercent = $adjustedExpected > 0 ? ($difference / $adjustedExpected) * 100 : 0;
+                $isPaid = $differencePercent < 10;
             }
 
             // Overdue logic: only for current month, after 20th, if not paid and not waived
@@ -138,8 +153,8 @@ class CustomerBilling extends Page
             
             if (
                 $isPast20th
-                && !$currentSnapshot['payment']->is_paid
-                && !$currentSnapshot['payment']->is_waived
+                && !$isPaid
+                && !$payment->is_waived
             ) {
                 $overdueFlag = true;
             }

@@ -8,15 +8,9 @@
         $formatCurrency = fn ($value) => '$' . number_format((float) $value, 2);
     @endphp
 
-    <div class="flex flex-col gap-2 mb-6 md:flex-row md:items-center md:justify-between">
-        <div>
-            <p class="text-sm text-gray-500">Current month</p>
-            <p class="text-2xl font-semibold text-gray-900 dark:text-gray-100">{{ $periodLabel }}</p>
-        </div>
-
-        <x-filament::button icon="heroicon-o-arrow-path" wire:click="refreshSummary">
-            Refresh
-        </x-filament::button>
+    <div class="mb-6">
+        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Current Month</p>
+        <p class="text-2xl font-semibold text-gray-900 dark:text-gray-100">{{ $periodLabel }}</p>
     </div>
 
     <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4 mb-6">
@@ -24,8 +18,8 @@
             <div class="flex items-start gap-3">
                 <x-filament::icon icon="heroicon-o-users" class="w-6 h-6 text-indigo-500" />
                 <div>
-                    <p class="text-sm text-gray-500">Customers to bill</p>
-                    <p class="mt-1 text-3xl font-semibold text-gray-900 dark:text-gray-100">
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Customers to Bill</p>
+                    <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">
                         {{ $summary['customers_due'] ?? 0 }}
                     </p>
                 </div>
@@ -36,8 +30,8 @@
             <div class="flex items-start gap-3">
                 <x-filament::icon icon="heroicon-o-banknotes" class="w-6 h-6 text-emerald-500" />
                 <div>
-                    <p class="text-sm text-gray-500">Expected revenue</p>
-                    <p class="mt-1 text-3xl font-semibold text-emerald-600 dark:text-emerald-400">
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Expected Revenue</p>
+                    <p class="mt-1 text-2xl font-semibold text-emerald-600 dark:text-emerald-400">
                         {{ $formatCurrency($summary['expected_total'] ?? 0) }}
                     </p>
                 </div>
@@ -48,8 +42,8 @@
             <div class="flex items-start gap-3">
                 <x-filament::icon icon="heroicon-o-circle-stack" class="w-6 h-6 text-sky-500" />
                 <div>
-                    <p class="text-sm text-gray-500">Received (confirmed)</p>
-                    <p class="mt-1 text-3xl font-semibold text-sky-600 dark:text-sky-400">
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Received (Confirmed)</p>
+                    <p class="mt-1 text-2xl font-semibold text-sky-600 dark:text-sky-400">
                         {{ $formatCurrency($summary['received_total'] ?? 0) }}
                     </p>
                 </div>
@@ -60,11 +54,11 @@
             <div class="flex items-start gap-3">
                 <x-filament::icon icon="heroicon-o-exclamation-triangle" class="w-6 h-6 {{ count($overdueList) ? 'text-rose-600' : 'text-gray-400' }}" />
                 <div>
-                    <p class="text-sm text-gray-500">Overdue amount</p>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Overdue Amount</p>
                     <p class="mt-1 text-2xl font-semibold {{ count($overdueList) ? 'text-rose-600 dark:text-rose-400' : 'text-gray-900 dark:text-gray-100' }}">
                         {{ $formatCurrency($summary['overdue_amount_total'] ?? 0) }}
                     </p>
-                    <p class="text-xs text-gray-500">{{ count($overdueList) }} customer(s)</p>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ count($overdueList) }} customer(s)</p>
                 </div>
             </div>
         </x-filament::card>
@@ -72,43 +66,43 @@
 
     <div class="grid gap-6 mt-6 lg:grid-cols-2">
         <x-filament::section>
-            <x-slot name="heading">Top 3 customers (amount)</x-slot>
+            <x-slot name="heading">Top 3 Customers (Amount)</x-slot>
             <x-slot name="description">Highest billing amounts this month</x-slot>
 
             <ul class="divide-y divide-gray-100 dark:divide-gray-700">
                 @forelse ($topCustomers as $row)
                     <li class="flex items-center justify-between py-4">
                         <div>
-                            <p class="font-semibold text-gray-900 dark:text-gray-100">{{ $row['customer']->name }}</p>
-                            <p class="text-xs text-gray-500">Recurring charges</p>
+                            <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $row['customer']->name }}</p>
+                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Recurring charges</p>
                         </div>
-                        <span class="text-base font-semibold text-gray-700 dark:text-gray-200">
+                        <span class="text-sm font-semibold text-gray-700 dark:text-gray-200">
                             {{ $formatCurrency($row['amount']) }}
                         </span>
                     </li>
                 @empty
-                    <li class="py-3 text-sm text-gray-500">No billing data for this month.</li>
+                    <li class="py-3 text-sm font-medium text-gray-500 dark:text-gray-400">No billing data for this month.</li>
                 @endforelse
             </ul>
         </x-filament::section>
 
         <x-filament::section>
-            <x-slot name="heading">Overdue customers</x-slot>
+            <x-slot name="heading">Overdue Customers</x-slot>
             <x-slot name="description">Unpaid months before {{ $periodLabel }}</x-slot>
 
             <ul class="divide-y divide-gray-100 dark:divide-gray-700">
                 @forelse ($overdueList as $row)
                     <li class="flex items-center justify-between py-4">
                         <div>
-                            <p class="font-semibold text-gray-900 dark:text-gray-100">{{ $row['customer']->name }}</p>
-                            <p class="text-xs text-gray-500">Follow up required</p>
+                            <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $row['customer']->name }}</p>
+                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Follow up required</p>
                         </div>
-                        <span class="text-base font-semibold text-rose-600 dark:text-rose-400">
+                        <span class="text-sm font-semibold text-rose-600 dark:text-rose-400">
                             {{ $formatCurrency($row['amount']) }}
                         </span>
                     </li>
                 @empty
-                    <li class="py-3 text-sm text-gray-500">No overdue records 🎉</li>
+                    <li class="py-3 text-sm font-medium text-gray-500 dark:text-gray-400">No overdue records 🎉</li>
                 @endforelse
             </ul>
         </x-filament::section>
@@ -121,25 +115,25 @@
 
             <div class="grid gap-4 md:grid-cols-4">
                 <div>
-                    <p class="text-xs text-gray-500">Customers</p>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Customers</p>
                     <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">
                         {{ $previousSummary['customers_due'] ?? 0 }}
                     </p>
                 </div>
                 <div>
-                    <p class="text-xs text-gray-500">Expected</p>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Expected</p>
                     <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">
                         {{ $formatCurrency($previousSummary['expected_total'] ?? 0) }}
                     </p>
                 </div>
                 <div>
-                    <p class="text-xs text-gray-500">Received</p>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Received</p>
                     <p class="text-lg font-semibold text-sky-600 dark:text-sky-400">
                         {{ $formatCurrency($previousSummary['received_total'] ?? 0) }}
                     </p>
                 </div>
                 <div>
-                    <p class="text-xs text-gray-500">Overdue</p>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Overdue</p>
                     <p class="text-lg font-semibold {{ ($previousSummary['overdue_amount_total'] ?? 0) > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-gray-900 dark:text-gray-100' }}">
                         {{ $formatCurrency($previousSummary['overdue_amount_total'] ?? 0) }}
                     </p>

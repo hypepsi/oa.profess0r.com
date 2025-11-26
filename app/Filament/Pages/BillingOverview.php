@@ -38,8 +38,4 @@ class BillingOverview extends Page
         $this->previousSummary = BillingCalculator::getOverviewForMonth($previous);
     }
 
-    public function refreshSummary(): void
-    {
-        $this->loadSummary();
-    }
 }

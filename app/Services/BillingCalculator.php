@@ -133,6 +133,8 @@ class BillingCalculator
         ];
 
         $topCollection = collect();
+        $now = Carbon::now('Asia/Shanghai');
+        $isCurrentMonth = $period->format('Y-m') === $now->format('Y-m');
 
         foreach ($customers as $customer) {
             self::ensureCustomerMonths($customer);
@@ -160,7 +162,22 @@ class BillingCalculator
                 $summary['received_total'] += (float) ($payment->actual_amount ?? 0);
             }
 
-            $overdueAmount = self::calculateOverdueAmount($customer, $period);
+            // Calculate overdue: include current month if past 20th and not paid/waived
+            $overdueAmount = 0.0;
+            
+            // Check current month: if past 20th and not paid/waived, it's overdue
+            if ($isCurrentMonth && $payment) {
+                $periodDay20 = $period->copy()->day(20);
+                $isPast20th = $now->greaterThan($periodDay20);
+                
+                if ($isPast20th && !$payment->is_paid && !$payment->is_waived) {
+                    $overdueAmount = $expected['expected_total'];
+                }
+            }
+            
+            // Add historical overdue amounts
+            $overdueAmount += self::calculateOverdueAmount($customer, $period);
+            
             if ($overdueAmount > 0) {
                 $summary['overdue'][] = [
                     'customer' => $customer,
