@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Models\Provider;
 use App\Models\IptProvider;
+use App\Models\DatacenterProvider;
 use App\Models\ProviderExpensePayment;
 use App\Services\ExpenseCalculator;
 use Carbon\Carbon;
@@ -44,6 +45,8 @@ class ProviderExpense extends Page
             $this->provider = Provider::findOrFail((int) $providerId);
         } elseif ($providerType === 'ipt') {
             $this->provider = IptProvider::findOrFail((int) $providerId);
+        } elseif ($providerType === 'datacenter') {
+            $this->provider = DatacenterProvider::findOrFail((int) $providerId);
         } else {
             abort(404, 'Invalid provider type');
         }
@@ -54,7 +57,14 @@ class ProviderExpense extends Page
 
     public function getHeading(): string
     {
-        return 'Expense • ' . $this->provider->name;
+        $label = $this->provider->name;
+        
+        // 如果是DatacenterProvider，显示Name+Location组合
+        if ($this->provider instanceof DatacenterProvider && !empty($this->provider->location)) {
+            $label = $this->provider->name . '-' . $this->provider->location;
+        }
+        
+        return 'Expense • ' . $label;
     }
 
     protected function loadSnapshots(): void

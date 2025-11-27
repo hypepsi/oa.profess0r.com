@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Provider;
 use App\Models\IptProvider;
+use App\Models\DatacenterProvider;
 use App\Models\ProviderExpensePayment;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -20,6 +21,13 @@ class ExpenseCalculator
         $current = Carbon::now('Asia/Shanghai')->startOfMonth();
         $providerType = get_class($provider);
         
+        $defaultExpected = 0;
+        
+        // 对于DatacenterProvider，使用hosting_fee + other_fee作为默认预期金额
+        if ($provider instanceof DatacenterProvider) {
+            $defaultExpected = (float) $provider->monthly_total_fee;
+        }
+        
         ProviderExpensePayment::firstOrCreate(
             [
                 'provider_type' => $providerType,
@@ -28,6 +36,7 @@ class ExpenseCalculator
                 'expense_month' => (int) $current->month,
             ],
             [
+                'expected_amount' => $defaultExpected,
                 'is_paid' => false,
             ]
         );
@@ -92,7 +101,6 @@ class ExpenseCalculator
 
     /**
      * 获取 Provider 某月的预期支出金额
-     * 这里先返回 0，后续可以根据实际业务逻辑计算
      */
     public static function getProviderExpectedAmountForMonth($provider, Carbon $period): float
     {
@@ -104,7 +112,17 @@ class ExpenseCalculator
             ->where('expense_month', $period->month)
             ->first();
         
-        // TODO: 根据实际业务逻辑计算预期支出
+        // 如果已经有记录的预期金额，使用记录的值
+        if ($payment && $payment->expected_amount !== null) {
+            return (float) $payment->expected_amount;
+        }
+        
+        // 对于DatacenterProvider，使用hosting_fee + other_fee作为默认预期金额
+        if ($provider instanceof DatacenterProvider) {
+            return (float) $provider->monthly_total_fee;
+        }
+        
+        // 其他Provider类型，根据实际业务逻辑计算
         // 例如：基于 IP Assets 的成本、带宽费用等
         return (float) ($payment?->expected_amount ?? 0);
     }
@@ -116,7 +134,10 @@ class ExpenseCalculator
     {
         $providers = Provider::all();
         $iptProviders = IptProvider::all();
-        $allProviders = collect($providers)->merge($iptProviders);
+        $datacenterProviders = DatacenterProvider::where('active', true)->get();
+        $allProviders = collect($providers)
+            ->merge($iptProviders)
+            ->merge($datacenterProviders);
 
         $expectedTotal = 0.0;
         $paidTotal = 0.0;

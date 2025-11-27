@@ -6,6 +6,7 @@ use App\Models\BillingOtherItem;
 use App\Models\BillingPaymentRecord;
 use App\Models\Customer;
 use App\Models\CustomerBillingPayment;
+use App\Models\IncomeOtherItem;
 use App\Models\Device;
 use App\Models\Employee;
 use App\Models\IpAsset;
@@ -69,6 +70,7 @@ class AppServiceProvider extends ServiceProvider
             BillingOtherItem::class,
             BillingPaymentRecord::class,
             CustomerBillingPayment::class,
+            IncomeOtherItem::class,
         ];
 
         foreach ($models as $model) {

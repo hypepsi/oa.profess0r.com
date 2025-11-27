@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\IpAssetResource\Pages;
 
 use App\Filament\Resources\IpAssetResource;
+use App\Filament\Resources\IpAssetResource\Widgets\IpAssetStatsOverview;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
@@ -14,6 +15,13 @@ class ListIpAssets extends ListRecords
     {
         return [
             Actions\CreateAction::make(),
+        ];
+    }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            IpAssetStatsOverview::class,
         ];
     }
 }

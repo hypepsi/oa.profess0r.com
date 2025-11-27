@@ -34,6 +34,24 @@ class ListActivityLogs extends ListRecords
                     $this->quickFilter = 'workflows';
                     $this->resetTable();
                 }),
+            Actions\Action::make('filter_billing')
+                ->label('Billing')
+                ->icon('heroicon-o-banknotes')
+                ->color('success')
+                ->outlined()
+                ->action(function () {
+                    $this->quickFilter = 'billing';
+                    $this->resetTable();
+                }),
+            Actions\Action::make('filter_expense')
+                ->label('Expense')
+                ->icon('heroicon-o-arrow-trending-down')
+                ->color('warning')
+                ->outlined()
+                ->action(function () {
+                    $this->quickFilter = 'expense';
+                    $this->resetTable();
+                }),
             Actions\Action::make('filter_logins')
                 ->label('Login/Logout')
                 ->icon('heroicon-o-key')
@@ -71,6 +89,19 @@ class ListActivityLogs extends ListRecords
                     $this->resetTable();
                 }),
             Actions\ActionGroup::make([
+                Actions\Action::make('clean_filtered')
+                    ->label('Delete Filtered Logs')
+                    ->icon('heroicon-o-funnel')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->modalHeading('Delete Filtered Activity Logs')
+                    ->modalDescription(fn () => $this->getFilteredDeleteDescription())
+                    ->modalSubmitActionLabel('Yes, delete')
+                    ->modalCancelActionLabel('Cancel')
+                    ->visible(fn () => !empty($this->quickFilter))
+                    ->action(function () {
+                        $this->cleanFilteredLogs();
+                    }),
                 Actions\Action::make('clean_24h')
                     ->label('24 Hours')
                     ->icon('heroicon-o-clock')
@@ -187,14 +218,98 @@ class ListActivityLogs extends ListRecords
         $this->resetTable();
     }
 
+    public function getFilteredDeleteDescription(): string
+    {
+        $filterName = match($this->quickFilter) {
+            'ip_assets' => 'IP Assets',
+            'workflows' => 'Workflows',
+            'billing' => 'Billing',
+            'expense' => 'Expense',
+            'logins' => 'Login/Logout',
+            'created' => 'Creations',
+            'updated' => 'Updates',
+            'deleted' => 'Deletions',
+            default => 'Filtered',
+        };
+        
+        return "Are you sure you want to delete all activity logs matching the current filter ({$filterName})? This action cannot be undone.";
+    }
+
+    public function cleanFilteredLogs(): void
+    {
+        $query = \App\Models\ActivityLog::query();
+        
+        // 应用当前过滤器
+        match($this->quickFilter) {
+            'ip_assets' => $query->where('model_type', 'App\\Models\\IpAsset'),
+            'workflows' => $query->where('model_type', 'App\\Models\\Workflow'),
+            'billing' => $query->whereIn('model_type', [
+                'App\\Models\\CustomerBillingPayment',
+                'App\\Models\\BillingPaymentRecord',
+                'App\\Models\\BillingOtherItem',
+            ]),
+            'expense' => $query->whereIn('model_type', [
+                'App\\Models\\ProviderExpensePayment',
+                'App\\Models\\ExpensePaymentRecord',
+            ]),
+            'logins' => $query->whereIn('action', ['login', 'logout']),
+            'created' => $query->where('action', 'created'),
+            'updated' => $query->where('action', 'updated'),
+            'deleted' => $query->where('action', 'deleted'),
+            default => null,
+        };
+        
+        $countToDelete = $query->count();
+        
+        if ($countToDelete === 0) {
+            \Filament\Notifications\Notification::make()
+                ->title('No logs to delete')
+                ->body('There are no activity logs matching the current filter.')
+                ->warning()
+                ->send();
+            return;
+        }
+        
+        $deletedCount = $query->delete();
+        
+        $filterName = match($this->quickFilter) {
+            'ip_assets' => 'IP Assets',
+            'workflows' => 'Workflows',
+            'billing' => 'Billing',
+            'expense' => 'Expense',
+            'logins' => 'Login/Logout',
+            'created' => 'Creations',
+            'updated' => 'Updates',
+            'deleted' => 'Deletions',
+            default => 'Filtered',
+        };
+
+        \Filament\Notifications\Notification::make()
+            ->title('Filtered logs deleted')
+            ->body("Successfully deleted {$deletedCount} activity log(s) matching {$filterName} filter.")
+            ->success()
+            ->send();
+
+        $this->resetTable();
+    }
+
     protected function getTableQuery(): Builder
     {
         $query = parent::getTableQuery();
 
-        // 根据快速过滤器修改查询
+        // 根据快速过滤器修改查询 - 使用索引优化
         match($this->quickFilter) {
             'ip_assets' => $query->where('model_type', 'App\\Models\\IpAsset'),
             'workflows' => $query->where('model_type', 'App\\Models\\Workflow'),
+            'billing' => $query->whereIn('model_type', [
+                'App\\Models\\CustomerBillingPayment',
+                'App\\Models\\BillingPaymentRecord',
+                'App\\Models\\BillingOtherItem',
+            ]),
+            'expense' => $query->whereIn('model_type', [
+                'App\\Models\\ProviderExpensePayment',
+                'App\\Models\\ExpensePaymentRecord',
+            ]),
             'logins' => $query->whereIn('action', ['login', 'logout']),
             'created' => $query->where('action', 'created'),
             'updated' => $query->where('action', 'updated'),

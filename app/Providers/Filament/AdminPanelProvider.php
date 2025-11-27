@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Models\Customer;
 use App\Models\Provider;
 use App\Models\IptProvider;
+use App\Models\DatacenterProvider;
 use App\Models\Workflow;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -24,6 +25,7 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Illuminate\Support\Facades\Schema;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -65,6 +67,10 @@ class AdminPanelProvider extends PanelProvider
                 'panels::body.end',
                 fn () => view('filament.workflow-table-scripts')
             )
+            ->renderHook(
+                'panels::head.end',
+                fn () => view('filament.sidebar-scroll-preserve')
+            )
             ->navigationItems(array_merge(
                 $this->getBillingNavigationItems(),
                 $this->getWorkflowNavigationItems()
@@ -88,31 +94,43 @@ class AdminPanelProvider extends PanelProvider
     protected function getWorkflowNavigationItems(): array
     {
         $now = Carbon::now('Asia/Shanghai')->startOfMonth();
-        $months = collect([$now]);
-
+        
+        // 获取所有有workflow数据的月份（只统计有实际数据的月份）
         $workflowMonths = Workflow::query()
-            ->orderByDesc('created_at')
-            ->pluck('created_at')
-            ->map(fn ($timestamp) => Carbon::parse($timestamp)->setTimezone('Asia/Shanghai')->startOfMonth())
+            ->selectRaw('DATE(created_at) as date')
+            ->distinct()
+            ->pluck('date')
+            ->map(fn ($date) => Carbon::parse($date)->setTimezone('Asia/Shanghai')->startOfMonth())
             ->unique(fn (Carbon $date) => $date->format('Y-m'))
+            ->filter(fn (Carbon $date) => $date->lessThanOrEqualTo($now)) // 只显示当前月及之前的月份
+            ->sortByDesc(fn (Carbon $date) => $date->format('Y-m'))
             ->values();
 
-        $previousMonth = $now->copy()->subMonth();
-        if ($workflowMonths->doesntContain(fn (Carbon $date) => $date->equalTo($previousMonth))) {
-            $workflowMonths->push($previousMonth);
+        // 确保当前月存在（即使没有数据也要显示）
+        $currentMonthExists = $workflowMonths->contains(fn (Carbon $date) => $date->equalTo($now));
+        if (!$currentMonthExists) {
+            $workflowMonths->prepend($now);
         }
 
-        $historicalMonths = $workflowMonths
-            ->filter(fn (Carbon $date) => $date->lessThanOrEqualTo($now))
-            ->sortByDesc(fn (Carbon $date) => $date->format('Y-m'))
-            ->take(12);
-
-        $orderedMonths = $months
-            ->merge($historicalMonths)
+        // 保留最近6个月（只包括当前月及历史月份，不包含下个月）
+        $orderedMonths = $workflowMonths
             ->unique(fn (Carbon $date) => $date->format('Y-m'))
+            ->sortByDesc(fn (Carbon $date) => $date->format('Y-m'))
+            ->take(6)
             ->values();
 
-        return $orderedMonths
+        // 重新排序：当前月在前，历史月份在后
+        $currentMonth = $orderedMonths->filter(fn (Carbon $date) => 
+            $date->equalTo($now)
+        );
+
+        $historical = $orderedMonths->filter(fn (Carbon $date) => 
+            $date->lessThan($now)
+        )->sortByDesc(fn (Carbon $date) => $date->format('Y-m'));
+
+        $finalMonths = $currentMonth->merge($historical);
+
+        return $finalMonths
             ->map(function (Carbon $date, int $index) {
                 $year = $date->format('Y');
                 $month = $date->format('n');
@@ -193,6 +211,35 @@ class AdminPanelProvider extends PanelProvider
                 ->group('Expense')
                 ->sort(100 + $index)
                 ->url('/admin/expense/provider?provider=' . $iptProvider->id . '&type=ipt');
+        }
+
+        // 动态添加 Datacenter Providers
+        $datacenterProviders = collect([]);
+        if (Schema::hasTable('datacenter_providers')) {
+            try {
+                $datacenterProviders = DatacenterProvider::query()
+                    ->where('active', true)
+                    ->orderBy('name')
+                    ->get();
+            } catch (\Exception $e) {
+                // 如果查询失败，返回空集合
+                $datacenterProviders = collect([]);
+            }
+        }
+
+        foreach ($datacenterProviders as $index => $datacenterProvider) {
+            // 组合显示：Name + Location，如 "Equinix-HK2"
+            $label = $datacenterProvider->name;
+            if (!empty($datacenterProvider->location)) {
+                $label = $datacenterProvider->name . '-' . $datacenterProvider->location;
+            }
+            
+            $items[] = NavigationItem::make("expense-datacenter-provider-{$datacenterProvider->id}")
+                ->label($label)
+                ->icon('heroicon-o-building-office')
+                ->group('Expense')
+                ->sort(200 + $index)
+                ->url('/admin/expense/provider?provider=' . $datacenterProvider->id . '&type=datacenter');
         }
 
         return $items;

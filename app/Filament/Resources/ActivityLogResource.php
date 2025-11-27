@@ -100,12 +100,16 @@ class ActivityLogResource extends Resource
                         'App\\Models\\Customer' => 'Customer',
                         'App\\Models\\Provider' => 'Provider',
                         'App\\Models\\IptProvider' => 'IPT Provider',
+                        'App\\Models\\DatacenterProvider' => 'Datacenter Provider',
                         'App\\Models\\Employee' => 'Employee',
                         'App\\Models\\Workflow' => 'Workflow',
                         'App\\Models\\WorkflowUpdate' => 'Workflow Update',
                         'App\\Models\\BillingOtherItem' => 'Billing Add-on',
                         'App\\Models\\BillingPaymentRecord' => 'Payment Record',
                         'App\\Models\\CustomerBillingPayment' => 'Billing Payment',
+                        'App\\Models\\ProviderExpensePayment' => 'Expense Payment',
+                        'App\\Models\\ExpensePaymentRecord' => 'Expense Payment Record',
+                        'App\\Models\\IncomeOtherItem' => 'Other Income',
                     ])
                     ->multiple(),
 

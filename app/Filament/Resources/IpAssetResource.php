@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\IpAssetResource\Pages;
+use App\Filament\Resources\IpAssetResource\Widgets\IpAssetStatsOverview;
 use App\Models\IpAsset;
 use App\Models\Provider;
 use App\Models\Customer;
