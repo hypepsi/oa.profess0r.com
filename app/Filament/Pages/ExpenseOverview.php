@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Services\ExpenseCalculator;
+use App\Filament\Widgets\ExpenseOverviewStats;
 use Carbon\Carbon;
 use Filament\Pages\Page;
 
@@ -36,6 +37,13 @@ class ExpenseOverview extends Page
         $this->previousPeriodLabel = $previous->format('F Y');
         $this->summary = ExpenseCalculator::getOverviewForMonth($current);
         $this->previousSummary = ExpenseCalculator::getOverviewForMonth($previous);
+    }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            ExpenseOverviewStats::class,
+        ];
     }
 }
 

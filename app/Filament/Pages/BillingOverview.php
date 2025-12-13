@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Services\BillingCalculator;
+use App\Filament\Widgets\BillingOverviewStats;
 use Carbon\Carbon;
 use Filament\Pages\Page;
 
@@ -36,6 +37,13 @@ class BillingOverview extends Page
         $this->previousPeriodLabel = $previous->format('F Y');
         $this->summary = BillingCalculator::getOverviewForMonth($current);
         $this->previousSummary = BillingCalculator::getOverviewForMonth($previous);
+    }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            BillingOverviewStats::class,
+        ];
     }
 
 }

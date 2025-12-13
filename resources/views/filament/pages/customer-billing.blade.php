@@ -5,43 +5,7 @@
         $nowMonth = $now->format('F Y');
     @endphp
 
-    <div class="grid gap-4 mb-8 md:grid-cols-3">
-        <x-filament::card>
-            <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-banknotes" class="w-6 h-6 text-emerald-500" />
-                <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Expected</p>
-                    <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                        {{ $formatCurrency($stats['current_expected'] ?? 0) }}
-                    </p>
-                </div>
-            </div>
-        </x-filament::card>
-
-        <x-filament::card>
-            <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-check-badge" class="w-6 h-6 text-sky-500" />
-                <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Confirmed Received</p>
-                    <p class="mt-1 text-2xl font-semibold text-sky-600 dark:text-sky-400">
-                        {{ $formatCurrency($stats['current_received'] ?? 0) }}
-                    </p>
-                </div>
-            </div>
-        </x-filament::card>
-
-        <x-filament::card :class="($stats['has_overdue'] ?? false) ? 'border border-rose-200 dark:border-rose-500 bg-rose-50 dark:bg-rose-950/40' : ''">
-            <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-exclamation-triangle" class="w-6 h-6 {{ ($stats['has_overdue'] ?? false) ? 'text-rose-600' : 'text-gray-400' }}" />
-                <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Overdue Alert</p>
-                    <p class="mt-1 text-2xl font-semibold {{ ($stats['has_overdue'] ?? false) ? 'text-rose-600 dark:text-rose-400' : 'text-gray-900 dark:text-gray-100' }}">
-                        {{ $stats['overdue_message'] ?? 'All good' }}
-                    </p>
-                </div>
-            </div>
-        </x-filament::card>
-    </div>
+    {{-- Stats are now rendered by the CustomerBillingStats widget via getHeaderWidgets() --}}
 
     @php
         $now = \Carbon\Carbon::now('Asia/Shanghai');
@@ -54,7 +18,7 @@
 
             <div class="overflow-x-auto bg-white border border-gray-200 rounded-xl shadow-sm dark:bg-gray-900 dark:border-gray-700">
                 <table class="w-full text-sm text-left text-gray-900 dark:text-gray-100">
-                    <thead class="text-sm font-semibold uppercase bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                    <thead class="text-xs font-bold uppercase tracking-wider bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
                         <tr>
                             <th class="px-4 py-3">Month</th>
                             <th class="px-4 py-3 text-center">Subnets</th>
@@ -136,7 +100,7 @@
 
             <div class="overflow-x-auto bg-white border border-gray-200 rounded-xl shadow-sm dark:bg-gray-900 dark:border-gray-700">
                 <table class="w-full text-sm text-left text-gray-900 dark:text-gray-100">
-                    <thead class="text-sm font-semibold uppercase bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                    <thead class="text-xs font-bold uppercase tracking-wider bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
                         <tr>
                             <th class="px-4 py-3">Month</th>
                             <th class="px-4 py-3 text-center">Subnets</th>
@@ -187,16 +151,16 @@
                                 $statusColor = $isOverdue ? 'rose' : $statusConfig['color'];
                                 $statusLabel = $isOverdue ? 'Overdue' : $statusConfig['label'];
                             @endphp
-                            <tr class="{{ $rowClasses }} hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer" onclick="window.location.href='{{ $detailUrl }}'">
-                                <td class="px-4 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">{{ $periodLabel }}</td>
-                                <td class="px-4 py-4 text-sm text-center text-gray-900 dark:text-gray-100">{{ $snapshot['subnet_count'] }}</td>
-                                <td class="px-4 py-4 text-sm text-gray-900 dark:text-gray-100">{{ $formatCurrency($snapshot['subnet_total']) }}</td>
-                                <td class="px-4 py-4 text-sm text-gray-900 dark:text-gray-100">{{ $formatCurrency($snapshot['other_total']) }}</td>
-                                <td class="px-4 py-4 text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $formatCurrency($snapshot['expected_total']) }}</td>
-                                <td class="px-4 py-4 text-sm text-gray-900 dark:text-gray-100">{{ $formatCurrency($payment->invoiced_amount ?? '-') }}</td>
-                                <td class="px-4 py-4 text-sm font-semibold text-sky-600 dark:text-sky-400">{{ $formatCurrency($totalReceived) }}</td>
+                            <tr class="{{ $rowClasses }} hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors {{ $isOverdue ? 'border-l-4 border-rose-500' : '' }}" onclick="window.location.href='{{ $detailUrl }}'">
+                                <td class="px-4 py-4 text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $periodLabel }}</td>
+                                <td class="px-4 py-4 text-sm text-center font-medium text-gray-700 dark:text-gray-300">{{ $snapshot['subnet_count'] }}</td>
+                                <td class="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">{{ $formatCurrency($snapshot['subnet_total']) }}</td>
+                                <td class="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">{{ $formatCurrency($snapshot['other_total']) }}</td>
+                                <td class="px-4 py-4 text-sm font-bold text-gray-900 dark:text-gray-100">{{ $formatCurrency($snapshot['expected_total']) }}</td>
+                                <td class="px-4 py-4 text-sm text-gray-700 dark:text-gray-300">{{ $formatCurrency($payment->invoiced_amount ?? '-') }}</td>
+                                <td class="px-4 py-4 text-sm font-bold text-sky-600 dark:text-sky-400">{{ $formatCurrency($totalReceived) }}</td>
                                 <td class="px-4 py-4">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-{{ $statusColor }}-100 text-{{ $statusColor }}-800 dark:bg-{{ $statusColor }}-900/40 dark:text-{{ $statusColor }}-300">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-{{ $statusColor }}-100 text-{{ $statusColor }}-800 dark:bg-{{ $statusColor }}-900/40 dark:text-{{ $statusColor }}-300">
                                         {{ $statusLabel }}
                                     </span>
                                 </td>

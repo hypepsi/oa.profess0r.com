@@ -6,6 +6,7 @@ use App\Models\BillingPaymentRecord;
 use App\Models\Customer;
 use App\Models\CustomerBillingPayment;
 use App\Services\BillingCalculator;
+use App\Filament\Widgets\CustomerBillingDetailStats;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
@@ -101,6 +102,17 @@ class CustomerBillingDetail extends Page implements HasTable
     {
         $periodLabel = $this->snapshot['period']->format('F Y');
         return 'Billing • ' . $this->customer->name . ' • ' . $periodLabel;
+    }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            CustomerBillingDetailStats::make([
+                'snapshot' => $this->snapshot,
+                'totalReceived' => $this->getTotalReceived(),
+                'waivedAmount' => $this->getWaivedAmount(),
+            ]),
+        ];
     }
 
     protected function getHeaderActions(): array

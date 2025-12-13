@@ -27,96 +27,36 @@
         </x-filament::button>
     </div>
 
-    {{-- 区块A：统计卡片一行 --}}
-    <div class="grid gap-4 mb-8" style="grid-template-columns: repeat(4, minmax(0, 1fr));">
-        <x-filament::card>
-            <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-rectangle-stack" class="w-6 h-6 text-blue-500" />
-                <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Subnets</p>
-                    <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                        {{ $snapshot['subnet_count'] }}
-                    </p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ $formatCurrency($snapshot['subnet_total']) }}</p>
-                </div>
-            </div>
-        </x-filament::card>
+    {{-- Stats are now rendered by the CustomerBillingDetailStats widget via getHeaderWidgets() --}}
 
-        <x-filament::card>
-            <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-plus-circle" class="w-6 h-6 text-purple-500" />
-                <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Add-ons</p>
-                    <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                        {{ $formatCurrency($snapshot['other_total']) }}
-                    </p>
-                </div>
-            </div>
-        </x-filament::card>
-
-        <x-filament::card>
-            <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-banknotes" class="w-6 h-6 text-emerald-500" />
-                <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Expected Total</p>
-                    <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                        {{ $formatCurrency($snapshot['expected_total']) }}
-                    </p>
-                    @if($waivedAmount > 0)
-                        <p class="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                            -{{ $formatCurrency($waivedAmount) }} waived
-                        </p>
-                    @endif
-                </div>
-            </div>
-        </x-filament::card>
-
-        <x-filament::card>
-            <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-currency-dollar" class="w-6 h-6 text-indigo-500" />
-                <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Received</p>
-                    <p class="mt-1 text-2xl font-semibold {{ $totalReceived > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-900 dark:text-gray-100' }}">
-                        {{ $formatCurrency($totalReceived) }}
-                    </p>
-                    @if($paymentRecords->isNotEmpty())
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            {{ $paymentRecords->count() }} payment(s)
-                        </p>
-                    @endif
-                </div>
-            </div>
-        </x-filament::card>
-    </div>
-
-    {{-- Add-ons Details 单独一行，占满整行，高度与上面卡片一致 --}}
+    {{-- Add-ons Details Section --}}
     @if($addOnsItems->isNotEmpty())
         <x-filament::section class="mb-6 [&>div]:p-4">
             <x-slot name="heading">Add-ons Details</x-slot>
             <div class="overflow-x-auto">
                 <table class="w-full text-sm text-left text-gray-900 dark:text-gray-100">
-                    <thead class="text-sm font-semibold uppercase bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                    <thead class="text-xs font-bold uppercase tracking-wider bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
                         <tr>
-                            <th class="px-4 py-2">Title</th>
-                            <th class="px-4 py-2">Date</th>
-                            <th class="px-4 py-2">Amount</th>
+                            <th class="px-4 py-3">Title</th>
+                            <th class="px-4 py-3">Date</th>
+                            <th class="px-4 py-3">Amount</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                         @foreach ($addOnsItems as $item)
-                            <tr class="bg-white dark:bg-gray-900">
-                                <td class="px-4 py-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+                            <tr class="bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                                <td class="px-4 py-3">
                                     <a 
                                         href="/admin/billing-other-items/{{ $item->id }}/edit" 
-                                        class="text-gray-900 dark:text-gray-100 hover:text-gray-700 dark:hover:text-gray-300 hover:underline"
+                                        class="text-sm font-semibold text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 hover:underline"
                                     >
                                         {{ $item->title }}
                                     </a>
                                 </td>
-                                <td class="px-4 py-2 text-sm text-gray-600 dark:text-gray-400">
+                                <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                                     {{ $item->effectiveStartDate()->format('Y-m-d') }}
                                 </td>
-                                <td class="px-4 py-2 text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $formatCurrency($item->amount) }}</td>
+                                <td class="px-4 py-3 text-sm font-bold text-gray-900 dark:text-gray-100">{{ $formatCurrency($item->amount) }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -125,7 +65,7 @@
         </x-filament::section>
     @endif
 
-    {{-- Invoiced Amount 单独一行，与 Add-ons Details 对齐，高度一致 --}}
+    {{-- Invoiced Amount Section --}}
     <x-filament::section class="mb-8 [&>div]:p-4">
         <x-slot name="heading">Invoiced Amount</x-slot>
         <form wire:submit.prevent="updateInvoicedAmount">
@@ -161,7 +101,7 @@
         </form>
     </x-filament::section>
 
-    {{-- 区块C：Payment Records + Record New Payment --}}
+    {{-- Payment Records Section --}}
     <x-filament::section>
         <x-slot name="heading">Payment Records</x-slot>
         <div class="grid gap-6 {{ !$payment->is_waived ? 'md:grid-cols-2 md:items-start' : '' }}">
@@ -217,7 +157,7 @@
         </div>
     </x-filament::section>
 
-    {{-- 区块D：Waive Options --}}
+    {{-- Waive Options Section --}}
     @if(!$payment->is_waived)
         <x-filament::section class="[&>div]:p-4">
             <x-slot name="heading">Waive Options</x-slot>

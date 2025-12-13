@@ -40,7 +40,7 @@ class DatacenterProviderResource extends Resource
                 Forms\Components\TextInput::make('power')
                     ->label('Power')
                     ->maxLength(255)
-                    ->helperText('电力信息，如：100kW'),
+                    ->helperText('Power information, e.g., 100kW'),
 
                 Forms\Components\Textarea::make('address')
                     ->label('Address')
@@ -51,13 +51,13 @@ class DatacenterProviderResource extends Resource
                     ->label('Hosting Fee (Monthly)')
                     ->numeric()
                     ->prefix('$')
-                    ->helperText('托管费用（每月）'),
+                    ->helperText('Monthly hosting fee in USD'),
 
                 Forms\Components\TextInput::make('other_fee')
                     ->label('Other Fee (Monthly)')
                     ->numeric()
                     ->prefix('$')
-                    ->helperText('其他费用（每月）'),
+                    ->helperText('Monthly other fees in USD'),
 
                 Forms\Components\Textarea::make('notes')
                     ->label('Notes')

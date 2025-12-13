@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Models\Customer;
 use App\Models\CustomerBillingPayment;
 use App\Services\BillingCalculator;
+use App\Filament\Widgets\CustomerBillingStats;
 use Carbon\Carbon;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -44,6 +45,12 @@ class CustomerBilling extends Page
         return 'Billing • ' . $this->customer->name;
     }
 
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            CustomerBillingStats::make(['stats' => $this->stats]),
+        ];
+    }
 
     public function waivePayment(int $paymentId): void
     {

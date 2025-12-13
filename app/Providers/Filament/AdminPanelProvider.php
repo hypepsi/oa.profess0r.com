@@ -95,31 +95,31 @@ class AdminPanelProvider extends PanelProvider
     {
         $now = Carbon::now('Asia/Shanghai')->startOfMonth();
         
-        // 获取所有有workflow数据的月份（只统计有实际数据的月份）
+        // Get all months with workflow data
         $workflowMonths = Workflow::query()
             ->selectRaw('DATE(created_at) as date')
             ->distinct()
             ->pluck('date')
             ->map(fn ($date) => Carbon::parse($date)->setTimezone('Asia/Shanghai')->startOfMonth())
             ->unique(fn (Carbon $date) => $date->format('Y-m'))
-            ->filter(fn (Carbon $date) => $date->lessThanOrEqualTo($now)) // 只显示当前月及之前的月份
+            ->filter(fn (Carbon $date) => $date->lessThanOrEqualTo($now)) // Only show current and past months
             ->sortByDesc(fn (Carbon $date) => $date->format('Y-m'))
             ->values();
 
-        // 确保当前月存在（即使没有数据也要显示）
+        // Ensure current month exists (show even if no data)
         $currentMonthExists = $workflowMonths->contains(fn (Carbon $date) => $date->equalTo($now));
         if (!$currentMonthExists) {
             $workflowMonths->prepend($now);
         }
 
-        // 保留最近6个月（只包括当前月及历史月份，不包含下个月）
+        // Keep last 6 months (current and historical only, no future months)
         $orderedMonths = $workflowMonths
             ->unique(fn (Carbon $date) => $date->format('Y-m'))
             ->sortByDesc(fn (Carbon $date) => $date->format('Y-m'))
             ->take(6)
             ->values();
 
-        // 重新排序：当前月在前，历史月份在后
+        // Reorder: current month first, then historical months
         $currentMonth = $orderedMonths->filter(fn (Carbon $date) => 
             $date->equalTo($now)
         );
@@ -185,7 +185,7 @@ class AdminPanelProvider extends PanelProvider
             ->sort(10)
             ->url('/admin/expense/overview');
 
-        // 动态添加 IP Providers
+        // Add IP Providers dynamically
         $providers = Provider::query()
             ->orderBy('name')
             ->get();
@@ -199,7 +199,7 @@ class AdminPanelProvider extends PanelProvider
                 ->url('/admin/expense/provider?provider=' . $provider->id . '&type=ip');
         }
 
-        // 动态添加 IPT Providers
+        // Add IPT Providers dynamically
         $iptProviders = IptProvider::query()
             ->orderBy('name')
             ->get();
@@ -213,7 +213,7 @@ class AdminPanelProvider extends PanelProvider
                 ->url('/admin/expense/provider?provider=' . $iptProvider->id . '&type=ipt');
         }
 
-        // 动态添加 Datacenter Providers
+        // Add Datacenter Providers dynamically
         $datacenterProviders = collect([]);
         if (Schema::hasTable('datacenter_providers')) {
             try {
@@ -222,13 +222,13 @@ class AdminPanelProvider extends PanelProvider
                     ->orderBy('name')
                     ->get();
             } catch (\Exception $e) {
-                // 如果查询失败，返回空集合
+                // Return empty collection if query fails
                 $datacenterProviders = collect([]);
             }
         }
 
         foreach ($datacenterProviders as $index => $datacenterProvider) {
-            // 组合显示：Name + Location，如 "Equinix-HK2"
+            // Combine Name + Location, e.g., "Equinix-HK2"
             $label = $datacenterProvider->name;
             if (!empty($datacenterProvider->location)) {
                 $label = $datacenterProvider->name . '-' . $datacenterProvider->location;

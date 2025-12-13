@@ -22,32 +22,32 @@ class IpAssetStatsOverview extends BaseWidget
             Card::make('Total IP Assets', $total)
                 ->icon('heroicon-o-server-stack')
                 ->color('primary')
-                ->description('所有IP资产'),
+                ->description('All IP assets in the system'),
             
             Card::make('Active', $active)
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
-                ->description('活跃状态'),
+                ->description('Currently active'),
             
             Card::make('Reserved', $reserved)
                 ->icon('heroicon-o-clock')
                 ->color('warning')
-                ->description('预留状态'),
+                ->description('Reserved for future use'),
             
             Card::make('Released', $released)
                 ->icon('heroicon-o-x-circle')
                 ->color('danger')
-                ->description('已释放'),
+                ->description('Released assets'),
             
             Card::make('Total Cost', '$' . number_format($totalCost, 2))
                 ->icon('heroicon-o-currency-dollar')
                 ->color('info')
-                ->description('总成本'),
+                ->description('Sum of all costs'),
             
             Card::make('Total Price', '$' . number_format($totalPrice, 2))
                 ->icon('heroicon-o-banknotes')
                 ->color('success')
-                ->description('总价格'),
+                ->description('Sum of all prices'),
         ];
     }
 }
