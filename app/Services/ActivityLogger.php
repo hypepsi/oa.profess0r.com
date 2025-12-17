@@ -34,7 +34,7 @@ class ActivityLogger
     /**
      * 记录登录
      */
-    public static function logLogin(\Illuminate\Contracts\Auth\Authenticatable $user): void
+    public static function logLogin($user): void
     {
         // 防止重复记录：检查最近1秒内是否有相同的登录记录
         $recentLogin = ActivityLog::where('user_id', $user->id)
@@ -62,7 +62,7 @@ class ActivityLogger
     /**
      * 记录登出
      */
-    public static function logLogout(\Illuminate\Contracts\Auth\Authenticatable $user): void
+    public static function logLogout($user): void
     {
         // 防止重复记录：检查最近1秒内是否有相同的登出记录
         $recentLogout = ActivityLog::where('user_id', $user->id)
@@ -122,6 +122,9 @@ class ActivityLogger
             'Employee' => $model->name ?? "ID: {$model->id}",
             'Workflow' => $model->title ?? "ID: {$model->id}",
             'WorkflowUpdate' => "Update #{$model->id}",
+            'BillingOtherItem' => $model->title ?? "ID: {$model->id}",
+            'CustomerBillingPayment' => "Payment {$model->billing_year}-{$model->billing_month}",
+            'BillingPaymentRecord' => "Record #{$model->id}",
             default => "ID: {$model->id}",
         };
     }

@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\IpAssetResource\Pages;
 
 use App\Filament\Resources\IpAssetResource;
-use App\Filament\Resources\IpAssetResource\Widgets\IpAssetStatsOverview;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
@@ -18,10 +17,13 @@ class ListIpAssets extends ListRecords
         ];
     }
 
+    /**
+     * 在列表页顶部显示统计卡片
+     */
     protected function getHeaderWidgets(): array
     {
         return [
-            IpAssetStatsOverview::class,
+            IpAssetResource\Widgets\IpAssetStatsOverview::class,
         ];
     }
 }

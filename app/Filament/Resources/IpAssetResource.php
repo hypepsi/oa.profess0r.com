@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\IpAssetResource\Pages;
-use App\Filament\Resources\IpAssetResource\Widgets\IpAssetStatsOverview;
 use App\Models\IpAsset;
 use App\Models\Provider;
 use App\Models\Customer;
@@ -57,6 +56,11 @@ class IpAssetResource extends Resource
                 ->label('Location')
                 ->options(Location::all()->pluck('name', 'id'))
                 ->searchable(),
+
+            Forms\Components\TextInput::make('geo_location')
+                ->label('Geo Location')
+                ->maxLength(255)
+                ->placeholder('e.g., US-West, EU-Central, Asia-Pacific'),
 
             Forms\Components\Select::make('ipt_provider_id')
                 ->label('IPT Provider')
@@ -177,17 +181,9 @@ class IpAssetResource extends Resource
                         $filename = 'ip_assets_export_' . now()->format('Ymd_His') . '.xlsx';
 
                         return Excel::download(new class($data) implements \Maatwebsite\Excel\Concerns\FromCollection {
-                            /** @var array<int, array<string, mixed>> */
-                            protected array $data;
-                            
-                            /** @param array<int, array<string, mixed>> $data */
-                            public function __construct(array $data) { 
-                                $this->data = $data; 
-                            }
-                            
-                            public function collection(): \Illuminate\Support\Collection { 
-                                return collect($this->data); 
-                            }
+                            protected $data;
+                            public function __construct($data) { $this->data = $data; }
+                            public function collection() { return collect($this->data); }
                         }, $filename);
                     }),
             ])
@@ -197,6 +193,10 @@ class IpAssetResource extends Resource
                 Tables\Columns\TextColumn::make('client.name')->label('Client')->searchable(),
                 Tables\Columns\TextColumn::make('salesPerson.name')->label('Sales Person')->searchable(),
                 Tables\Columns\TextColumn::make('location.name')->label('Location')->searchable(),
+                Tables\Columns\TextColumn::make('geo_location')
+                    ->label('Geo Location')
+                    ->searchable()
+                    ->placeholder('—'),
                 Tables\Columns\TextColumn::make('iptProvider.name')->label('IPT Provider')->searchable(),
                 Tables\Columns\TextColumn::make('type')->label('Type')->searchable(),
                 Tables\Columns\TextColumn::make('asn')->label('ASN')->searchable(),
@@ -207,7 +207,8 @@ class IpAssetResource extends Resource
                     ->label('Created at')
                     ->date('Y-m-d')
                     ->sortable()
-                    ->tooltip(fn (IpAsset $record) => $record->created_at?->setTimezone('Asia/Shanghai')->format('Y-m-d H:i:s')),
+                    ->tooltip(fn (IpAsset $record) => $record->created_at?->setTimezone('Asia/Shanghai')->format('Y-m-d H:i:s'))
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([])
             ->actions([

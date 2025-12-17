@@ -34,24 +34,6 @@ class ListActivityLogs extends ListRecords
                     $this->quickFilter = 'workflows';
                     $this->resetTable();
                 }),
-            Actions\Action::make('filter_billing')
-                ->label('Billing')
-                ->icon('heroicon-o-banknotes')
-                ->color('success')
-                ->outlined()
-                ->action(function () {
-                    $this->quickFilter = 'billing';
-                    $this->resetTable();
-                }),
-            Actions\Action::make('filter_expense')
-                ->label('Expense')
-                ->icon('heroicon-o-arrow-trending-down')
-                ->color('warning')
-                ->outlined()
-                ->action(function () {
-                    $this->quickFilter = 'expense';
-                    $this->resetTable();
-                }),
             Actions\Action::make('filter_logins')
                 ->label('Login/Logout')
                 ->icon('heroicon-o-key')
@@ -88,233 +70,22 @@ class ListActivityLogs extends ListRecords
                     $this->quickFilter = 'deleted';
                     $this->resetTable();
                 }),
-            Actions\ActionGroup::make([
-                Actions\Action::make('clean_filtered')
-                    ->label('Delete Filtered Logs')
-                    ->icon('heroicon-o-funnel')
-                    ->color('warning')
-                    ->requiresConfirmation()
-                    ->modalHeading('Delete Filtered Activity Logs')
-                    ->modalDescription(fn () => $this->getFilteredDeleteDescription())
-                    ->modalSubmitActionLabel('Yes, delete')
-                    ->modalCancelActionLabel('Cancel')
-                    ->visible(fn () => !empty($this->quickFilter))
-                    ->action(function () {
-                        $this->cleanFilteredLogs();
-                    }),
-                Actions\Action::make('clean_24h')
-                    ->label('24 Hours')
-                    ->icon('heroicon-o-clock')
-                    ->requiresConfirmation()
-                    ->modalHeading('Clean Activity Logs')
-                    ->modalDescription('Are you sure you want to delete all activity logs from the last 24 hours? This action cannot be undone.')
-                    ->modalSubmitActionLabel('Yes, delete')
-                    ->modalCancelActionLabel('Cancel')
-                    ->action(function () {
-                        $this->cleanRecentLogs(24);
-                    }),
-                Actions\Action::make('clean_7d')
-                    ->label('7 Days')
-                    ->icon('heroicon-o-calendar')
-                    ->requiresConfirmation()
-                    ->modalHeading('Clean Activity Logs')
-                    ->modalDescription('Are you sure you want to delete all activity logs from the last 7 days? This action cannot be undone.')
-                    ->modalSubmitActionLabel('Yes, delete')
-                    ->modalCancelActionLabel('Cancel')
-                    ->action(function () {
-                        $this->cleanRecentLogs(7 * 24);
-                    }),
-                Actions\Action::make('clean_30d')
-                    ->label('30 Days')
-                    ->icon('heroicon-o-calendar-days')
-                    ->requiresConfirmation()
-                    ->modalHeading('Clean Activity Logs')
-                    ->modalDescription('Are you sure you want to delete all activity logs from the last 30 days? This action cannot be undone.')
-                    ->modalSubmitActionLabel('Yes, delete')
-                    ->modalCancelActionLabel('Cancel')
-                    ->action(function () {
-                        $this->cleanRecentLogs(30 * 24);
-                    }),
-                Actions\Action::make('clean_all')
-                    ->label('All Logs')
-                    ->icon('heroicon-o-x-circle')
-                    ->color('danger')
-                    ->requiresConfirmation()
-                    ->modalHeading('Delete All Activity Logs')
-                    ->modalDescription('Are you sure you want to delete ALL activity logs? This action cannot be undone and will delete every single log record.')
-                    ->modalSubmitActionLabel('Yes, delete all')
-                    ->modalCancelActionLabel('Cancel')
-                    ->action(function () {
-                        $this->cleanAllLogs();
-                    }),
-            ])
-                ->label('Clean Logs')
-                ->icon('heroicon-o-trash')
-                ->color('danger'),
         ];
-    }
-
-    public function cleanRecentLogs(int $hours): void
-    {
-        $cutoffDate = \Carbon\Carbon::now('Asia/Shanghai')->subHours($hours);
-        
-        // 先统计要删除的数量（最近X时间的日志）
-        $countToDelete = \App\Models\ActivityLog::where('created_at', '>=', $cutoffDate)->count();
-        
-        if ($countToDelete === 0) {
-            $timeLabel = match(true) {
-                $hours < 24 => "{$hours} hours",
-                $hours < 168 => (int)($hours / 24) . " days",
-                default => (int)($hours / 24) . " days",
-            };
-            
-            \Filament\Notifications\Notification::make()
-                ->title('No logs to clean')
-                ->body("There are no activity logs from the last {$timeLabel}.")
-                ->warning()
-                ->send();
-            return;
-        }
-        
-        // 删除最近X时间的日志
-        $deletedCount = \App\Models\ActivityLog::where('created_at', '>=', $cutoffDate)->delete();
-
-        $timeLabel = match(true) {
-            $hours < 24 => "{$hours} hours",
-            $hours < 168 => (int)($hours / 24) . " days",
-            default => (int)($hours / 24) . " days",
-        };
-
-        \Filament\Notifications\Notification::make()
-            ->title('Logs cleaned')
-            ->body("Successfully deleted {$deletedCount} activity log(s) from the last {$timeLabel}.")
-            ->success()
-            ->send();
-
-        $this->resetTable();
-    }
-
-    public function cleanAllLogs(): void
-    {
-        $totalCount = \App\Models\ActivityLog::count();
-        
-        if ($totalCount === 0) {
-            \Filament\Notifications\Notification::make()
-                ->title('No logs to clean')
-                ->body('There are no activity logs to delete.')
-                ->warning()
-                ->send();
-            return;
-        }
-        
-        $deletedCount = \App\Models\ActivityLog::query()->delete();
-
-        \Filament\Notifications\Notification::make()
-            ->title('All logs deleted')
-            ->body("Successfully deleted all {$deletedCount} activity log(s).")
-            ->success()
-            ->send();
-
-        $this->resetTable();
-    }
-
-    public function getFilteredDeleteDescription(): string
-    {
-        $filterName = match($this->quickFilter) {
-            'ip_assets' => 'IP Assets',
-            'workflows' => 'Workflows',
-            'billing' => 'Billing',
-            'expense' => 'Expense',
-            'logins' => 'Login/Logout',
-            'created' => 'Creations',
-            'updated' => 'Updates',
-            'deleted' => 'Deletions',
-            default => 'Filtered',
-        };
-        
-        return "Are you sure you want to delete all activity logs matching the current filter ({$filterName})? This action cannot be undone.";
-    }
-
-    public function cleanFilteredLogs(): void
-    {
-        $query = \App\Models\ActivityLog::query();
-        
-        // 应用当前过滤器
-        match($this->quickFilter) {
-            'ip_assets' => $query->where('model_type', 'App\\Models\\IpAsset'),
-            'workflows' => $query->where('model_type', 'App\\Models\\Workflow'),
-            'billing' => $query->whereIn('model_type', [
-                'App\\Models\\CustomerBillingPayment',
-                'App\\Models\\BillingPaymentRecord',
-                'App\\Models\\BillingOtherItem',
-            ]),
-            'expense' => $query->whereIn('model_type', [
-                'App\\Models\\ProviderExpensePayment',
-                'App\\Models\\ExpensePaymentRecord',
-            ]),
-            'logins' => $query->whereIn('action', ['login', 'logout']),
-            'created' => $query->where('action', 'created'),
-            'updated' => $query->where('action', 'updated'),
-            'deleted' => $query->where('action', 'deleted'),
-            default => null,
-        };
-        
-        $countToDelete = $query->count();
-        
-        if ($countToDelete === 0) {
-            \Filament\Notifications\Notification::make()
-                ->title('No logs to delete')
-                ->body('There are no activity logs matching the current filter.')
-                ->warning()
-                ->send();
-            return;
-        }
-        
-        $deletedCount = $query->delete();
-        
-        $filterName = match($this->quickFilter) {
-            'ip_assets' => 'IP Assets',
-            'workflows' => 'Workflows',
-            'billing' => 'Billing',
-            'expense' => 'Expense',
-            'logins' => 'Login/Logout',
-            'created' => 'Creations',
-            'updated' => 'Updates',
-            'deleted' => 'Deletions',
-            default => 'Filtered',
-        };
-
-        \Filament\Notifications\Notification::make()
-            ->title('Filtered logs deleted')
-            ->body("Successfully deleted {$deletedCount} activity log(s) matching {$filterName} filter.")
-            ->success()
-            ->send();
-
-        $this->resetTable();
     }
 
     protected function getTableQuery(): Builder
     {
         $query = parent::getTableQuery();
 
-        // 根据快速过滤器修改查询 - 使用索引优化
+        // 根据快速过滤器修改查询
         match($this->quickFilter) {
             'ip_assets' => $query->where('model_type', 'App\\Models\\IpAsset'),
             'workflows' => $query->where('model_type', 'App\\Models\\Workflow'),
-            'billing' => $query->whereIn('model_type', [
-                'App\\Models\\CustomerBillingPayment',
-                'App\\Models\\BillingPaymentRecord',
-                'App\\Models\\BillingOtherItem',
-            ]),
-            'expense' => $query->whereIn('model_type', [
-                'App\\Models\\ProviderExpensePayment',
-                'App\\Models\\ExpensePaymentRecord',
-            ]),
             'logins' => $query->whereIn('action', ['login', 'logout']),
             'created' => $query->where('action', 'created'),
             'updated' => $query->where('action', 'updated'),
             'deleted' => $query->where('action', 'deleted'),
-            default => null, // 无操作
+            default => null,
         };
 
         return $query;

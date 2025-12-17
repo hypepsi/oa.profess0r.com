@@ -16,7 +16,7 @@ class IncomeOtherItemResource extends Resource
 {
     protected static ?string $model = IncomeOtherItem::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-banknotes';
+    protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
 
     protected static ?string $navigationGroup = 'Income';
 
@@ -24,7 +24,7 @@ class IncomeOtherItemResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Other Income';
 
-    protected static ?int $navigationSort = 800;
+    protected static ?int $navigationSort = 900;
 
     public static function form(Form $form): Form
     {
@@ -288,7 +288,7 @@ class IncomeOtherItemResource extends Resource
         // }
         
         // 暂时返回一个默认值，实际使用时应该从API获取
-        return 7.2; // 示例汇率
+        return 7.0; // 默认汇率 USD to CNY
     }
 
     protected static function mutateFormDataBeforeCreate(array $data): array

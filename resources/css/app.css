@@ -10,62 +10,9 @@
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
-/* ===== UNIFIED DESIGN SYSTEM ===== */
-/* All pages follow IP Assets style: icons + colors + descriptions */
-
-/* List Items - Clear primary/secondary distinction */
-.oa-list-primary {
-    font-size: 0.9375rem !important;
-    font-weight: 600 !important;
-    color: rgb(17 24 39) !important;
-}
-.dark .oa-list-primary {
-    color: rgb(243 244 246) !important;
-}
-
-.oa-list-secondary {
-    font-size: 0.75rem !important;
-    font-weight: 500 !important;
-    color: rgb(107 114 128) !important;
-    margin-top: 0.25rem !important;
-}
-
-.oa-list-value {
-    font-size: 1.125rem !important;
-    font-weight: 700 !important;
-    letter-spacing: -0.025em !important;
-}
-
-/* Table Enhancements - Headers stand out */
-.fi-ta-header-cell {
-    font-weight: 700 !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.025em !important;
-    font-size: 0.75rem !important;
-}
-
-/* Unified badge styling */
+/* 全局统一 Badge 字体与大小，保持界面一致 */
 .fi-badge {
-    font-size: 0.8125rem !important;
-    font-weight: 600 !important;
-    text-transform: capitalize !important;
-    padding: 0.25rem 0.625rem !important;
-}
-
-/* Unified button sizing */
-.fi-btn {
-    font-size: 0.875rem !important;
-    font-weight: 600 !important;
-    padding: 0.625rem 1rem !important;
-}
-
-/* Form field hierarchy */
-.fi-fo-field-wrp-label {
-    font-weight: 600 !important;
-    font-size: 0.875rem !important;
-}
-
-.fi-fo-field-wrp-hint {
-    font-size: 0.75rem !important;
-    color: rgb(107 114 128) !important;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: capitalize;
 }

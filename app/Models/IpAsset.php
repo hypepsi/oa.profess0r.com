@@ -15,13 +15,27 @@ class IpAsset extends Model
         'client_id',
         'sales_person_id',
         'location_id',
+        'geo_location',
         'ipt_provider_id',
         'type',
         'asn',
         'status',
+        'released_at',
+        'client_changed_at',
         'cost',
+        'cost_changed_at',
         'price',
+        'price_changed_at',
         'notes',
+        'meta',
+    ];
+
+    protected $casts = [
+        'released_at' => 'datetime',
+        'client_changed_at' => 'datetime',
+        'cost_changed_at' => 'datetime',
+        'price_changed_at' => 'datetime',
+        'meta' => 'array',
     ];
 
     // 关联 IP Provider

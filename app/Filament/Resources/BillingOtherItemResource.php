@@ -18,13 +18,11 @@ class BillingOtherItemResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-list-bullet';
 
-    protected static ?string $navigationGroup = 'Income';
+    protected static bool $shouldRegisterNavigation = false; // Manually registered in AdminPanelProvider
 
     protected static ?string $navigationLabel = 'Add-ons';
 
     protected static ?string $pluralModelLabel = 'Add-ons';
-
-    protected static ?int $navigationSort = 900;
 
     public static function form(Form $form): Form
     {
@@ -69,7 +67,7 @@ class BillingOtherItemResource extends Resource
                             ->label('Effective from')
                             ->helperText('Applies every month from this date until you release it.')
                             ->default(now('Asia/Shanghai'))
-                            ->live()
+                            ->reactive()
                             ->afterStateUpdated(function ($state, callable $set) {
                                 if ($state) {
                                     $date = Carbon::parse($state);
@@ -122,10 +120,6 @@ class BillingOtherItemResource extends Resource
                     ->label('Title')
                     ->wrap()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('category')
-                    ->label('Category')
-                    ->badge()
-                    ->color('gray'),
                 Tables\Columns\TextColumn::make('billing_period')
                     ->label('Starts from')
                     ->getStateUsing(fn (BillingOtherItem $record) => Carbon::createFromDate($record->billing_year, $record->billing_month, $record->billing_day ?? 1, 'Asia/Shanghai')->format('M d, Y'))
@@ -146,8 +140,8 @@ class BillingOtherItemResource extends Resource
                         'released' => 'heroicon-o-archive-box-x-mark',
                     ]),
                 Tables\Columns\TextColumn::make('updated_at')
-                    ->label('Updated at')
-                    ->since()
+                    ->label('Updated At')
+                    ->dateTime('M d, Y H:i', 'Asia/Shanghai')
                     ->sortable(),
             ])
             ->filters([
@@ -263,9 +257,6 @@ class BillingOtherItemResource extends Resource
         return self::mutateFormData($data);
     }
 
-    /**
-     * @return array<int, string>
-     */
     protected static function getYearOptions(): array
     {
         $current = now('Asia/Shanghai')->year;
@@ -277,9 +268,6 @@ class BillingOtherItemResource extends Resource
         return $years;
     }
 
-    /**
-     * @return array<int, string>
-     */
     protected static function getMonthOptions(): array
     {
         $months = [];
@@ -290,9 +278,6 @@ class BillingOtherItemResource extends Resource
         return $months;
     }
 
-    /**
-     * @return array<int, string>
-     */
     protected static function getDayOptions(): array
     {
         $days = [];

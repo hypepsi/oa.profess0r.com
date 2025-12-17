@@ -25,7 +25,6 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Illuminate\Support\Facades\Schema;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -52,9 +51,6 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->navigationGroups([
                 NavigationGroup::make()
-                    ->label('Metadata')
-                    ->collapsed(),
-                NavigationGroup::make()
                     ->label('Income')
                     ->collapsed(),
                 NavigationGroup::make()
@@ -62,17 +58,18 @@ class AdminPanelProvider extends PanelProvider
                     ->collapsed(),
                 NavigationGroup::make()
                     ->label('Workflows'),
+                NavigationGroup::make()
+                    ->label('Metadata')
+                    ->collapsed()
+                    ->collapsible(true),
             ])
             ->renderHook(
                 'panels::body.end',
                 fn () => view('filament.workflow-table-scripts')
             )
-            ->renderHook(
-                'panels::head.end',
-                fn () => view('filament.sidebar-scroll-preserve')
-            )
             ->navigationItems(array_merge(
-                $this->getBillingNavigationItems(),
+                $this->getIncomeNavigationItems(),
+                $this->getExpenseNavigationItems(),
                 $this->getWorkflowNavigationItems()
             ))
             ->middleware([
@@ -94,43 +91,31 @@ class AdminPanelProvider extends PanelProvider
     protected function getWorkflowNavigationItems(): array
     {
         $now = Carbon::now('Asia/Shanghai')->startOfMonth();
-        
-        // Get all months with workflow data
+        $months = collect([$now]);
+
         $workflowMonths = Workflow::query()
-            ->selectRaw('DATE(created_at) as date')
-            ->distinct()
-            ->pluck('date')
-            ->map(fn ($date) => Carbon::parse($date)->setTimezone('Asia/Shanghai')->startOfMonth())
+            ->orderByDesc('created_at')
+            ->pluck('created_at')
+            ->map(fn ($timestamp) => Carbon::parse($timestamp)->setTimezone('Asia/Shanghai')->startOfMonth())
             ->unique(fn (Carbon $date) => $date->format('Y-m'))
-            ->filter(fn (Carbon $date) => $date->lessThanOrEqualTo($now)) // Only show current and past months
-            ->sortByDesc(fn (Carbon $date) => $date->format('Y-m'))
             ->values();
 
-        // Ensure current month exists (show even if no data)
-        $currentMonthExists = $workflowMonths->contains(fn (Carbon $date) => $date->equalTo($now));
-        if (!$currentMonthExists) {
-            $workflowMonths->prepend($now);
+        $previousMonth = $now->copy()->subMonth();
+        if ($workflowMonths->doesntContain(fn (Carbon $date) => $date->equalTo($previousMonth))) {
+            $workflowMonths->push($previousMonth);
         }
 
-        // Keep last 6 months (current and historical only, no future months)
-        $orderedMonths = $workflowMonths
-            ->unique(fn (Carbon $date) => $date->format('Y-m'))
+        $historicalMonths = $workflowMonths
+            ->filter(fn (Carbon $date) => $date->lessThanOrEqualTo($now))
             ->sortByDesc(fn (Carbon $date) => $date->format('Y-m'))
-            ->take(6)
+            ->take(12);
+
+        $orderedMonths = $months
+            ->merge($historicalMonths)
+            ->unique(fn (Carbon $date) => $date->format('Y-m'))
             ->values();
 
-        // Reorder: current month first, then historical months
-        $currentMonth = $orderedMonths->filter(fn (Carbon $date) => 
-            $date->equalTo($now)
-        );
-
-        $historical = $orderedMonths->filter(fn (Carbon $date) => 
-            $date->lessThan($now)
-        )->sortByDesc(fn (Carbon $date) => $date->format('Y-m'));
-
-        $finalMonths = $currentMonth->merge($historical);
-
-        return $finalMonths
+        return $orderedMonths
             ->map(function (Carbon $date, int $index) {
                 $year = $date->format('Y');
                 $month = $date->format('n');
@@ -145,18 +130,19 @@ class AdminPanelProvider extends PanelProvider
             ->toArray();
     }
 
-    protected function getBillingNavigationItems(): array
+    protected function getIncomeNavigationItems(): array
     {
         $items = [];
 
-        // Income group items
+        // Income Overview
         $items[] = NavigationItem::make('income-overview')
-            ->label('Income Overview')
-            ->icon('heroicon-o-banknotes')
+            ->label('Overview')
+            ->icon('heroicon-o-chart-bar')
             ->group('Income')
             ->sort(10)
             ->url('/admin/billing/overview');
 
+        // Customer List
         $customers = Customer::query()
             ->orderBy('name')
             ->get();
@@ -170,14 +156,24 @@ class AdminPanelProvider extends PanelProvider
                 ->url('/admin/billing/customer?customer=' . $customer->id);
         }
 
+        // Add-ons
         $items[] = NavigationItem::make('income-add-ons')
             ->label('Add-ons')
             ->icon('heroicon-o-plus-circle')
             ->group('Income')
-            ->sort(900)
+            ->sort(800)
             ->url('/admin/billing-other-items');
 
-        // Expense group items
+        // Other Income (should be registered by IncomeOtherItemResource, but we ensure it's at the end)
+
+        return $items;
+    }
+
+    protected function getExpenseNavigationItems(): array
+    {
+        $items = [];
+
+        // Expense Overview
         $items[] = NavigationItem::make('expense-overview')
             ->label('Expense Overview')
             ->icon('heroicon-o-arrow-trending-down')
@@ -185,61 +181,49 @@ class AdminPanelProvider extends PanelProvider
             ->sort(10)
             ->url('/admin/expense/overview');
 
-        // Add IP Providers dynamically
+        // IP Providers
         $providers = Provider::query()
             ->orderBy('name')
             ->get();
 
         foreach ($providers as $index => $provider) {
-            $items[] = NavigationItem::make("expense-ip-provider-{$provider->id}")
-                ->label($provider->name)
-                ->icon('heroicon-o-building-office-2')
+            $items[] = NavigationItem::make("expense-provider-{$provider->id}")
+                ->label($provider->name . ' (IP)')
+                ->icon('heroicon-o-globe-alt')
                 ->group('Expense')
                 ->sort(20 + $index)
                 ->url('/admin/expense/provider?provider=' . $provider->id . '&type=ip');
         }
 
-        // Add IPT Providers dynamically
+        // IPT Providers
         $iptProviders = IptProvider::query()
             ->orderBy('name')
             ->get();
 
+        $offset = count($providers);
         foreach ($iptProviders as $index => $iptProvider) {
-            $items[] = NavigationItem::make("expense-ipt-provider-{$iptProvider->id}")
-                ->label($iptProvider->name)
-                ->icon('heroicon-o-server-stack')
+            $items[] = NavigationItem::make("expense-ipt-{$iptProvider->id}")
+                ->label($iptProvider->name . ' (IPT)')
+                ->icon('heroicon-o-signal')
                 ->group('Expense')
-                ->sort(100 + $index)
+                ->sort(20 + $offset + $index)
                 ->url('/admin/expense/provider?provider=' . $iptProvider->id . '&type=ipt');
         }
 
-        // Add Datacenter Providers dynamically
-        $datacenterProviders = collect([]);
-        if (Schema::hasTable('datacenter_providers')) {
-            try {
-                $datacenterProviders = DatacenterProvider::query()
-                    ->where('active', true)
-                    ->orderBy('name')
-                    ->get();
-            } catch (\Exception $e) {
-                // Return empty collection if query fails
-                $datacenterProviders = collect([]);
-            }
-        }
+        // Datacenter Providers
+        $datacenterProviders = DatacenterProvider::query()
+            ->where('active', true)
+            ->orderBy('name')
+            ->get();
 
-        foreach ($datacenterProviders as $index => $datacenterProvider) {
-            // Combine Name + Location, e.g., "Equinix-HK2"
-            $label = $datacenterProvider->name;
-            if (!empty($datacenterProvider->location)) {
-                $label = $datacenterProvider->name . '-' . $datacenterProvider->location;
-            }
-            
-            $items[] = NavigationItem::make("expense-datacenter-provider-{$datacenterProvider->id}")
-                ->label($label)
-                ->icon('heroicon-o-building-office')
+        $offset += count($iptProviders);
+        foreach ($datacenterProviders as $index => $datacenter) {
+            $items[] = NavigationItem::make("expense-datacenter-{$datacenter->id}")
+                ->label($datacenter->name . ' (DC)')
+                ->icon('heroicon-o-building-office-2')
                 ->group('Expense')
-                ->sort(200 + $index)
-                ->url('/admin/expense/provider?provider=' . $datacenterProvider->id . '&type=datacenter');
+                ->sort(20 + $offset + $index)
+                ->url('/admin/expense/provider?provider=' . $datacenter->id . '&type=datacenter');
         }
 
         return $items;

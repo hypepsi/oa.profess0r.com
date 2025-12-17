@@ -4,10 +4,12 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ActivityLogResource\Pages;
 use App\Models\ActivityLog;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
 class ActivityLogResource extends Resource
 {
@@ -49,9 +51,13 @@ class ActivityLogResource extends Resource
                         'deleted' => 'danger',
                         'login' => 'info',
                         'logout' => 'gray',
+                        'payment_recorded', 'expense_payment_recorded' => 'success',
+                        'invoice_updated', 'expense_invoice_updated' => 'warning',
+                        'payment_waived', 'expense_waived' => 'warning',
+                        'payment_reset', 'expense_reset' => 'danger',
                         default => 'primary',
                     })
-                    ->formatStateUsing(fn (string $state) => ucfirst($state))
+                    ->formatStateUsing(fn (string $state) => ucwords(str_replace('_', ' ', $state)))
                     ->sortable()
                     ->searchable(),
 
@@ -88,28 +94,34 @@ class ActivityLogResource extends Resource
                         'deleted' => 'Deleted',
                         'login' => 'Login',
                         'logout' => 'Logout',
+                        'payment_recorded' => 'Income: Payment Recorded',
+                        'invoice_updated' => 'Income: Invoice Updated',
+                        'payment_waived' => 'Income: Payment Waived',
+                        'payment_reset' => 'Income: Payment Reset',
+                        'expense_payment_recorded' => 'Expense: Payment Recorded',
+                        'expense_invoice_updated' => 'Expense: Invoice Updated',
+                        'expense_waived' => 'Expense: Waived',
+                        'expense_reset' => 'Expense: Reset',
                     ])
                     ->multiple(),
 
                 Tables\Filters\SelectFilter::make('model_type')
-                    ->label('Model Type')
+                    ->label('Module')
                     ->options([
-                        'App\\Models\\IpAsset' => 'IP Asset',
-                        'App\\Models\\Device' => 'Device',
-                        'App\\Models\\Location' => 'Location',
-                        'App\\Models\\Customer' => 'Customer',
-                        'App\\Models\\Provider' => 'Provider',
-                        'App\\Models\\IptProvider' => 'IPT Provider',
-                        'App\\Models\\DatacenterProvider' => 'Datacenter Provider',
-                        'App\\Models\\Employee' => 'Employee',
-                        'App\\Models\\Workflow' => 'Workflow',
-                        'App\\Models\\WorkflowUpdate' => 'Workflow Update',
-                        'App\\Models\\BillingOtherItem' => 'Billing Add-on',
-                        'App\\Models\\BillingPaymentRecord' => 'Payment Record',
-                        'App\\Models\\CustomerBillingPayment' => 'Billing Payment',
-                        'App\\Models\\ProviderExpensePayment' => 'Expense Payment',
-                        'App\\Models\\ExpensePaymentRecord' => 'Expense Payment Record',
+                        'App\\Models\\IpAsset' => 'IP Assets',
+                        'App\\Models\\Device' => 'Devices',
+                        'App\\Models\\Location' => 'Locations',
+                        'App\\Models\\Customer' => 'Customers',
+                        'App\\Models\\Provider' => 'IP Providers',
+                        'App\\Models\\IptProvider' => 'IPT Providers',
+                        'App\\Models\\DatacenterProvider' => 'Datacenter Providers',
+                        'App\\Models\\Employee' => 'Employees',
+                        'App\\Models\\Workflow' => 'Workflows',
+                        'App\\Models\\WorkflowUpdate' => 'Workflow Updates',
+                        'App\\Models\\BillingOtherItem' => 'Income Add-ons',
                         'App\\Models\\IncomeOtherItem' => 'Other Income',
+                        'App\\Models\\CustomerBillingPayment' => 'Customer Billing',
+                        'App\\Models\\ProviderExpensePayment' => 'Provider Expense',
                     ])
                     ->multiple(),
 
@@ -136,9 +148,98 @@ class ActivityLogResource extends Resource
                 Tables\Actions\ViewAction::make()
                     ->modalHeading('Activity Log Details')
                     ->modalContent(fn (ActivityLog $record) => view('filament.resources.activity-log-resource.view-details', ['record' => $record])),
+                Tables\Actions\DeleteAction::make()
+                    ->requiresConfirmation()
+                    ->modalHeading('Delete Log Entry')
+                    ->modalDescription('Are you sure you want to delete this log entry? This action cannot be undone.')
+                    ->successNotificationTitle('Log entry deleted'),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->requiresConfirmation()
+                        ->modalHeading('Delete Selected Logs')
+                        ->modalDescription('Are you sure you want to delete the selected log entries? This action cannot be undone.')
+                        ->successNotificationTitle('Selected logs deleted'),
+                ]),
+            ])
+            ->headerActions([
+                Tables\Actions\Action::make('delete_filtered')
+                    ->label('Delete Filtered Logs')
+                    ->icon('heroicon-o-funnel')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->modalHeading('Delete Filtered Logs')
+                    ->modalDescription('This will delete only the logs matching your current filters. All other logs will remain.')
+                    ->modalSubmitActionLabel('Delete Filtered Logs')
+                    ->action(function (Tables\Table $table) {
+                        $query = $table->getFilteredTableQuery();
+                        $count = $query->count();
+                        $query->delete();
+                        
+                        Notification::make()
+                            ->success()
+                            ->title('Filtered Logs Deleted')
+                            ->body("Successfully deleted {$count} filtered log entries.")
+                            ->send();
+                    })
+                    ->visible(fn () => true), // Always visible since filters may be applied
+                Tables\Actions\Action::make('delete_old_logs')
+                    ->label('Clean Old Logs')
+                    ->icon('heroicon-o-clock')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->form([
+                        \Filament\Forms\Components\Select::make('days')
+                            ->label('Delete logs older than')
+                            ->options([
+                                7 => '7 days',
+                                14 => '14 days',
+                                30 => '30 days',
+                                60 => '60 days',
+                                90 => '90 days',
+                                180 => '180 days',
+                                365 => '1 year',
+                            ])
+                            ->default(30)
+                            ->required(),
+                    ])
+                    ->modalHeading('Clean Old Activity Logs')
+                    ->modalDescription('This will permanently delete all activity logs older than the selected period.')
+                    ->modalSubmitActionLabel('Delete Old Logs')
+                    ->action(function (array $data) {
+                        $days = $data['days'];
+                        $date = now()->subDays($days);
+                        $count = ActivityLog::where('created_at', '<', $date)->count();
+                        ActivityLog::where('created_at', '<', $date)->delete();
+                        
+                        Notification::make()
+                            ->success()
+                            ->title('Old Logs Deleted')
+                            ->body("Successfully deleted {$count} log entries older than {$days} days.")
+                            ->send();
+                    }),
+                Tables\Actions\Action::make('delete_all_logs')
+                    ->label('Delete ALL Logs')
+                    ->icon('heroicon-o-exclamation-triangle')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('⚠️ Delete ALL Activity Logs')
+                    ->modalDescription('DANGER: This will permanently delete ALL activity logs from the entire system, regardless of any filters. This action cannot be undone!')
+                    ->modalSubmitActionLabel('Yes, Delete Everything')
+                    ->action(function () {
+                        $count = ActivityLog::count();
+                        ActivityLog::query()->delete();
+                        
+                        Notification::make()
+                            ->success()
+                            ->title('All Logs Deleted')
+                            ->body("Successfully deleted all {$count} log entries from the system.")
+                            ->send();
+                    }),
             ])
             ->defaultSort('created_at', 'desc')
-            ->poll('30s') // 每30秒自动刷新
+            ->poll('30s')
             ->emptyStateHeading('No activity logs yet')
             ->emptyStateDescription('Activity logs will appear here as users interact with the system.');
     }

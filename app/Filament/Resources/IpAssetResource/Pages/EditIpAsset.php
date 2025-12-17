@@ -16,4 +16,19 @@ class EditIpAsset extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+
+    /**
+     * 在编辑表单下方显示变更历史记录
+     */
+    public function getFooterWidgetsColumns(): int | array
+    {
+        return 1;
+    }
+
+    protected function getFooterWidgets(): array
+    {
+        return [
+            IpAssetResource\Widgets\ChangeHistoryWidget::class,
+        ];
+    }
 }

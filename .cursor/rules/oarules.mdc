@@ -1,29 +1,22 @@
 ---
-description: FilamentPHP v3 & Laravel 12 开发规范与 OA 业务指南
+description: FilamentPHP v3 开发规范与 OA 系统业务逻辑指南
 globs: **/*.php
 ---
 
 # Project Context
-当前项目是一个基于 **Laravel 12** 和 **Filament v3** 开发的 OA 系统。
-
-# Documentation Sources (双核驱动)
-在回答问题时，请根据问题类型选择正确的文档源：
-1. **后台 UI / 表格 / 表单**: 必须优先参考 @Filament 文档。
-2. **业务逻辑 / 数据库 / 集合 / Blade**: 必须优先参考 @Laravel12 文档（确保使用 v12 最新特性）。
-3. **日志记录**: 参考 @ActivityLog 文档（如果有索引）。
+当前项目是一个基于 Laravel 11 和 Filament v3 开发的 OA 系统。
 
 # Documentation Rules
-- 严禁使用过时的 Filament v2 语法。
-- 严禁使用 Laravel 10/11 的过时写法，优先利用 Laravel 12 的新特性。
+- 在编写任何 Resource、Page、Widget 或 Action 时，**必须** 检索并参考已索引的官方文档 @Filament 。
+- 禁止使用过时的 Filament v2 语法（如 `Filament::registerResources`），必须严格遵循 v3 的 `->schema()` 和 `->form()` 链式调用风格。
 
 # Code Standards
 1. **Schema Builder**: 严禁在 Filament 页面中手写 Blade/HTML，必须使用 `$form->schema([...])` 和 `$table->columns([...])`。
-2. **Type Safety**: 代码必须包含严格的 PHP 类型提示 (Type Hinting)，例如 `public function index(): View`。
+2. **Type Safety**: 尽可能使用 PHP 8.2+ 的类型提示（Type Hinting）。
 3. **Naming**: 
     - Resource 文件名必须以 `Resource.php` 结尾。
     - 数据库迁移文件应遵循 Laravel 标准命名。
 
 # Troubleshooting Strategy
 - 如果遇到报错，首先检查是否遗漏了 `use` 引用。
-- 涉及 UI 问题查阅 @Filament 的 "Common Pitfalls"。
-- 涉及底层报错（如 Container, Eloquent）查阅 @Laravel12 文档。
+- 其次检查 @Filament 文档中的 "Upgrade Guide" 或 "Common Pitfalls"。

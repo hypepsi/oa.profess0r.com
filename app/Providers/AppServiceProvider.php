@@ -6,16 +6,19 @@ use App\Models\BillingOtherItem;
 use App\Models\BillingPaymentRecord;
 use App\Models\Customer;
 use App\Models\CustomerBillingPayment;
-use App\Models\IncomeOtherItem;
+use App\Models\DatacenterProvider;
 use App\Models\Device;
 use App\Models\Employee;
+use App\Models\IncomeOtherItem;
 use App\Models\IpAsset;
 use App\Models\IptProvider;
 use App\Models\Location;
 use App\Models\Provider;
+use App\Models\ProviderExpensePayment;
 use App\Models\Workflow;
 use App\Models\WorkflowUpdate;
 use App\Observers\ActivityLogObserver;
+use App\Observers\IpAssetObserver;
 use App\Listeners\LogUserActivity;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
@@ -46,6 +49,9 @@ class AppServiceProvider extends ServiceProvider
 
         // 注册活动日志 Observer
         $this->registerActivityLogObservers();
+        
+        // 注册 IpAsset 特殊 Observer（用于追踪字段变更时间）
+        IpAsset::observe(IpAssetObserver::class);
 
         // 注册登录/登出事件监听
         Event::listen(Login::class, [LogUserActivity::class, 'handleLogin']);
@@ -58,19 +64,32 @@ class AppServiceProvider extends ServiceProvider
     protected function registerActivityLogObservers(): void
     {
         $models = [
+            // Assets & Infrastructure
             IpAsset::class,
             Device::class,
             Location::class,
+            
+            // People & Organizations
             Customer::class,
+            Employee::class,
+            
+            // Providers
             Provider::class,
             IptProvider::class,
-            Employee::class,
+            DatacenterProvider::class,
+            
+            // Workflows
             Workflow::class,
             WorkflowUpdate::class,
+            
+            // Income
             BillingOtherItem::class,
-            BillingPaymentRecord::class,
-            CustomerBillingPayment::class,
             IncomeOtherItem::class,
+            CustomerBillingPayment::class,
+            BillingPaymentRecord::class,
+            
+            // Expense
+            ProviderExpensePayment::class,
         ];
 
         foreach ($models as $model) {

@@ -6,20 +6,15 @@ use App\Models\BillingPaymentRecord;
 use App\Models\Customer;
 use App\Models\CustomerBillingPayment;
 use App\Services\BillingCalculator;
-use App\Filament\Widgets\CustomerBillingDetailStats;
+use App\Services\BillingActivityLogger;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Filament\Tables\Actions\Action as TableAction;
-use Filament\Tables\Concerns\InteractsWithTable;
-use Filament\Tables\Contracts\HasTable;
-use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
 
-class CustomerBillingDetail extends Page implements HasTable
+class CustomerBillingDetail extends Page
 {
-    use InteractsWithTable;
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
     protected static bool $shouldRegisterNavigation = false;
@@ -104,17 +99,6 @@ class CustomerBillingDetail extends Page implements HasTable
         return 'Billing • ' . $this->customer->name . ' • ' . $periodLabel;
     }
 
-    protected function getHeaderWidgets(): array
-    {
-        return [
-            CustomerBillingDetailStats::make([
-                'snapshot' => $this->snapshot,
-                'totalReceived' => $this->getTotalReceived(),
-                'waivedAmount' => $this->getWaivedAmount(),
-            ]),
-        ];
-    }
-
     protected function getHeaderActions(): array
     {
         return [
@@ -147,47 +131,25 @@ class CustomerBillingDetail extends Page implements HasTable
         ];
     }
 
-    public function table(Table $table): Table
-    {
-        return $table
-            ->query($this->payment->paymentRecords()->getQuery())
-            ->columns([
-                \Filament\Tables\Columns\TextColumn::make('paid_at')
-                    ->label('Date')
-                    ->dateTime('Y-m-d H:i')
-                    ->timezone('Asia/Shanghai')
-                    ->sortable(),
-                \Filament\Tables\Columns\TextColumn::make('amount')
-                    ->label('Amount')
-                    ->money('USD')
-                    ->sortable(),
-                \Filament\Tables\Columns\TextColumn::make('recordedBy.name')
-                    ->label('Recorded By')
-                    ->sortable(),
-            ])
-            ->filters([])
-            ->actions([
-                \Filament\Tables\Actions\DeleteAction::make()
-                    ->requiresConfirmation()
-                    ->modalHeading('Delete Payment Record')
-                    ->modalDescription('Are you sure you would like to do this?')
-                    ->action(function (BillingPaymentRecord $record) {
-                        $this->deletePaymentRecord($record->id);
-                    }),
-            ])
-            ->paginated(false)
-            ->defaultSort('paid_at', 'desc');
-    }
-
     public function updateInvoicedAmount(): void
     {
         $this->validate([
             'invoicedAmount' => 'nullable|numeric|min:0',
         ]);
 
+        $oldAmount = $this->payment->invoiced_amount;
+        
         $this->payment->update([
             'invoiced_amount' => $this->invoicedAmount,
         ]);
+
+        // Log activity
+        BillingActivityLogger::logInvoiceUpdated(
+            $this->payment,
+            $this->customer,
+            $oldAmount,
+            $this->invoicedAmount
+        );
 
         Notification::make()
             ->title('Invoiced amount updated')
@@ -205,13 +167,16 @@ class CustomerBillingDetail extends Page implements HasTable
 
         $amountValue = (float) $this->paymentInput['amount'];
 
-        BillingPaymentRecord::create([
+        $record = BillingPaymentRecord::create([
             'customer_billing_payment_id' => $this->payment->id,
             'amount' => $amountValue,
             'paid_at' => Carbon::now('Asia/Shanghai'),
             'recorded_by_user_id' => Auth::id(),
             'notes' => $this->paymentNote,
         ]);
+
+        // Log activity
+        BillingActivityLogger::logPaymentRecorded($record, $this->payment, $this->customer);
 
         $this->paymentInput = ['amount' => ''];
         $this->paymentNote = '';
@@ -225,34 +190,6 @@ class CustomerBillingDetail extends Page implements HasTable
 
         $this->loadPaymentRecords();
     }
-
-    public function deletePaymentRecord(int $recordId): void
-    {
-        $record = BillingPaymentRecord::findOrFail($recordId);
-        
-        // 确保只能删除属于当前 payment 的记录
-        if ($record->customer_billing_payment_id !== $this->payment->id) {
-            Notification::make()
-                ->title('Unauthorized')
-                ->body('You cannot delete this payment record.')
-                ->danger()
-                ->send();
-            return;
-        }
-
-        $record->delete();
-
-        $this->updatePaymentStatus();
-
-        Notification::make()
-            ->title('Payment record deleted')
-            ->success()
-            ->send();
-
-        $this->loadPaymentRecords();
-    }
-
-
 
     public function partialWaive(): void
     {
@@ -284,6 +221,9 @@ class CustomerBillingDetail extends Page implements HasTable
             'notes' => $this->waiveNote ?: $this->payment->notes,
         ]);
 
+        // Log activity
+        BillingActivityLogger::logPaymentWaived($this->payment, $this->customer, $waiveAmount, false);
+
         $this->partialWaiveAmount = null;
         $this->waiveNote = '';
 
@@ -306,6 +246,8 @@ class CustomerBillingDetail extends Page implements HasTable
             return;
         }
 
+        $expectedTotal = $this->snapshot['expected_total'];
+        
         $this->payment->update([
             'is_paid' => false,
             'actual_amount' => null,
@@ -317,6 +259,9 @@ class CustomerBillingDetail extends Page implements HasTable
 
         // Clear all payment records
         $this->payment->paymentRecords()->delete();
+
+        // Log activity
+        BillingActivityLogger::logPaymentWaived($this->payment, $this->customer, $expectedTotal, true);
 
         $this->waiveNote = '';
 
@@ -344,6 +289,9 @@ class CustomerBillingDetail extends Page implements HasTable
 
         // Delete all payment records
         $this->payment->paymentRecords()->delete();
+
+        // Log activity
+        BillingActivityLogger::logPaymentReset($this->payment, $this->customer);
 
         $this->paymentInput = ['amount' => ''];
         $this->paymentNote = '';
