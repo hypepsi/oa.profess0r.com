@@ -388,4 +388,32 @@ class CustomerBillingDetail extends Page
 
         return 'pending';
     }
+
+    public function deletePaymentRecord(int $recordId): void
+    {
+        $record = BillingPaymentRecord::findOrFail($recordId);
+        
+        // Verify this record belongs to current payment
+        if ($record->customer_billing_payment_id !== $this->payment->id) {
+            Notification::make()
+                ->title('Unauthorized')
+                ->danger()
+                ->send();
+            return;
+        }
+
+        $amount = $record->amount;
+        $record->delete();
+
+        // Update payment status after deletion
+        $this->updatePaymentStatus();
+
+        Notification::make()
+            ->title('Payment record deleted')
+            ->body("Deleted payment of $" . number_format($amount, 2))
+            ->success()
+            ->send();
+
+        $this->loadPaymentRecords();
+    }
 }

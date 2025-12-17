@@ -27,311 +27,259 @@
         </x-filament::button>
     </div>
 
-    <div class="grid gap-4 mb-8 md:grid-cols-4">
-        <x-filament::card>
-            <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-banknotes" class="w-6 h-6 text-emerald-500" />
-                <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Expected Total</p>
-                    <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">
+    {{-- 区块A：统计卡片一行 --}}
+    <div class="grid gap-4 mb-8" style="grid-template-columns: repeat(4, minmax(0, 1fr));">
+        <x-filament::card class="p-4">
+            <div class="flex items-center gap-3">
+                <div class="flex-shrink-0">
+                    <x-filament::icon icon="heroicon-o-banknotes" class="w-8 h-8 text-emerald-500" />
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Expected Total</p>
+                    <p class="mt-1.5 text-2xl font-bold text-gray-900 dark:text-gray-100">
                         {{ $formatCurrency($snapshot['expected_total']) }}
                     </p>
                     @if($waivedAmount > 0)
-                        <p class="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                        <p class="text-xs text-amber-600 dark:text-amber-400 mt-1 font-medium">
                             -{{ $formatCurrency($waivedAmount) }} waived
-                        </p>
-                        <p class="text-xs font-medium text-gray-600 dark:text-gray-400 mt-1">
-                            Adjusted: {{ $formatCurrency($adjustedExpected) }}
                         </p>
                     @endif
                 </div>
             </div>
         </x-filament::card>
 
-        <x-filament::card>
-            <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-rectangle-stack" class="w-6 h-6 text-blue-500" />
-                <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Subnets</p>
-                    <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                        {{ $snapshot['subnet_count'] }}
-                    </p>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">{{ $formatCurrency($snapshot['subnet_total']) }}</p>
+        <x-filament::card class="p-4">
+            <div class="flex items-center gap-3">
+                <div class="flex-shrink-0">
+                    <x-filament::icon icon="heroicon-o-currency-dollar" class="w-8 h-8 text-indigo-500" />
                 </div>
-            </div>
-        </x-filament::card>
-
-        <x-filament::card>
-            <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-plus-circle" class="w-6 h-6 text-purple-500" />
-                <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Add-ons</p>
-                    <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                        {{ $formatCurrency($snapshot['other_total']) }}
-                    </p>
-                </div>
-            </div>
-        </x-filament::card>
-
-        <x-filament::card>
-            <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-currency-dollar" class="w-6 h-6 text-indigo-500" />
-                <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Received</p>
-                    <p class="mt-1 text-2xl font-semibold {{ $totalReceived > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-900 dark:text-gray-100' }}">
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total Received</p>
+                    <p class="mt-1.5 text-2xl font-bold {{ $totalReceived > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-900 dark:text-gray-100' }}">
                         {{ $formatCurrency($totalReceived) }}
                     </p>
                     @if($paymentRecords->isNotEmpty())
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">
                             {{ $paymentRecords->count() }} payment(s)
                         </p>
                     @endif
                 </div>
             </div>
         </x-filament::card>
-    </div>
 
-    @if($addOnsItems->isNotEmpty())
-        <x-filament::section>
-            <x-slot name="heading">Add-ons Details</x-slot>
-
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm text-left text-gray-900 dark:text-gray-100">
-                    <thead class="text-sm font-semibold uppercase bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
-                        <tr>
-                            <th class="px-4 py-3">Title</th>
-                            <th class="px-4 py-3">Category</th>
-                            <th class="px-4 py-3">Amount</th>
-                            <th class="px-4 py-3">Description</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                        @foreach ($addOnsItems as $item)
-                            <tr class="bg-white dark:bg-gray-900">
-                                <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">{{ $item->title }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ $item->category ?? '-' }}</td>
-                                <td class="px-4 py-3 text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $formatCurrency($item->amount) }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{{ $item->description ?? '-' }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+        <x-filament::card class="p-4">
+            <div class="flex items-center gap-3">
+                <div class="flex-shrink-0">
+                    <x-filament::icon icon="heroicon-o-rectangle-stack" class="w-8 h-8 text-blue-500" />
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Subnets</p>
+                    <p class="mt-1.5 text-2xl font-bold text-gray-900 dark:text-gray-100">
+                        {{ $snapshot['subnet_count'] }}
+                    </p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">{{ $formatCurrency($snapshot['subnet_total']) }}</p>
+                </div>
             </div>
-        </x-filament::section>
-    @endif
+        </x-filament::card>
 
-    <x-filament::section>
-        <x-slot name="heading">Invoiced Amount</x-slot>
-        <x-slot name="description">The actual amount sent to the customer in the invoice</x-slot>
-
-        <div class="space-y-4">
-            <form wire:submit.prevent="updateInvoicedAmount" class="space-y-4">
-                <div class="max-w-md">
-                    <label class="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
-                        Invoiced Amount
-                    </label>
-                    <div class="fi-input flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 focus-within:border-primary-500 focus-within:ring-1 focus-within:ring-primary-500 dark:bg-gray-900 dark:border-gray-700">
-                        <span class="text-gray-500">$</span>
-                        <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            wire:model="invoicedAmount"
-                            placeholder="Enter invoiced amount"
-                            class="flex-1 bg-transparent border-0 focus:ring-0 text-sm text-gray-900 dark:text-gray-100"
-                        />
-                    </div>
-                    @error('invoicedAmount')
-                        <span class="text-xs text-rose-600 mt-1">{{ $message }}</span>
-                    @enderror
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Current: {{ $formatCurrency($payment->invoiced_amount ?? $snapshot['expected_total']) }}
+        <x-filament::card class="p-4">
+            <div class="flex items-center gap-3">
+                <div class="flex-shrink-0">
+                    <x-filament::icon icon="heroicon-o-plus-circle" class="w-8 h-8 text-purple-500" />
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Add-ons</p>
+                    <p class="mt-1.5 text-2xl font-bold text-gray-900 dark:text-gray-100">
+                        {{ $formatCurrency($snapshot['other_total']) }}
                     </p>
                 </div>
+            </div>
+        </x-filament::card>
+    </div>
 
-                <x-filament::button type="submit" color="primary" size="sm">
-                    Update Invoiced Amount
-                </x-filament::button>
-            </form>
-        </div>
-    </x-filament::section>
-
-    <x-filament::section>
-        <x-slot name="heading">Payment Records</x-slot>
-        <x-slot name="description">All payment records for this billing period</x-slot>
-
-        <div class="space-y-6">
-            @if($paymentRecords->isNotEmpty())
-                <div class="overflow-x-auto">
+    {{-- 账单详情区域 --}}
+    <div class="grid gap-6 mb-6 md:grid-cols-2">
+        @if($addOnsItems->isNotEmpty())
+            <x-filament::section>
+                <x-slot name="heading">Add-ons Details</x-slot>
+                <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
                     <table class="w-full text-sm text-left text-gray-900 dark:text-gray-100">
-                        <thead class="text-sm font-semibold uppercase bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                        <thead class="text-xs font-semibold uppercase bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
                             <tr>
-                                <th class="px-4 py-3">Date</th>
-                                <th class="px-4 py-3">Amount</th>
-                                <th class="px-4 py-3">Recorded By</th>
-                                <th class="px-4 py-3">Notes</th>
+                                <th class="px-4 py-3.5">Title</th>
+                                <th class="px-4 py-3.5 text-right">Amount</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                            @foreach ($paymentRecords as $record)
-                                <tr class="bg-white dark:bg-gray-900">
-                                    <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">
-                                        {{ optional($record->paid_at)->setTimezone('Asia/Shanghai')->format('Y-m-d H:i') }}
-                                    </td>
-                                    <td class="px-4 py-3 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-                                        {{ $formatCurrency($record->amount) }}
-                                    </td>
-                                    <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                                        {{ $record->recordedBy->name ?? 'Unknown' }}
-                                    </td>
-                                    <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                                        {{ $record->notes ?? '-' }}
-                                    </td>
+                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                            @foreach ($addOnsItems as $item)
+                                <tr class="bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                                    <td class="px-4 py-3.5 text-sm font-medium text-gray-900 dark:text-gray-100">{{ $item->title }}</td>
+                                    <td class="px-4 py-3.5 text-sm font-semibold text-gray-900 dark:text-gray-100 text-right whitespace-nowrap">{{ $formatCurrency($item->amount) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
-                        <tfoot class="bg-gray-50 dark:bg-gray-800">
-                            <tr>
-                                <td class="px-4 py-3 text-sm font-semibold text-gray-900 dark:text-gray-100" colspan="3">
-                                    Total Received
-                                </td>
-                                <td class="px-4 py-3 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-                                    {{ $formatCurrency($totalReceived) }}
-                                </td>
-                            </tr>
-                        </tfoot>
                     </table>
                 </div>
-            @else
-                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">No payment records yet.</p>
-            @endif
+            </x-filament::section>
+        @endif
 
-            @if(!$payment->is_waived)
-                <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
-                    <p class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Record New Payment</p>
-                    <form wire:submit.prevent="recordPayment" class="space-y-4">
-                        <div class="max-w-md">
-                            <label class="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
-                                Amount Received
-                            </label>
-                            <div class="fi-input flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 focus-within:border-primary-500 focus-within:ring-1 focus-within:ring-primary-500 dark:bg-gray-900 dark:border-gray-700">
-                                <span class="text-gray-500">$</span>
+        <x-filament::section>
+            <x-slot name="heading">Invoiced Amount</x-slot>
+            <form wire:submit.prevent="updateInvoicedAmount">
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+                            Amount
+                        </label>
+                        <div class="flex items-center gap-2">
+                            <div class="flex-1 fi-input flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2.5 focus-within:border-primary-500 focus-within:ring-1 focus-within:ring-primary-500 dark:bg-gray-900 dark:border-gray-700">
+                                <span class="text-gray-500 text-sm">$</span>
                                 <input
                                     type="number"
                                     step="0.01"
-                                    min="0.01"
-                                    wire:model="paymentInput.amount"
-                                    placeholder="Amount"
+                                    min="0"
+                                    wire:model="invoicedAmount"
+                                    placeholder="Enter amount"
                                     class="flex-1 bg-transparent border-0 focus:ring-0 text-sm text-gray-900 dark:text-gray-100"
-                                    required
                                 />
                             </div>
+                            <x-filament::button type="submit" color="primary" class="shrink-0">
+                                Update
+                            </x-filament::button>
+                        </div>
+                        @error('invoicedAmount')
+                            <span class="text-xs text-rose-600 mt-1.5 block">{{ $message }}</span>
+                        @enderror
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
+                            Current: {{ $formatCurrency($payment->invoiced_amount ?? $snapshot['expected_total']) }}
+                        </p>
+                    </div>
+                </div>
+            </form>
+        </x-filament::section>
+    </div>
+
+    {{-- 区块C：Payment Records + Record New Payment --}}
+    <x-filament::section class="mt-6">
+        <x-slot name="heading">Payment Records</x-slot>
+        <div class="grid gap-6 {{ !$payment->is_waived ? 'md:grid-cols-2' : '' }}">
+            <div>
+                @if($paymentRecords->isNotEmpty())
+                    <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+                        <table class="w-full text-sm text-left text-gray-900 dark:text-gray-100">
+                            <thead class="text-xs font-semibold uppercase bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                                <tr>
+                                    <th class="px-4 py-3.5">Date</th>
+                                    <th class="px-4 py-3.5">Amount</th>
+                                    <th class="px-4 py-3.5">Recorded By</th>
+                                    <th class="px-4 py-3.5 text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                @foreach ($paymentRecords as $record)
+                                    <tr class="bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                                        <td class="px-4 py-3.5 text-sm font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                                            {{ optional($record->paid_at)->setTimezone('Asia/Shanghai')->format('Y-m-d H:i') }}
+                                        </td>
+                                        <td class="px-4 py-3.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                                            {{ $formatCurrency($record->amount) }}
+                                        </td>
+                                        <td class="px-4 py-3.5 text-sm text-gray-600 dark:text-gray-400">
+                                            {{ $record->recordedBy->name ?? 'Unknown' }}
+                                        </td>
+                                        <td class="px-4 py-3.5 text-center">
+                                            <x-filament::button
+                                                wire:click="deletePaymentRecord({{ $record->id }})"
+                                                wire:confirm="Are you sure you want to delete this payment record of {{ $formatCurrency($record->amount) }}? This action cannot be undone."
+                                                color="danger"
+                                                size="xs"
+                                                icon="heroicon-o-trash"
+                                            >
+                                                Delete
+                                            </x-filament::button>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                            <tfoot class="bg-gray-50 dark:bg-gray-800 border-t-2 border-gray-200 dark:border-gray-700">
+                                <tr>
+                                    <td class="px-4 py-3.5 text-sm font-bold text-gray-900 dark:text-gray-100" colspan="3">
+                                        Total Received
+                                    </td>
+                                    <td class="px-4 py-3.5 text-sm font-bold text-emerald-600 dark:text-emerald-400 text-center whitespace-nowrap">
+                                        {{ $formatCurrency($totalReceived) }}
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                @else
+                    <div class="text-center py-8 px-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">No payment records yet.</p>
+                    </div>
+                @endif
+            </div>
+
+            @if(!$payment->is_waived)
+                <div>
+                    <p class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Record New Payment</p>
+                    <form wire:submit.prevent="recordPayment" class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+                                Amount
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <div class="flex-1 fi-input flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2.5 focus-within:border-primary-500 focus-within:ring-1 focus-within:ring-primary-500 dark:bg-gray-900 dark:border-gray-700">
+                                    <span class="text-gray-500 text-sm">$</span>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0.01"
+                                        wire:model="paymentInput.amount"
+                                        placeholder="Amount"
+                                        class="flex-1 bg-transparent border-0 focus:ring-0 text-sm text-gray-900 dark:text-gray-100"
+                                        required
+                                    />
+                                </div>
+                                <x-filament::button type="submit" color="primary" class="shrink-0">
+                                    Record
+                                </x-filament::button>
+                            </div>
                             @error('paymentInput.amount')
-                                <span class="text-xs text-rose-600 mt-1">{{ $message }}</span>
+                                <span class="text-xs text-rose-600 mt-1.5 block">{{ $message }}</span>
                             @enderror
                         </div>
-
-                        <div class="max-w-md">
+                        <div>
                             <label class="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
-                                Notes (Optional)
+                                Notes
                             </label>
                             <textarea
-                                rows="3"
+                                rows="2"
                                 wire:model="paymentNote"
-                                placeholder="Add any notes about this payment..."
-                                class="fi-input block w-full rounded-lg border-gray-300 focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-900 dark:border-gray-700"
+                                placeholder="Optional notes..."
+                                class="fi-input block w-full rounded-lg border-gray-300 focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-900 dark:border-gray-700 text-sm px-3 py-2.5"
                             ></textarea>
                         </div>
-
-                        <x-filament::button type="submit" color="primary">
-                            Record Payment
-                        </x-filament::button>
                     </form>
                 </div>
             @endif
         </div>
     </x-filament::section>
 
-    <x-filament::section>
-        <x-slot name="heading">Payment Status</x-slot>
-
-        <div class="space-y-6">
-            <div>
-                <p class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">Current Status</p>
-                @php
-                    $statusConfig = match($paymentStatus) {
-                        'paid' => ['color' => 'emerald', 'label' => 'Paid'],
-                        'partial_paid' => ['color' => 'blue', 'label' => 'Partial Paid'],
-                        'waived' => ['color' => 'amber', 'label' => 'Waived'],
-                        'pending' => ['color' => 'gray', 'label' => 'Pending'],
-                        default => ['color' => 'gray', 'label' => 'Pending'],
-                    };
-                    $statusColor = $isOverdue ? 'rose' : $statusConfig['color'];
-                    $statusLabel = $isOverdue ? 'Overdue' : $statusConfig['label'];
-                @endphp
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-{{ $statusColor }}-100 text-{{ $statusColor }}-800 dark:bg-{{ $statusColor }}-900/40 dark:text-{{ $statusColor }}-300">
-                    {{ $statusLabel }}
-                </span>
-                @if($isOverdue)
-                    <p class="mt-2 text-sm font-medium text-rose-600 dark:text-rose-400">Action needed</p>
-                @elseif($isCurrentMonth && !$isPast20th)
-                    <p class="mt-2 text-sm font-medium text-gray-500 dark:text-gray-400">All good</p>
-                @endif
-            </div>
-
-            <div class="grid gap-4 md:grid-cols-2">
+    {{-- 区块D：Waive Options --}}
+    @if(!$payment->is_waived)
+        <x-filament::section class="mt-6">
+            <x-slot name="heading">Waive Options</x-slot>
+            <div class="grid gap-6 md:grid-cols-2">
                 <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Expected Total</p>
-                    <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                        {{ $formatCurrency($snapshot['expected_total']) }}
-                    </p>
-                </div>
-                <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Invoiced Amount</p>
-                    <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                        {{ $formatCurrency($payment->invoiced_amount ?? $snapshot['expected_total']) }}
-                    </p>
-                </div>
-                @if($waivedAmount > 0)
-                    <div>
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Waived Amount</p>
-                        <p class="text-lg font-semibold text-amber-600 dark:text-amber-400">
-                            -{{ $formatCurrency($waivedAmount) }}
-                        </p>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Adjusted Expected</p>
-                        <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                            {{ $formatCurrency($adjustedExpected) }}
-                        </p>
-                    </div>
-                @endif
-                <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Total Received</p>
-                    <p class="text-lg font-semibold text-emerald-600 dark:text-emerald-400">
-                        {{ $formatCurrency($totalReceived) }}
-                    </p>
-                </div>
-            </div>
-
-            @if($payment->notes)
-                <div class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <p class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">Notes</p>
-                    <p class="text-sm text-gray-700 dark:text-gray-300">{{ $payment->notes }}</p>
-                </div>
-            @endif
-
-            @if(!$payment->is_waived)
-                <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
-                    <p class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Waive Options</p>
-                    <div class="space-y-4">
-                        <form wire:submit.prevent="partialWaive" class="space-y-4">
-                            <div class="max-w-md">
-                                <label class="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
-                                    Partial Waive Amount
-                                </label>
-                                <div class="fi-input flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 focus-within:border-primary-500 focus-within:ring-1 focus-within:ring-primary-500 dark:bg-gray-900 dark:border-gray-700">
-                                    <span class="text-gray-500">$</span>
+                    <form wire:submit.prevent="partialWaive" class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+                                Partial Waive Amount
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <div class="flex-1 fi-input flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2.5 focus-within:border-primary-500 focus-within:ring-1 focus-within:ring-primary-500 dark:bg-gray-900 dark:border-gray-700">
+                                    <span class="text-gray-500 text-sm">$</span>
                                     <input
                                         type="number"
                                         step="0.01"
@@ -342,60 +290,36 @@
                                         class="flex-1 bg-transparent border-0 focus:ring-0 text-sm text-gray-900 dark:text-gray-100"
                                     />
                                 </div>
-                                @error('partialWaiveAmount')
-                                    <span class="text-xs text-rose-600 mt-1">{{ $message }}</span>
-                                @enderror
-                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                    Maximum: {{ $formatCurrency($snapshot['expected_total'] - 0.01) }}
-                                </p>
+                                <x-filament::button type="submit" color="warning" class="shrink-0">
+                                    Partial Waive
+                                </x-filament::button>
                             </div>
-
-                            <div class="max-w-md">
-                                <label class="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
-                                    Notes (Optional)
-                                </label>
-                                <textarea
-                                    rows="3"
-                                    wire:model="waiveNote"
-                                    placeholder="Add any notes about this waiver..."
-                                    class="fi-input block w-full rounded-lg border-gray-300 focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-900 dark:border-gray-700"
-                                ></textarea>
-                            </div>
-
-                            <x-filament::button type="submit" color="warning" size="sm">
-                                Partial Waive
-                            </x-filament::button>
-                        </form>
-
-                        <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-                            <div class="max-w-md mb-4">
-                                <label class="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
-                                    Notes (Optional)
-                                </label>
-                                <textarea
-                                    rows="3"
-                                    wire:model="waiveNote"
-                                    placeholder="Add any notes about this full waiver..."
-                                    class="fi-input block w-full rounded-lg border-gray-300 focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-900 dark:border-gray-700"
-                                ></textarea>
-                            </div>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                                Use the "Full Waive" button in the page header to fully waive this payment.
+                            @error('partialWaiveAmount')
+                                <span class="text-xs text-rose-600 mt-1.5 block">{{ $message }}</span>
+                            @enderror
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
+                                Max: {{ $formatCurrency($snapshot['expected_total'] - 0.01) }}
                             </p>
                         </div>
-                    </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+                                Notes
+                            </label>
+                            <textarea
+                                rows="2"
+                                wire:model="waiveNote"
+                                placeholder="Optional notes..."
+                                class="fi-input block w-full rounded-lg border-gray-300 focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-900 dark:border-gray-700 text-sm px-3 py-2.5"
+                            ></textarea>
+                        </div>
+                    </form>
                 </div>
-            @else
-                <div class="p-3 bg-amber-50 dark:bg-amber-950/40 rounded-lg">
-                    <p class="text-sm font-semibold text-amber-900 dark:text-amber-100 mb-1">Fully Waived</p>
-                    <p class="text-sm text-amber-700 dark:text-amber-300">
-                        Waived on {{ optional($payment->waived_at)->setTimezone('Asia/Shanghai')->format('Y-m-d H:i') }}
-                        @if($payment->waivedBy)
-                            by {{ $payment->waivedBy->name }}
-                        @endif
+                <div class="flex items-center justify-center p-6 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                    <p class="text-sm text-gray-600 dark:text-gray-400 text-center">
+                        Use the "Full Waive" button in the page header to fully waive this payment.
                     </p>
                 </div>
-            @endif
-        </div>
-    </x-filament::section>
+            </div>
+        </x-filament::section>
+    @endif
 </x-filament-panels::page>
