@@ -16,58 +16,53 @@ class ListActivityLogs extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('filter_ip_assets')
-                ->label('IP Assets')
+            Actions\Action::make('filter_financial')
+                ->label('Financial')
+                ->icon('heroicon-o-currency-dollar')
+                ->color('success')
+                ->outlined()
+                ->action(function () {
+                    $this->quickFilter = 'financial';
+                    $this->resetTable();
+                }),
+            
+            Actions\Action::make('filter_assets')
+                ->label('Assets')
                 ->icon('heroicon-o-server-stack')
                 ->color('primary')
                 ->outlined()
                 ->action(function () {
-                    $this->quickFilter = 'ip_assets';
+                    $this->quickFilter = 'assets';
                     $this->resetTable();
                 }),
+            
+            Actions\Action::make('filter_people')
+                ->label('People')
+                ->icon('heroicon-o-user-group')
+                ->color('info')
+                ->outlined()
+                ->action(function () {
+                    $this->quickFilter = 'people';
+                    $this->resetTable();
+                }),
+            
             Actions\Action::make('filter_workflows')
                 ->label('Workflows')
                 ->icon('heroicon-o-clipboard-document-check')
-                ->color('primary')
+                ->color('warning')
                 ->outlined()
                 ->action(function () {
                     $this->quickFilter = 'workflows';
                     $this->resetTable();
                 }),
-            Actions\Action::make('filter_logins')
-                ->label('Login/Logout')
+            
+            Actions\Action::make('filter_auth')
+                ->label('Auth')
                 ->icon('heroicon-o-key')
-                ->color('info')
+                ->color('gray')
                 ->outlined()
                 ->action(function () {
-                    $this->quickFilter = 'logins';
-                    $this->resetTable();
-                }),
-            Actions\Action::make('filter_created')
-                ->label('Creations')
-                ->icon('heroicon-o-plus-circle')
-                ->color('success')
-                ->outlined()
-                ->action(function () {
-                    $this->quickFilter = 'created';
-                    $this->resetTable();
-                }),
-            Actions\Action::make('filter_updated')
-                ->label('Updates')
-                ->icon('heroicon-o-pencil-square')
-                ->color('warning')
-                ->outlined()
-                ->action(function () {
-                    $this->quickFilter = 'updated';
-                    $this->resetTable();
-                }),
-            Actions\Action::make('filter_deleted')
-                ->label('Deletions')
-                ->icon('heroicon-o-trash')
-                ->color('danger')
-                ->outlined()
-                ->action(function () {
-                    $this->quickFilter = 'deleted';
+                    $this->quickFilter = 'auth';
                     $this->resetTable();
                 }),
         ];
@@ -79,12 +74,48 @@ class ListActivityLogs extends ListRecords
 
         // 根据快速过滤器修改查询
         match($this->quickFilter) {
-            'ip_assets' => $query->where('model_type', 'App\\Models\\IpAsset'),
-            'workflows' => $query->where('model_type', 'App\\Models\\Workflow'),
-            'logins' => $query->whereIn('action', ['login', 'logout']),
-            'created' => $query->where('action', 'created'),
-            'updated' => $query->where('action', 'updated'),
-            'deleted' => $query->where('action', 'deleted'),
+            'financial' => $query->where(function ($q) {
+                $q->whereIn('model_type', [
+                    'App\\Models\\CustomerBillingPayment',
+                    'App\\Models\\BillingPaymentRecord',
+                    'App\\Models\\BillingOtherItem',
+                    'App\\Models\\IncomeOtherItem',
+                    'App\\Models\\ProviderExpensePayment',
+                    'App\\Models\\ExpensePaymentRecord',
+                ])
+                ->orWhereIn('action', [
+                    'payment_recorded',
+                    'invoice_updated',
+                    'payment_waived',
+                    'payment_reset',
+                    'expense_payment_recorded',
+                    'expense_invoice_updated',
+                    'expense_waived',
+                    'expense_reset',
+                ]);
+            }),
+            
+            'assets' => $query->whereIn('model_type', [
+                'App\\Models\\IpAsset',
+                'App\\Models\\Device',
+                'App\\Models\\Location',
+            ]),
+            
+            'people' => $query->whereIn('model_type', [
+                'App\\Models\\Customer',
+                'App\\Models\\Employee',
+                'App\\Models\\Provider',
+                'App\\Models\\IptProvider',
+                'App\\Models\\DatacenterProvider',
+            ]),
+            
+            'workflows' => $query->whereIn('model_type', [
+                'App\\Models\\Workflow',
+                'App\\Models\\WorkflowUpdate',
+            ]),
+            
+            'auth' => $query->whereIn('action', ['login', 'logout']),
+            
             default => null,
         };
 

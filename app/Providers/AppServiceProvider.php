@@ -90,6 +90,7 @@ class AppServiceProvider extends ServiceProvider
             
             // Expense
             ProviderExpensePayment::class,
+            \App\Models\ExpensePaymentRecord::class,
         ];
 
         foreach ($models as $model) {

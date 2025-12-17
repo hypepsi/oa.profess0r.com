@@ -46,20 +46,34 @@ class ActivityLogResource extends Resource
                     ->label('Action')
                     ->badge()
                     ->color(fn (string $state) => match($state) {
-                        'created' => 'success',
-                        'updated' => 'warning',
+                        // CRUD Operations
+                        'created', 'workflow_created' => 'success',
+                        'updated', 'invoice_updated', 'expense_invoice_updated', 'workflow_updated' => 'warning',
                         'deleted' => 'danger',
+                        
+                        // Authentication
                         'login' => 'info',
                         'logout' => 'gray',
+                        
+                        // Payments & Financial
                         'payment_recorded', 'expense_payment_recorded' => 'success',
-                        'invoice_updated', 'expense_invoice_updated' => 'warning',
                         'payment_waived', 'expense_waived' => 'warning',
                         'payment_reset', 'expense_reset' => 'danger',
+                        
+                        // Workflow Operations
+                        'workflow_status_changed', 'workflow_assigned' => 'info',
+                        'workflow_comment_added' => 'primary',
+                        
+                        // IP Asset Changes
+                        'ip_asset_status_changed', 'ip_asset_customer_changed' => 'info',
+                        'ip_asset_price_changed', 'ip_asset_cost_changed' => 'warning',
+                        
                         default => 'primary',
                     })
                     ->formatStateUsing(fn (string $state) => ucwords(str_replace('_', ' ', $state)))
                     ->sortable()
-                    ->searchable(),
+                    ->searchable()
+                    ->wrap(),
 
                 Tables\Columns\TextColumn::make('description')
                     ->label('Description')
@@ -87,43 +101,89 @@ class ActivityLogResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('action')
-                    ->label('Action')
+                    ->label('Action Type')
                     ->options([
-                        'created' => 'Created',
-                        'updated' => 'Updated',
-                        'deleted' => 'Deleted',
-                        'login' => 'Login',
-                        'logout' => 'Logout',
-                        'payment_recorded' => 'Income: Payment Recorded',
-                        'invoice_updated' => 'Income: Invoice Updated',
-                        'payment_waived' => 'Income: Payment Waived',
-                        'payment_reset' => 'Income: Payment Reset',
-                        'expense_payment_recorded' => 'Expense: Payment Recorded',
-                        'expense_invoice_updated' => 'Expense: Invoice Updated',
-                        'expense_waived' => 'Expense: Waived',
-                        'expense_reset' => 'Expense: Reset',
+                        // Basic CRUD Operations
+                        'created' => '✨ Created',
+                        'updated' => '✏️ Updated',
+                        'deleted' => '🗑️ Deleted',
+                        
+                        // Authentication
+                        'login' => '🔐 User Login',
+                        'logout' => '🚪 User Logout',
+                        
+                        // Income - Customer Billing
+                        'payment_recorded' => '💰 Income: Payment Recorded',
+                        'invoice_updated' => '📝 Income: Invoice Updated',
+                        'payment_waived' => '🎁 Income: Payment Waived',
+                        'payment_reset' => '🔄 Income: Payment Reset',
+                        
+                        // Expense - Provider Payments
+                        'expense_payment_recorded' => '💸 Expense: Payment Recorded',
+                        'expense_invoice_updated' => '📋 Expense: Invoice Updated',
+                        'expense_waived' => '🎁 Expense: Waived',
+                        'expense_reset' => '🔄 Expense: Reset',
+                        
+                        // Workflow Operations
+                        'workflow_created' => '📋 Workflow: Created',
+                        'workflow_updated' => '📝 Workflow: Updated',
+                        'workflow_status_changed' => '🔄 Workflow: Status Changed',
+                        'workflow_assigned' => '👤 Workflow: Assigned',
+                        'workflow_comment_added' => '💬 Workflow: Comment Added',
+                        
+                        // IP Asset Specific
+                        'ip_asset_status_changed' => '🔄 IP Asset: Status Changed',
+                        'ip_asset_customer_changed' => '👥 IP Asset: Customer Changed',
+                        'ip_asset_price_changed' => '💵 IP Asset: Price Changed',
+                        'ip_asset_cost_changed' => '💰 IP Asset: Cost Changed',
                     ])
-                    ->multiple(),
+                    ->multiple()
+                    ->searchable(),
 
                 Tables\Filters\SelectFilter::make('model_type')
-                    ->label('Module')
+                    ->label('Module/Entity')
                     ->options([
-                        'App\\Models\\IpAsset' => 'IP Assets',
-                        'App\\Models\\Device' => 'Devices',
-                        'App\\Models\\Location' => 'Locations',
-                        'App\\Models\\Customer' => 'Customers',
-                        'App\\Models\\Provider' => 'IP Providers',
-                        'App\\Models\\IptProvider' => 'IPT Providers',
-                        'App\\Models\\DatacenterProvider' => 'Datacenter Providers',
-                        'App\\Models\\Employee' => 'Employees',
-                        'App\\Models\\Workflow' => 'Workflows',
-                        'App\\Models\\WorkflowUpdate' => 'Workflow Updates',
-                        'App\\Models\\BillingOtherItem' => 'Income Add-ons',
-                        'App\\Models\\IncomeOtherItem' => 'Other Income',
-                        'App\\Models\\CustomerBillingPayment' => 'Customer Billing',
-                        'App\\Models\\ProviderExpensePayment' => 'Provider Expense',
+                        // Assets & Infrastructure
+                        'App\\Models\\IpAsset' => '🌐 IP Assets',
+                        'App\\Models\\Device' => '💻 Devices',
+                        'App\\Models\\Location' => '📍 Locations',
+                        
+                        // People & Organizations
+                        'App\\Models\\Customer' => '👥 Customers',
+                        'App\\Models\\Employee' => '👔 Employees',
+                        
+                        // Providers
+                        'App\\Models\\Provider' => '🏢 IP Providers',
+                        'App\\Models\\IptProvider' => '🔌 IPT Providers',
+                        'App\\Models\\DatacenterProvider' => '🏭 Datacenter Providers',
+                        
+                        // Workflows
+                        'App\\Models\\Workflow' => '📋 Workflows',
+                        'App\\Models\\WorkflowUpdate' => '💬 Workflow Updates',
+                        
+                        // Income Management
+                        'App\\Models\\BillingOtherItem' => '💰 Income: Add-ons',
+                        'App\\Models\\IncomeOtherItem' => '💵 Income: Other Income',
+                        'App\\Models\\CustomerBillingPayment' => '📊 Income: Customer Billing',
+                        'App\\Models\\BillingPaymentRecord' => '💳 Income: Payment Records',
+                        
+                        // Expense Management
+                        'App\\Models\\ProviderExpensePayment' => '💸 Expense: Provider Payments',
+                        'App\\Models\\ExpensePaymentRecord' => '💳 Expense: Payment Records',
+                        
+                        // System
+                        'App\\Models\\User' => '👤 Users',
                     ])
-                    ->multiple(),
+                    ->multiple()
+                    ->searchable(),
+
+                Tables\Filters\SelectFilter::make('user_id')
+                    ->label('User')
+                    ->relationship('user', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->multiple()
+                    ->placeholder('All Users (including System)'),
 
                 Tables\Filters\Filter::make('created_at')
                     ->form([
