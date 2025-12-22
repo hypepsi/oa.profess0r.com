@@ -232,24 +232,11 @@ class ActivityLogResource extends Resource
                     ->modalHeading('Delete Filtered Logs')
                     ->modalDescription('This will delete only the logs matching your current filters. All other logs will remain.')
                     ->modalSubmitActionLabel('Delete Filtered Logs')
-                    ->action(function () {
-                        // Get the current page instance to access tableFilters
-                        $livewire = \Livewire\Livewire::current();
+                    ->action(function (Tables\Table $table) {
+                        // Get the base query from the table
+                        $query = $table->getQuery();
                         
-                        // Build query with applied filters
-                        $query = ActivityLog::query();
-                        
-                        // Apply table filters if they exist
-                        if (method_exists($livewire, 'getTableFilters')) {
-                            $filters = $livewire->getTableFilters();
-                            foreach ($filters as $filter) {
-                                $state = $livewire->tableFilters[$filter->getName()] ?? null;
-                                if ($state !== null && $state !== '' && $state !== []) {
-                                    $filter->apply($query, $state);
-                                }
-                            }
-                        }
-                        
+                        // Count and delete
                         $count = $query->count();
                         if ($count > 0) {
                             $query->delete();
