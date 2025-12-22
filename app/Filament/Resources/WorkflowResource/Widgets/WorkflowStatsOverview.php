@@ -63,10 +63,18 @@ class WorkflowStatsOverview extends BaseWidget
             ->first();
 
         return [
-            Card::make('Open', (int) ($counts->open_count ?? 0))->icon('heroicon-m-clock'),
-            Card::make('Updated', (int) ($counts->updated_count ?? 0))->icon('heroicon-m-arrow-path'),
-            Card::make('Approved', (int) ($counts->approved_count ?? 0))->icon('heroicon-m-check-badge'),
-            Card::make('Overdue', (int) ($counts->overdue_count ?? 0))->icon('heroicon-m-exclamation-triangle'),
+            Card::make('Open', (int) ($counts->open_count ?? 0))
+                ->icon('heroicon-m-clock')
+                ->color('info'),
+            Card::make('Updated', (int) ($counts->updated_count ?? 0))
+                ->icon('heroicon-m-arrow-path')
+                ->color('warning'),
+            Card::make('Approved', (int) ($counts->approved_count ?? 0))
+                ->icon('heroicon-m-check-badge')
+                ->color('success'),
+            Card::make('Overdue', (int) ($counts->overdue_count ?? 0))
+                ->icon('heroicon-m-exclamation-triangle')
+                ->color('danger'),
         ];
     }
 }

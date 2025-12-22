@@ -40,10 +40,10 @@
 
         <x-filament::card>
             <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-circle-stack" class="w-6 h-6 text-sky-500" />
+                <x-filament::icon icon="heroicon-o-circle-stack" class="w-6 h-6 text-emerald-500" />
                 <div>
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Received (Confirmed)</p>
-                    <p class="mt-1 text-2xl font-semibold text-sky-600 dark:text-sky-400">
+                    <p class="mt-1 text-2xl font-semibold text-emerald-600 dark:text-emerald-400">
                         {{ $formatCurrency($summary['received_total'] ?? 0) }}
                     </p>
                 </div>
@@ -128,7 +128,7 @@
                 </div>
                 <div>
                     <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Received</p>
-                    <p class="text-lg font-semibold text-sky-600 dark:text-sky-400">
+                    <p class="text-lg font-semibold text-emerald-600 dark:text-emerald-400">
                         {{ $formatCurrency($previousSummary['received_total'] ?? 0) }}
                     </p>
                 </div>

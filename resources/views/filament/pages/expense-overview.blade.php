@@ -82,7 +82,7 @@
                 </div>
                 <div>
                     <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Paid</p>
-                    <p class="text-lg font-semibold text-sky-600 dark:text-sky-400">
+                    <p class="text-lg font-semibold text-emerald-600 dark:text-emerald-400">
                         {{ $formatCurrency($previousSummary['paid_total'] ?? 0) }}
                     </p>
                 </div>

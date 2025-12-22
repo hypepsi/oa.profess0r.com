@@ -232,16 +232,39 @@ class ActivityLogResource extends Resource
                     ->modalHeading('Delete Filtered Logs')
                     ->modalDescription('This will delete only the logs matching your current filters. All other logs will remain.')
                     ->modalSubmitActionLabel('Delete Filtered Logs')
-                    ->action(function (Tables\Table $table) {
-                        $query = $table->getFilteredTableQuery();
-                        $count = $query->count();
-                        $query->delete();
+                    ->action(function () {
+                        // Get the current page instance to access tableFilters
+                        $livewire = \Livewire\Livewire::current();
                         
-                        Notification::make()
-                            ->success()
-                            ->title('Filtered Logs Deleted')
-                            ->body("Successfully deleted {$count} filtered log entries.")
-                            ->send();
+                        // Build query with applied filters
+                        $query = ActivityLog::query();
+                        
+                        // Apply table filters if they exist
+                        if (method_exists($livewire, 'getTableFilters')) {
+                            $filters = $livewire->getTableFilters();
+                            foreach ($filters as $filter) {
+                                $state = $livewire->tableFilters[$filter->getName()] ?? null;
+                                if ($state !== null && $state !== '' && $state !== []) {
+                                    $filter->apply($query, $state);
+                                }
+                            }
+                        }
+                        
+                        $count = $query->count();
+                        if ($count > 0) {
+                            $query->delete();
+                            Notification::make()
+                                ->success()
+                                ->title('Filtered Logs Deleted')
+                                ->body("Successfully deleted {$count} filtered log entries.")
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->warning()
+                                ->title('No Logs to Delete')
+                                ->body('No logs matched the current filters.')
+                                ->send();
+                        }
                     })
                     ->visible(fn () => true), // Always visible since filters may be applied
                 Tables\Actions\Action::make('delete_old_logs')
