@@ -20,22 +20,22 @@
 
         <x-filament::card>
             <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-check-badge" class="w-6 h-6" style="color: rgb(16 185 129);" />
+                <x-filament::icon icon="heroicon-o-check-badge" class="w-6 h-6" style="color: rgb(22 101 52);" />
                 <div>
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Confirmed Paid</p>
-                    <p class="mt-1 text-2xl font-semibold" style="color: rgb(5 150 105);">
+                    <p class="mt-1 text-2xl" style="color: rgb(22 101 52); font-weight: 700;">
                         {{ $formatCurrency($stats['current_paid'] ?? 0) }}
                     </p>
                 </div>
             </div>
         </x-filament::card>
 
-        <x-filament::card style="{{ ($stats['has_overdue'] ?? false) ? 'border: 2px solid rgb(251 113 133); background-color: rgb(255 241 242);' : '' }}">
+        <x-filament::card style="{{ ($stats['has_overdue'] ?? false) ? 'border: 3px solid rgb(220 38 38); background-color: rgb(254 226 226);' : '' }}">
             <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-exclamation-triangle" class="w-6 h-6" style="color: {{ ($stats['has_overdue'] ?? false) ? 'rgb(225 29 72)' : 'rgb(156 163 175)' }};" />
+                <x-filament::icon icon="heroicon-o-exclamation-triangle" class="w-6 h-6" style="color: {{ ($stats['has_overdue'] ?? false) ? 'rgb(220 38 38)' : 'rgb(156 163 175)' }};" />
                 <div>
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Overdue Alert</p>
-                    <p class="mt-1 text-2xl font-semibold" style="color: {{ ($stats['has_overdue'] ?? false) ? 'rgb(225 29 72)' : 'rgb(17 24 39)' }};">
+                    <p class="mt-1 text-2xl" style="color: {{ ($stats['has_overdue'] ?? false) ? 'rgb(220 38 38)' : 'rgb(22 101 52)' }}; font-weight: 700;">
                         {{ $stats['overdue_message'] ?? 'All good' }}
                     </p>
                 </div>
@@ -109,7 +109,7 @@
                                 <td class="px-4 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">{{ $periodLabel }}</td>
                                 <td class="px-4 py-4 text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $formatCurrency($snapshot['expected_total']) }}</td>
                                 <td class="px-4 py-4 text-sm text-gray-900 dark:text-gray-100">{{ $formatCurrency($payment->invoiced_amount ?? '-') }}</td>
-                                <td class="px-4 py-4 text-sm font-semibold style="color: rgb(5 150 105);"">{{ $formatCurrency($totalPaid) }}</td>
+                                <td class="px-4 py-4 text-sm font-semibold style="color: rgb(22 101 52); font-weight: 700;"">{{ $formatCurrency($totalPaid) }}</td>
                                 <td class="px-4 py-4">
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-{{ $statusColor }}-100 text-{{ $statusColor }}-800 dark:bg-{{ $statusColor }}-900/40 dark:text-{{ $statusColor }}-300">
                                         {{ $statusLabel }}
@@ -180,7 +180,7 @@
                                 <td class="px-4 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">{{ $periodLabel }}</td>
                                 <td class="px-4 py-4 text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $formatCurrency($snapshot['expected_total']) }}</td>
                                 <td class="px-4 py-4 text-sm text-gray-900 dark:text-gray-100">{{ $formatCurrency($payment->invoiced_amount ?? '-') }}</td>
-                                <td class="px-4 py-4 text-sm font-semibold style="color: rgb(5 150 105);"">{{ $formatCurrency($totalPaid) }}</td>
+                                <td class="px-4 py-4 text-sm font-semibold style="color: rgb(22 101 52); font-weight: 700;"">{{ $formatCurrency($totalPaid) }}</td>
                                 <td class="px-4 py-4">
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-{{ $statusColor }}-100 text-{{ $statusColor }}-800 dark:bg-{{ $statusColor }}-900/40 dark:text-{{ $statusColor }}-300">
                                         {{ $statusLabel }}

@@ -20,10 +20,10 @@
 
         <x-filament::card>
             <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-check-badge" class="w-6 h-6" style="color: rgb(16 185 129);" />
+                <x-filament::icon icon="heroicon-o-check-badge" class="w-6 h-6" style="color: rgb(22 101 52);" />
                 <div>
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Confirmed Received</p>
-                    <p class="mt-1 text-2xl font-semibold" style="color: rgb(5 150 105);">
+                    <p class="mt-1 text-2xl" style="color: rgb(22 101 52); font-weight: 700;">
                         {{ $formatCurrency($stats['current_received'] ?? 0) }}
                     </p>
                 </div>
@@ -42,12 +42,12 @@
             </div>
         </x-filament::card>
 
-        <x-filament::card style="{{ ($stats['has_overdue'] ?? false) ? 'border: 2px solid rgb(251 113 133); background-color: rgb(255 241 242);' : '' }}">
+        <x-filament::card style="{{ ($stats['has_overdue'] ?? false) ? 'border: 3px solid rgb(220 38 38); background-color: rgb(254 226 226);' : '' }}">
             <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-exclamation-triangle" class="w-6 h-6" style="color: {{ ($stats['has_overdue'] ?? false) ? 'rgb(225 29 72)' : 'rgb(156 163 175)' }};" />
+                <x-filament::icon icon="heroicon-o-exclamation-triangle" class="w-6 h-6" style="color: {{ ($stats['has_overdue'] ?? false) ? 'rgb(220 38 38)' : 'rgb(156 163 175)' }};" />
                 <div>
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Overdue Alert</p>
-                    <p class="mt-1 text-2xl font-semibold" style="color: {{ ($stats['has_overdue'] ?? false) ? 'rgb(225 29 72)' : 'rgb(17 24 39)' }};">
+                    <p class="mt-1 text-2xl" style="color: {{ ($stats['has_overdue'] ?? false) ? 'rgb(220 38 38)' : 'rgb(22 101 52)' }}; font-weight: 700;">
                         {{ $stats['overdue_message'] ?? 'All good' }}
                     </p>
                 </div>

@@ -49,9 +49,9 @@
                     <li class="flex items-center justify-between py-4 border-l-4 border-rose-500 pl-4 bg-rose-50/50 dark:bg-rose-950/20 hover:bg-rose-100 dark:hover:bg-rose-950/30 transition-colors">
                         <div class="flex-1 min-w-0 mr-4">
                             <p class="oa-list-primary">{{ $row['provider']->name }}</p>
-                            <p class="oa-list-secondary" style="color: rgb(225 29 72);">⚠️ Follow up required</p>
+                            <p class="oa-list-secondary" style="color: rgb(220 38 38); font-weight: 700;">⚠️ Follow up required</p>
                         </div>
-                        <span class="oa-list-value shrink-0" style="color: rgb(225 29 72);">
+                        <span class="oa-list-value shrink-0" style="color: rgb(220 38 38); font-weight: 700;">
                             {{ $formatCurrency($row['amount']) }}
                         </span>
                     </li>
@@ -82,13 +82,13 @@
                 </div>
                 <div>
                     <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Paid</p>
-                    <p class="text-lg font-semibold" style="color: rgb(5 150 105);">
+                    <p class="text-lg" style="color: rgb(22 101 52); font-weight: 700;">
                         {{ $formatCurrency($previousSummary['paid_total'] ?? 0) }}
                     </p>
                 </div>
                 <div>
                     <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Overdue</p>
-                    <p class="text-lg font-semibold" style="color: {{ ($previousSummary['overdue_amount_total'] ?? 0) > 0 ? 'rgb(225 29 72)' : 'rgb(17 24 39)' }};">
+                    <p class="text-lg" style="color: {{ ($previousSummary['overdue_amount_total'] ?? 0) > 0 ? 'rgb(220 38 38)' : 'rgb(17 24 39)' }}; font-weight: 700;">
                         {{ $formatCurrency($previousSummary['overdue_amount_total'] ?? 0) }}
                     </p>
                 </div>

@@ -28,10 +28,10 @@
 
         <x-filament::card>
             <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-banknotes" class="w-6 h-6" style="color: rgb(16 185 129);" />
+                <x-filament::icon icon="heroicon-o-banknotes" class="w-6 h-6" style="color: rgb(22 101 52);" />
                 <div>
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Expected Revenue</p>
-                    <p class="mt-1 text-2xl font-semibold" style="color: rgb(5 150 105);">
+                    <p class="mt-1 text-2xl" style="color: rgb(22 101 52); font-weight: 700;">
                         {{ $formatCurrency($summary['expected_total'] ?? 0) }}
                     </p>
                 </div>
@@ -40,22 +40,22 @@
 
         <x-filament::card>
             <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-circle-stack" class="w-6 h-6" style="color: rgb(16 185 129);" />
+                <x-filament::icon icon="heroicon-o-circle-stack" class="w-6 h-6" style="color: rgb(22 101 52);" />
                 <div>
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Received (Confirmed)</p>
-                    <p class="mt-1 text-2xl font-semibold" style="color: rgb(5 150 105);">
+                    <p class="mt-1 text-2xl" style="color: rgb(22 101 52); font-weight: 700;">
                         {{ $formatCurrency($summary['received_total'] ?? 0) }}
                     </p>
                 </div>
             </div>
         </x-filament::card>
 
-        <x-filament::card style="{{ count($overdueList) ? 'border: 2px solid rgb(251 113 133); background-color: rgb(255 241 242);' : '' }}">
+        <x-filament::card style="{{ count($overdueList) ? 'border: 3px solid rgb(220 38 38); background-color: rgb(254 226 226);' : '' }}">
             <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-exclamation-triangle" class="w-6 h-6" style="color: {{ count($overdueList) ? 'rgb(225 29 72)' : 'rgb(156 163 175)' }};" />
+                <x-filament::icon icon="heroicon-o-exclamation-triangle" class="w-6 h-6" style="color: {{ count($overdueList) ? 'rgb(220 38 38)' : 'rgb(156 163 175)' }};" />
                 <div>
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Overdue Amount</p>
-                    <p class="mt-1 text-2xl font-semibold" style="color: {{ count($overdueList) ? 'rgb(225 29 72)' : 'rgb(17 24 39)' }};">
+                    <p class="mt-1 text-2xl" style="color: {{ count($overdueList) ? 'rgb(220 38 38)' : 'rgb(17 24 39)' }}; font-weight: 700;">
                         {{ $formatCurrency($summary['overdue_amount_total'] ?? 0) }}
                     </p>
                     <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ count($overdueList) }} customer(s)</p>
@@ -97,7 +97,7 @@
                             <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $row['customer']->name }}</p>
                             <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Follow up required</p>
                         </div>
-                        <span class="text-sm font-semibold" style="color: rgb(225 29 72);">
+                        <span class="text-sm" style="color: rgb(220 38 38); font-weight: 700;">
                             {{ $formatCurrency($row['amount']) }}
                         </span>
                     </li>
@@ -128,13 +128,13 @@
                 </div>
                 <div>
                     <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Received</p>
-                    <p class="text-lg font-semibold" style="color: rgb(5 150 105);">
+                    <p class="text-lg" style="color: rgb(22 101 52); font-weight: 700;">
                         {{ $formatCurrency($previousSummary['received_total'] ?? 0) }}
                     </p>
                 </div>
                 <div>
                     <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Overdue</p>
-                    <p class="text-lg font-semibold" style="color: {{ ($previousSummary['overdue_amount_total'] ?? 0) > 0 ? 'rgb(225 29 72)' : 'rgb(17 24 39)' }};">
+                    <p class="text-lg" style="color: {{ ($previousSummary['overdue_amount_total'] ?? 0) > 0 ? 'rgb(220 38 38)' : 'rgb(17 24 39)' }}; font-weight: 700;">
                         {{ $formatCurrency($previousSummary['overdue_amount_total'] ?? 0) }}
                     </p>
                 </div>

@@ -35,7 +35,8 @@ class ExpenseOverviewStats extends BaseWidget
             Stat::make('Paid (Confirmed)', '$' . number_format($paidTotal, 2))
                 ->description('Payments confirmed')
                 ->descriptionIcon('heroicon-o-check-badge')
-                ->color('success'),
+                ->color('success')
+                ->extraAttributes(['style' => 'font-weight: 700;']),
 
             Stat::make('Overdue Amount', '$' . number_format($overdueAmount, 2))
                 ->description($overdueCount > 0 ? "{$overdueCount} provider(s) need follow-up" : 'All good')
