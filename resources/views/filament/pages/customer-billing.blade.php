@@ -42,12 +42,12 @@
             </div>
         </x-filament::card>
 
-        <x-filament::card :class="($stats['has_overdue'] ?? false) ? 'border border-rose-200 dark:border-rose-500 bg-rose-50 dark:bg-rose-950/40' : ''">
+        <x-filament::card style="{{ ($stats['has_overdue'] ?? false) ? 'border: 2px solid rgb(251 113 133); background-color: rgb(255 241 242);' : '' }}">
             <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-exclamation-triangle" class="w-6 h-6 {{ ($stats['has_overdue'] ?? false) ? 'text-rose-600' : 'text-gray-400' }}" />
+                <x-filament::icon icon="heroicon-o-exclamation-triangle" class="w-6 h-6" style="color: {{ ($stats['has_overdue'] ?? false) ? 'rgb(225 29 72)' : 'rgb(156 163 175)' }};" />
                 <div>
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Overdue Alert</p>
-                    <p class="mt-1 text-2xl font-semibold {{ ($stats['has_overdue'] ?? false) ? 'text-rose-600 dark:text-rose-400' : 'text-gray-900 dark:text-gray-100' }}">
+                    <p class="mt-1 text-2xl font-semibold" style="color: {{ ($stats['has_overdue'] ?? false) ? 'rgb(225 29 72)' : 'rgb(17 24 39)' }};">
                         {{ $stats['overdue_message'] ?? 'All good' }}
                     </p>
                 </div>

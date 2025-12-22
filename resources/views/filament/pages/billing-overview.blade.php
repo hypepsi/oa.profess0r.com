@@ -97,7 +97,7 @@
                             <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $row['customer']->name }}</p>
                             <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Follow up required</p>
                         </div>
-                        <span class="text-sm font-semibold text-rose-600 dark:text-rose-400">
+                        <span class="text-sm font-semibold" style="color: rgb(225 29 72);">
                             {{ $formatCurrency($row['amount']) }}
                         </span>
                     </li>
@@ -134,7 +134,7 @@
                 </div>
                 <div>
                     <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Overdue</p>
-                    <p class="text-lg font-semibold {{ ($previousSummary['overdue_amount_total'] ?? 0) > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-gray-900 dark:text-gray-100' }}">
+                    <p class="text-lg font-semibold" style="color: {{ ($previousSummary['overdue_amount_total'] ?? 0) > 0 ? 'rgb(225 29 72)' : 'rgb(17 24 39)' }};">
                         {{ $formatCurrency($previousSummary['overdue_amount_total'] ?? 0) }}
                     </p>
                 </div>

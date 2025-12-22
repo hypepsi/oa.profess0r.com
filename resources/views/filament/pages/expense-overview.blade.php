@@ -49,9 +49,9 @@
                     <li class="flex items-center justify-between py-4 border-l-4 border-rose-500 pl-4 bg-rose-50/50 dark:bg-rose-950/20 hover:bg-rose-100 dark:hover:bg-rose-950/30 transition-colors">
                         <div class="flex-1 min-w-0 mr-4">
                             <p class="oa-list-primary">{{ $row['provider']->name }}</p>
-                            <p class="oa-list-secondary text-rose-600 dark:text-rose-400">⚠️ Follow up required</p>
+                            <p class="oa-list-secondary" style="color: rgb(225 29 72);">⚠️ Follow up required</p>
                         </div>
-                        <span class="oa-list-value text-rose-600 dark:text-rose-400 shrink-0">
+                        <span class="oa-list-value shrink-0" style="color: rgb(225 29 72);">
                             {{ $formatCurrency($row['amount']) }}
                         </span>
                     </li>
@@ -88,7 +88,7 @@
                 </div>
                 <div>
                     <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Overdue</p>
-                    <p class="text-lg font-semibold {{ ($previousSummary['overdue_amount_total'] ?? 0) > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-gray-900 dark:text-gray-100' }}">
+                    <p class="text-lg font-semibold" style="color: {{ ($previousSummary['overdue_amount_total'] ?? 0) > 0 ? 'rgb(225 29 72)' : 'rgb(17 24 39)' }};">
                         {{ $formatCurrency($previousSummary['overdue_amount_total'] ?? 0) }}
                     </p>
                 </div>
