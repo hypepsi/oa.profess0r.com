@@ -50,12 +50,12 @@
             </div>
         </x-filament::card>
 
-        <x-filament::card :class="count($overdueList) ? 'border border-rose-200 dark:border-rose-500 bg-rose-50 dark:bg-rose-950/40' : ''">
+        <x-filament::card style="{{ count($overdueList) ? 'border: 2px solid rgb(251 113 133); background-color: rgb(255 241 242);' : '' }}">
             <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-exclamation-triangle" class="w-6 h-6 {{ count($overdueList) ? 'text-rose-600' : 'text-gray-400' }}" />
+                <x-filament::icon icon="heroicon-o-exclamation-triangle" class="w-6 h-6" style="color: {{ count($overdueList) ? 'rgb(225 29 72)' : 'rgb(156 163 175)' }};" />
                 <div>
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Overdue Amount</p>
-                    <p class="mt-1 text-2xl font-semibold {{ count($overdueList) ? 'text-rose-600 dark:text-rose-400' : 'text-gray-900 dark:text-gray-100' }}">
+                    <p class="mt-1 text-2xl font-semibold" style="color: {{ count($overdueList) ? 'rgb(225 29 72)' : 'rgb(17 24 39)' }};">
                         {{ $formatCurrency($summary['overdue_amount_total'] ?? 0) }}
                     </p>
                     <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ count($overdueList) }} customer(s)</p>
