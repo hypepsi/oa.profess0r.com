@@ -20,10 +20,10 @@
 
         <x-filament::card>
             <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-check-badge" class="w-6 h-6 text-emerald-500" />
+                <x-filament::icon icon="heroicon-o-check-badge" class="w-6 h-6" style="color: rgb(16 185 129);" />
                 <div>
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Confirmed Paid</p>
-                    <p class="mt-1 text-2xl font-semibold text-emerald-600 dark:text-emerald-400">
+                    <p class="mt-1 text-2xl font-semibold" style="color: rgb(5 150 105);">
                         {{ $formatCurrency($stats['current_paid'] ?? 0) }}
                     </p>
                 </div>
@@ -109,7 +109,7 @@
                                 <td class="px-4 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">{{ $periodLabel }}</td>
                                 <td class="px-4 py-4 text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $formatCurrency($snapshot['expected_total']) }}</td>
                                 <td class="px-4 py-4 text-sm text-gray-900 dark:text-gray-100">{{ $formatCurrency($payment->invoiced_amount ?? '-') }}</td>
-                                <td class="px-4 py-4 text-sm font-semibold text-emerald-600 dark:text-emerald-400">{{ $formatCurrency($totalPaid) }}</td>
+                                <td class="px-4 py-4 text-sm font-semibold style="color: rgb(5 150 105);"">{{ $formatCurrency($totalPaid) }}</td>
                                 <td class="px-4 py-4">
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-{{ $statusColor }}-100 text-{{ $statusColor }}-800 dark:bg-{{ $statusColor }}-900/40 dark:text-{{ $statusColor }}-300">
                                         {{ $statusLabel }}
@@ -180,7 +180,7 @@
                                 <td class="px-4 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">{{ $periodLabel }}</td>
                                 <td class="px-4 py-4 text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $formatCurrency($snapshot['expected_total']) }}</td>
                                 <td class="px-4 py-4 text-sm text-gray-900 dark:text-gray-100">{{ $formatCurrency($payment->invoiced_amount ?? '-') }}</td>
-                                <td class="px-4 py-4 text-sm font-semibold text-emerald-600 dark:text-emerald-400">{{ $formatCurrency($totalPaid) }}</td>
+                                <td class="px-4 py-4 text-sm font-semibold style="color: rgb(5 150 105);"">{{ $formatCurrency($totalPaid) }}</td>
                                 <td class="px-4 py-4">
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-{{ $statusColor }}-100 text-{{ $statusColor }}-800 dark:bg-{{ $statusColor }}-900/40 dark:text-{{ $statusColor }}-300">
                                         {{ $statusLabel }}

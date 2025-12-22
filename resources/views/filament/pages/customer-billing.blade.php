@@ -20,10 +20,10 @@
 
         <x-filament::card>
             <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-check-badge" class="w-6 h-6 text-emerald-500" />
+                <x-filament::icon icon="heroicon-o-check-badge" class="w-6 h-6" style="color: rgb(16 185 129);" />
                 <div>
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Confirmed Received</p>
-                    <p class="mt-1 text-2xl font-semibold text-emerald-600 dark:text-emerald-400">
+                    <p class="mt-1 text-2xl font-semibold" style="color: rgb(5 150 105);">
                         {{ $formatCurrency($stats['current_received'] ?? 0) }}
                     </p>
                 </div>
