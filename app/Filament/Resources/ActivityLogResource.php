@@ -48,8 +48,8 @@ class ActivityLogResource extends Resource
                     ->color(fn (string $state) => match($state) {
                         // CRUD Operations
                         'created', 'workflow_created' => 'success',
-                        'updated', 'invoice_updated', 'expense_invoice_updated', 'workflow_updated' => 'warning',
-                        'deleted' => 'danger',
+                        'updated', 'invoice_updated', 'expense_invoice_updated', 'workflow_updated', 'document_updated' => 'warning',
+                        'deleted', 'document_deleted' => 'danger',
                         
                         // Authentication
                         'login' => 'info',
@@ -67,6 +67,9 @@ class ActivityLogResource extends Resource
                         // IP Asset Changes
                         'ip_asset_status_changed', 'ip_asset_customer_changed' => 'info',
                         'ip_asset_price_changed', 'ip_asset_cost_changed' => 'warning',
+                        
+                        // Document Operations
+                        'document_uploaded' => 'success',
                         
                         default => 'primary',
                     })
@@ -136,6 +139,11 @@ class ActivityLogResource extends Resource
                         'ip_asset_customer_changed' => '👥 IP Asset: Customer Changed',
                         'ip_asset_price_changed' => '💵 IP Asset: Price Changed',
                         'ip_asset_cost_changed' => '💰 IP Asset: Cost Changed',
+                        
+                        // Document Operations
+                        'document_uploaded' => '📄 Document: Uploaded',
+                        'document_updated' => '✏️ Document: Updated',
+                        'document_deleted' => '🗑️ Document: Deleted',
                     ])
                     ->multiple()
                     ->searchable(),
@@ -160,6 +168,9 @@ class ActivityLogResource extends Resource
                         // Workflows
                         'App\\Models\\Workflow' => '📋 Workflows',
                         'App\\Models\\WorkflowUpdate' => '💬 Workflow Updates',
+                        
+                        // Documents
+                        'App\\Models\\Document' => '📄 Documents',
                         
                         // Income Management
                         'App\\Models\\BillingOtherItem' => '💰 Income: Add-ons',
@@ -224,79 +235,90 @@ class ActivityLogResource extends Resource
                 ]),
             ])
             ->headerActions([
+                // 删除筛选后的日志
                 Tables\Actions\Action::make('delete_filtered')
-                    ->label('Delete Filtered Logs')
+                    ->label('Delete Filtered')
                     ->icon('heroicon-o-funnel')
                     ->color('warning')
                     ->requiresConfirmation()
                     ->modalHeading('Delete Filtered Logs')
-                    ->modalDescription('This will delete only the logs matching your current filters. All other logs will remain.')
+                    ->modalDescription('This will delete only the logs that match your current search and filter criteria.')
                     ->modalSubmitActionLabel('Delete Filtered Logs')
                     ->action(function (Tables\Table $table) {
-                        // Get the base query from the table
-                        $query = $table->getQuery();
-                        
-                        // Count and delete
+                        $query = $table->getFilteredTableQuery();
                         $count = $query->count();
+                        
                         if ($count > 0) {
                             $query->delete();
                             Notification::make()
                                 ->success()
                                 ->title('Filtered Logs Deleted')
-                                ->body("Successfully deleted {$count} filtered log entries.")
+                                ->body("Successfully deleted {$count} log entries.")
                                 ->send();
                         } else {
                             Notification::make()
-                                ->warning()
+                                ->info()
                                 ->title('No Logs to Delete')
-                                ->body('No logs matched the current filters.')
+                                ->body('No logs matched your current filters.')
                                 ->send();
                         }
-                    })
-                    ->visible(fn () => true), // Always visible since filters may be applied
-                Tables\Actions\Action::make('delete_old_logs')
-                    ->label('Clean Old Logs')
-                    ->icon('heroicon-o-clock')
+                    }),
+                
+                // 按时间清理旧日志
+                Tables\Actions\Action::make('delete_by_date')
+                    ->label('Clean by Date')
+                    ->icon('heroicon-o-calendar-days')
                     ->color('warning')
                     ->requiresConfirmation()
                     ->form([
-                        \Filament\Forms\Components\Select::make('days')
+                        \Filament\Forms\Components\Select::make('period')
                             ->label('Delete logs older than')
                             ->options([
-                                7 => '7 days',
-                                14 => '14 days',
-                                30 => '30 days',
-                                60 => '60 days',
-                                90 => '90 days',
-                                180 => '180 days',
-                                365 => '1 year',
+                                7 => 'Last 7 days',
+                                14 => 'Last 14 days',
+                                30 => 'Last 30 days (1 month)',
+                                60 => 'Last 60 days (2 months)',
+                                90 => 'Last 90 days (3 months)',
+                                180 => 'Last 180 days (6 months)',
+                                365 => 'Last 365 days (1 year)',
                             ])
-                            ->default(30)
-                            ->required(),
+                            ->default(90)
+                            ->required()
+                            ->helperText('Logs created before the selected period will be deleted.'),
                     ])
-                    ->modalHeading('Clean Old Activity Logs')
-                    ->modalDescription('This will permanently delete all activity logs older than the selected period.')
+                    ->modalHeading('Clean Old Logs')
+                    ->modalDescription('Select a time period. All logs older than this period will be permanently deleted.')
                     ->modalSubmitActionLabel('Delete Old Logs')
                     ->action(function (array $data) {
-                        $days = $data['days'];
+                        $days = $data['period'];
                         $date = now()->subDays($days);
                         $count = ActivityLog::where('created_at', '<', $date)->count();
-                        ActivityLog::where('created_at', '<', $date)->delete();
                         
-                        Notification::make()
-                            ->success()
-                            ->title('Old Logs Deleted')
-                            ->body("Successfully deleted {$count} log entries older than {$days} days.")
-                            ->send();
+                        if ($count > 0) {
+                            ActivityLog::where('created_at', '<', $date)->delete();
+                            Notification::make()
+                                ->success()
+                                ->title('Old Logs Deleted')
+                                ->body("Successfully deleted {$count} log entries older than {$days} days.")
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->info()
+                                ->title('No Old Logs')
+                                ->body('No logs older than the selected period were found.')
+                                ->send();
+                        }
                     }),
-                Tables\Actions\Action::make('delete_all_logs')
-                    ->label('Delete ALL Logs')
-                    ->icon('heroicon-o-exclamation-triangle')
+                
+                // 删除所有日志（危险操作）
+                Tables\Actions\Action::make('delete_all')
+                    ->label('Delete ALL')
+                    ->icon('heroicon-o-trash')
                     ->color('danger')
                     ->requiresConfirmation()
-                    ->modalHeading('⚠️ Delete ALL Activity Logs')
-                    ->modalDescription('DANGER: This will permanently delete ALL activity logs from the entire system, regardless of any filters. This action cannot be undone!')
-                    ->modalSubmitActionLabel('Yes, Delete Everything')
+                    ->modalHeading('⚠️ Delete ALL Activity Logs?')
+                    ->modalDescription('DANGER: This will permanently delete ALL activity logs in the system, ignoring any filters. This action CANNOT be undone!')
+                    ->modalSubmitActionLabel('Yes, Delete ALL Logs')
                     ->action(function () {
                         $count = ActivityLog::count();
                         ActivityLog::query()->delete();

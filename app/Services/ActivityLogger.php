@@ -125,6 +125,7 @@ class ActivityLogger
             'BillingOtherItem' => $model->title ?? "ID: {$model->id}",
             'CustomerBillingPayment' => "Payment {$model->billing_year}-{$model->billing_month}",
             'BillingPaymentRecord' => "Record #{$model->id}",
+            'Document' => $model->title ?? "ID: {$model->id}",
             default => "ID: {$model->id}",
         };
     }

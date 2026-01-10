@@ -59,6 +59,9 @@ class AdminPanelProvider extends PanelProvider
                 NavigationGroup::make()
                     ->label('Workflows'),
                 NavigationGroup::make()
+                    ->label('Documents')
+                    ->collapsed(),
+                NavigationGroup::make()
                     ->label('Metadata')
                     ->collapsed()
                     ->collapsible(true),

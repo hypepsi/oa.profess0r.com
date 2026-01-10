@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Models\CustomerBillingPayment;
 use App\Models\DatacenterProvider;
 use App\Models\Device;
+use App\Models\Document;
 use App\Models\Employee;
 use App\Models\IncomeOtherItem;
 use App\Models\IpAsset;
@@ -18,6 +19,7 @@ use App\Models\ProviderExpensePayment;
 use App\Models\Workflow;
 use App\Models\WorkflowUpdate;
 use App\Observers\ActivityLogObserver;
+use App\Observers\DocumentObserver;
 use App\Observers\IpAssetObserver;
 use App\Listeners\LogUserActivity;
 use Illuminate\Auth\Events\Login;
@@ -52,6 +54,9 @@ class AppServiceProvider extends ServiceProvider
         
         // 注册 IpAsset 特殊 Observer（用于追踪字段变更时间）
         IpAsset::observe(IpAssetObserver::class);
+        
+        // 注册 Document Observer
+        Document::observe(DocumentObserver::class);
 
         // 注册登录/登出事件监听
         Event::listen(Login::class, [LogUserActivity::class, 'handleLogin']);
