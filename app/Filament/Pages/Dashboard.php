@@ -7,12 +7,14 @@ use App\Filament\Widgets\Dashboard\SubnetStatusStats;
 use App\Filament\Widgets\Dashboard\RevenueStatusStats;
 use App\Filament\Widgets\Dashboard\SalesPersonSubnetStats;
 use App\Filament\Widgets\Dashboard\SalesPersonRevenueStats;
+use App\Filament\Widgets\Dashboard\BackupStatusWidget;
 
 class Dashboard extends BaseDashboard
 {
     public function getWidgets(): array
     {
         return [
+            BackupStatusWidget::class,
             SubnetStatusStats::class,
             RevenueStatusStats::class,
             SalesPersonSubnetStats::class,
@@ -20,5 +22,3 @@ class Dashboard extends BaseDashboard
         ];
     }
 }
-
-
