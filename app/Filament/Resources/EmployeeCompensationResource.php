@@ -55,8 +55,8 @@ class EmployeeCompensationResource extends Resource
                             ->step(0.01)
                             ->helperText('Enter percentage, e.g., 25 for 25%')
                             ->required()
-                            ->dehydrateStateUsing(fn ($state) => $state / 100)
-                            ->formatStateUsing(fn ($state) => $state ? $state * 100 : 25),
+                            ->dehydrateStateUsing(fn ($state) => is_numeric($state) ? $state / 100 : 0.25)
+                            ->formatStateUsing(fn ($state) => is_numeric($state) && $state <= 1 ? $state * 100 : ($state ?: 25)),
                         
                         Forms\Components\Toggle::make('exclude_from_shared_cost')
                             ->label('Exclude from Shared Cost Allocation')
