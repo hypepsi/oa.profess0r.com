@@ -8,6 +8,7 @@ use App\Models\MonthlyPerformance;
 use App\Models\IpAsset;
 use App\Models\IncomeOtherItem;
 use App\Models\ProviderExpensePayment;
+use App\Models\Workflow;
 use Carbon\Carbon;
 
 class PerformanceCalculator
@@ -208,8 +209,6 @@ class PerformanceCalculator
      */
     protected function calculateWorkflowDeductions(int $employeeId, int $year, int $month): array
     {
-        use App\Models\Workflow;
-        
         // 找出该员工该月创建的且标记为overdue的workflows
         $overdueWorkflows = Workflow::whereHas('assignees', function ($query) use ($employeeId) {
                 $query->where('employee_id', $employeeId);
