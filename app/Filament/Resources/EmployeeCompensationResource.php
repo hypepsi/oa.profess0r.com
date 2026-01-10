@@ -37,7 +37,8 @@ class EmployeeCompensationResource extends Resource
                             ->required()
                             ->searchable()
                             ->preload()
-                            ->helperText('Only sales employees can have compensation configuration'),
+                            ->helperText('Only sales employees can have compensation configuration')
+                            ->columnSpanFull(),
                         
                         Forms\Components\TextInput::make('base_salary')
                             ->label('Base Salary (USD)')
@@ -61,7 +62,8 @@ class EmployeeCompensationResource extends Resource
                         
                         Forms\Components\Toggle::make('is_active')
                             ->label('Active')
-                            ->default(true),
+                            ->default(true)
+                            ->columnSpanFull(),
                         
                         Forms\Components\Textarea::make('notes')
                             ->label('Notes')

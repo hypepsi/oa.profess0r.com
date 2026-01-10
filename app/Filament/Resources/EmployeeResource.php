@@ -49,6 +49,7 @@ class EmployeeResource extends Resource
                         ->options([
                             'sales' => 'Sales',
                             'technical' => 'Technical',
+                            'owner' => 'Owner',
                         ])
                         ->default('sales')
                         ->native(false)
@@ -83,6 +84,7 @@ class EmployeeResource extends Resource
                     ->colors([
                         'primary' => 'sales',
                         'success' => 'technical',
+                        'warning' => 'owner',
                     ])
                     ->sortable(),
 
@@ -101,6 +103,7 @@ class EmployeeResource extends Resource
                     ->options([
                         'sales' => 'Sales',
                         'technical' => 'Technical',
+                        'owner' => 'Owner',
                     ]),
                 Tables\Filters\TernaryFilter::make('is_active')
                     ->label('Active'),
