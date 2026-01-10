@@ -13,7 +13,7 @@ class BackupStatusWidget extends Widget
     
     protected int | string | array $columnSpan = 'full';
     
-    protected static ?int $sort = -1; // Show at top
+    protected static ?int $sort = 9999; // Show at bottom
     
     public function getBackupMetadata(): ?array
     {
