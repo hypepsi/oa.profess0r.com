@@ -19,9 +19,9 @@ class EmployeeCompensationResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
     
-    protected static ?string $navigationLabel = 'Pay Config';
+    protected static ?string $navigationLabel = 'Salary Settings';
     
-    protected static ?string $navigationGroup = 'Compensation';
+    protected static ?string $navigationGroup = 'Salary';
     
     protected static ?int $navigationSort = 501;
 
@@ -29,7 +29,7 @@ class EmployeeCompensationResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Pay Settings')
+                Forms\Components\Section::make('Salary Configuration')
                     ->schema([
                         Forms\Components\Select::make('employee_id')
                             ->label('Employee')
@@ -37,25 +37,25 @@ class EmployeeCompensationResource extends Resource
                             ->required()
                             ->searchable()
                             ->preload()
-                            ->helperText('Only sales staff can have pay settings')
+                            ->helperText('Only sales employees need salary settings')
                             ->columnSpanFull(),
                         
                         Forms\Components\TextInput::make('base_salary')
-                            ->label('Base Pay (USD/month)')
+                            ->label('Base Salary (USD/Month)')
                             ->numeric()
                             ->default(0)
                             ->prefix('$')
                             ->required(),
                         
                         Forms\Components\TextInput::make('commission_rate')
-                            ->label('Bonus Rate (%)')
+                            ->label('Commission Rate (%)')
                             ->numeric()
                             ->default(25)
                             ->suffix('%')
                             ->minValue(0)
                             ->maxValue(100)
                             ->step(0.01)
-                            ->helperText('Enter number, e.g., 25 = 25%')
+                            ->helperText('Enter number, e.g., 25 means 25%')
                             ->required()
                             ->dehydrateStateUsing(fn ($state) => is_numeric($state) ? $state / 100 : 0.25)
                             ->formatStateUsing(fn ($state) => is_numeric($state) && $state <= 1 ? $state * 100 : ($state ?: 25)),
@@ -83,12 +83,12 @@ class EmployeeCompensationResource extends Resource
                     ->sortable(),
                 
                 Tables\Columns\TextColumn::make('base_salary')
-                    ->label('Base Pay')
+                    ->label('Base Salary')
                     ->money('USD')
                     ->sortable(),
                 
                 Tables\Columns\TextColumn::make('commission_rate')
-                    ->label('Bonus Rate')
+                    ->label('Commission')
                     ->formatStateUsing(fn ($state) => number_format($state * 100, 2) . '%')
                     ->sortable(),
                 

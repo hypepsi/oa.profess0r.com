@@ -21,9 +21,9 @@ class MonthlyPerformanceResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
     
-    protected static ?string $navigationLabel = 'Pay & Results';
+    protected static ?string $navigationLabel = 'Monthly Report';
     
-    protected static ?string $navigationGroup = 'Compensation';
+    protected static ?string $navigationGroup = 'Salary';
     
     protected static ?int $navigationSort = 502;
 
@@ -72,13 +72,13 @@ class MonthlyPerformanceResource extends Resource
                     ->sortable(['year', 'month']),
                 
                 Tables\Columns\TextColumn::make('total_revenue')
-                    ->label('Income')
+                    ->label('Revenue')
                     ->money('USD')
                     ->color('success')
                     ->sortable(),
                 
                 Tables\Columns\TextColumn::make('total_cost')
-                    ->label('Expense')
+                    ->label('Cost')
                     ->money('USD')
                     ->color('danger')
                     ->sortable(),
@@ -91,7 +91,7 @@ class MonthlyPerformanceResource extends Resource
                     ->sortable(),
                 
                 Tables\Columns\TextColumn::make('workflow_deductions')
-                    ->label('Penalty')
+                    ->label('Deduction')
                     ->money('USD')
                     ->color('warning')
                     ->sortable()
@@ -104,7 +104,7 @@ class MonthlyPerformanceResource extends Resource
                     ->toggleable(),
                 
                 Tables\Columns\TextColumn::make('total_compensation')
-                    ->label('Total Pay')
+                    ->label('Total Salary')
                     ->money('USD')
                     ->color('warning')
                     ->weight('bold')
@@ -137,7 +137,7 @@ class MonthlyPerformanceResource extends Resource
                 Tables\Actions\Action::make('view_details')
                     ->label('Details')
                     ->icon('heroicon-o-eye')
-                    ->modalHeading('Pay Details')
+                    ->modalHeading('Salary Details')
                     ->modalContent(fn (MonthlyPerformance $record) => view('filament.resources.monthly-performance.details', ['record' => $record]))
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Close'),
@@ -153,7 +153,7 @@ class MonthlyPerformanceResource extends Resource
                         
                         Notification::make()
                             ->success()
-                            ->title('Results Updated')
+                            ->title('Recalculated Successfully')
                             ->send();
                     }),
                 
@@ -171,7 +171,7 @@ class MonthlyPerformanceResource extends Resource
                         
                         Notification::make()
                             ->success()
-                            ->title('Done! ' . count($results) . ' staff updated')
+                            ->title('Calculated for ' . count($results) . ' employees')
                             ->send();
                     }),
             ])
