@@ -56,7 +56,7 @@
                     <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
                         <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Storage Path</div>
                         <div class="text-sm font-semibold truncate" title="{{ $metadata['last_backup_path'] }}">
-                            {{ basename($metadata['last_backup_path']) }}
+                            storage/app/private/backups/
                         </div>
                     </div>
                 </div>
