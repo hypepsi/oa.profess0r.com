@@ -33,10 +33,11 @@ class EmployeeCompensationResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('employee_id')
                             ->label('Employee')
-                            ->relationship('employee', 'name')
+                            ->relationship('employee', 'name', fn ($query) => $query->where('department', 'sales'))
                             ->required()
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->helperText('Only sales employees can have compensation configuration'),
                         
                         Forms\Components\TextInput::make('base_salary')
                             ->label('Base Salary (USD)')
@@ -57,17 +58,6 @@ class EmployeeCompensationResource extends Resource
                             ->required()
                             ->dehydrateStateUsing(fn ($state) => is_numeric($state) ? $state / 100 : 0.25)
                             ->formatStateUsing(fn ($state) => is_numeric($state) && $state <= 1 ? $state * 100 : ($state ?: 25)),
-                        
-                        Forms\Components\Toggle::make('exclude_from_shared_cost')
-                            ->label('Exclude from Shared Cost Allocation')
-                            ->helperText('Enable for boss/owner who should not bear shared costs')
-                            ->default(false),
-                        
-                        Forms\Components\DatePicker::make('effective_from')
-                            ->label('Effective From'),
-                        
-                        Forms\Components\DatePicker::make('effective_to')
-                            ->label('Effective To'),
                         
                         Forms\Components\Toggle::make('is_active')
                             ->label('Active')
@@ -98,15 +88,6 @@ class EmployeeCompensationResource extends Resource
                 Tables\Columns\TextColumn::make('commission_rate')
                     ->label('Commission Rate')
                     ->formatStateUsing(fn ($state) => number_format($state * 100, 2) . '%')
-                    ->sortable(),
-                
-                Tables\Columns\IconColumn::make('exclude_from_shared_cost')
-                    ->label('Exclude Shared Cost')
-                    ->boolean(),
-                
-                Tables\Columns\TextColumn::make('effective_from')
-                    ->label('Effective From')
-                    ->date()
                     ->sortable(),
                 
                 Tables\Columns\IconColumn::make('is_active')

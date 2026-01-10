@@ -13,13 +13,29 @@ class Employee extends Model
         'name',
         'email',
         'phone',
-        'department', // sales / technical
+        'department', // sales / technical / owner
         'is_active',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
     ];
+
+    /**
+     * Check if employee is owner/boss
+     */
+    public function isOwner(): bool
+    {
+        return strtolower($this->department) === 'owner';
+    }
+
+    /**
+     * Check if employee is sales
+     */
+    public function isSales(): bool
+    {
+        return strtolower($this->department) === 'sales';
+    }
 
     // 关联IP资产（作为销售人员）
     public function ipAssets()

@@ -31,20 +31,24 @@ class PerformanceCalculator
         $revenueData = $this->calculateRevenue($employeeId, $year, $month);
         
         // 2. 计算成本
-        $costData = $this->calculateCost($employeeId, $year, $month, $compensation);
+        $costData = $this->calculateCost($employeeId, $year, $month);
         
-        // 3. 计算利润
+        // 3. 计算workflow扣款
+        $deductionData = $this->calculateWorkflowDeductions($employeeId, $year, $month);
+        
+        // 4. 计算利润
         $totalRevenue = $revenueData['total'];
         $totalCost = $costData['total'];
         $netProfit = $totalRevenue - $totalCost;
         
-        // 4. 计算薪酬
+        // 5. 计算薪酬（利润 - 扣款）
         $baseSalary = $compensation ? $compensation->base_salary : 0;
         $commissionRate = $compensation ? $compensation->commission_rate : 0.25;
-        $commissionAmount = $netProfit > 0 ? $netProfit * $commissionRate : 0;
+        $profitAfterDeductions = $netProfit - $deductionData['total'];
+        $commissionAmount = $profitAfterDeductions > 0 ? $profitAfterDeductions * $commissionRate : 0;
         $totalCompensation = $baseSalary + $commissionAmount;
         
-        // 5. 保存数据
+        // 6. 保存数据
         $performance->fill([
             'ip_asset_revenue' => $revenueData['ip_asset_revenue'],
             'other_income' => $revenueData['other_income'],
@@ -56,6 +60,9 @@ class PerformanceCalculator
             'total_cost' => $totalCost,
             
             'net_profit' => $netProfit,
+            'workflow_deductions' => $deductionData['total'],
+            'overdue_workflow_count' => $deductionData['count'],
+            
             'base_salary' => $baseSalary,
             'commission_rate' => $commissionRate,
             'commission_amount' => $commissionAmount,
@@ -68,6 +75,7 @@ class PerformanceCalculator
             'calculation_details' => [
                 'revenue' => $revenueData,
                 'cost' => $costData,
+                'deductions' => $deductionData,
                 'calculated_at' => now('Asia/Shanghai')->toDateTimeString(),
             ],
             'calculated_at' => now('Asia/Shanghai'),
@@ -112,15 +120,15 @@ class PerformanceCalculator
     /**
      * 计算成本
      */
-    protected function calculateCost(int $employeeId, int $year, int $month, ?EmployeeCompensation $compensation): array
+    protected function calculateCost(int $employeeId, int $year, int $month): array
     {
         // 1. IP资产直接成本 (该销售的所有Active IP的cost总和)
         $ipDirectCost = IpAsset::where('sales_person_id', $employeeId)
             ->where('status', 'Active')
             ->sum('cost') ?? 0;
         
-        // 2. 计算分摊成本
-        $sharedCostData = $this->calculateSharedCost($employeeId, $year, $month, $compensation);
+        // 2. 计算分摊成本（只计算Provider费用，不包括IP cost）
+        $sharedCostData = $this->calculateSharedCost($employeeId, $year, $month);
         
         return [
             'ip_direct_cost' => (float) $ipDirectCost,
@@ -136,24 +144,13 @@ class PerformanceCalculator
      * 计算分摊成本
      * 
      * 逻辑：
-     * 1. 获取该月所有Provider费用（IPXO、机房托管等）
-     * 2. 统计全公司Active子网总数
+     * 1. 获取该月所有Provider费用（机房托管、IP Transit等混合成本）
+     * 2. 统计全公司Active子网总数（排除Owner）
      * 3. 统计该员工的Active子网数
      * 4. 按子网数量比例分摊成本
-     * 5. 如果员工设置了 exclude_from_shared_cost，则不分摊
      */
-    protected function calculateSharedCost(int $employeeId, int $year, int $month, ?EmployeeCompensation $compensation): array
+    protected function calculateSharedCost(int $employeeId, int $year, int $month): array
     {
-        // 如果是老板，不分摊成本
-        if ($compensation && $compensation->exclude_from_shared_cost) {
-            return [
-                'amount' => 0,
-                'ratio' => 0,
-                'employee_subnet_count' => 0,
-                'total_subnet_count' => 0,
-            ];
-        }
-        
         // 获取该月所有Provider费用总和
         $totalProviderExpense = ProviderExpensePayment::where('expense_year', $year)
             ->where('expense_month', $month)
@@ -175,10 +172,10 @@ class PerformanceCalculator
             ->where('status', 'Active')
             ->count();
         
-        // 统计全公司所有Active子网数（排除老板的）
+        // 统计全公司所有Active子网数（排除Owner部门的员工）
         $totalSubnetCount = IpAsset::where('status', 'Active')
-            ->whereHas('salesPerson.compensation', function ($query) {
-                $query->where('exclude_from_shared_cost', false);
+            ->whereHas('salesPerson', function ($query) {
+                $query->where('department', '!=', 'owner');
             })
             ->count();
         
@@ -205,10 +202,28 @@ class PerformanceCalculator
     }
     
     /**
+     * 计算workflow扣款
+     * 
+     * 逻辑：统计该员工该月的overdue workflows
+     */
+    protected function calculateWorkflowDeductions(int $employeeId, int $year, int $month): array
+    {
+        // TODO: 暂时返回0，等workflow添加deduction_amount字段后再实现
+        // 未来逻辑：找出该员工该月的overdue workflows，sum(deduction_amount)
+        
+        return [
+            'total' => 0,
+            'count' => 0,
+            'workflows' => [],
+        ];
+    }
+    
+    /**
      * 批量计算所有销售人员的月度业绩
      */
     public function calculateAllEmployees(int $year, int $month): array
     {
+        // 只计算sales部门的员工，排除owner
         $salesEmployees = Employee::where('department', 'sales')
             ->where('is_active', true)
             ->get();

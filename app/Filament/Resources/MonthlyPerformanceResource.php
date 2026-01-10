@@ -90,10 +90,18 @@ class MonthlyPerformanceResource extends Resource
                     ->weight('bold')
                     ->sortable(),
                 
+                Tables\Columns\TextColumn::make('workflow_deductions')
+                    ->label('Deductions')
+                    ->money('USD')
+                    ->color('warning')
+                    ->sortable()
+                    ->toggleable(),
+                
                 Tables\Columns\TextColumn::make('commission_rate')
                     ->label('Rate')
                     ->formatStateUsing(fn ($state) => number_format($state * 100, 1) . '%')
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(),
                 
                 Tables\Columns\TextColumn::make('total_compensation')
                     ->label('Total Salary')
@@ -104,8 +112,9 @@ class MonthlyPerformanceResource extends Resource
                 
                 Tables\Columns\TextColumn::make('calculated_at')
                     ->label('Calculated')
-                    ->dateTime('Y-m-d H:i')
-                    ->sortable(),
+                    ->dateTime('m-d H:i')
+                    ->sortable()
+                    ->toggleable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('employee_id')
