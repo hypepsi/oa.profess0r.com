@@ -21,7 +21,7 @@ class MonthlyPerformanceResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
     
-    protected static ?string $navigationLabel = 'Performance & Salary';
+    protected static ?string $navigationLabel = 'Pay & Results';
     
     protected static ?string $navigationGroup = 'Compensation';
     
@@ -66,32 +66,32 @@ class MonthlyPerformanceResource extends Resource
                     ->weight('bold'),
                 
                 Tables\Columns\TextColumn::make('period')
-                    ->label('Period')
+                    ->label('Month')
                     ->badge()
                     ->color('primary')
                     ->sortable(['year', 'month']),
                 
                 Tables\Columns\TextColumn::make('total_revenue')
-                    ->label('Revenue')
+                    ->label('Income')
                     ->money('USD')
                     ->color('success')
                     ->sortable(),
                 
                 Tables\Columns\TextColumn::make('total_cost')
-                    ->label('Cost')
+                    ->label('Expense')
                     ->money('USD')
                     ->color('danger')
                     ->sortable(),
                 
                 Tables\Columns\TextColumn::make('net_profit')
-                    ->label('Net Profit')
+                    ->label('Profit')
                     ->money('USD')
                     ->color(fn ($state) => $state >= 0 ? 'success' : 'danger')
                     ->weight('bold')
                     ->sortable(),
                 
                 Tables\Columns\TextColumn::make('workflow_deductions')
-                    ->label('Deductions')
+                    ->label('Penalty')
                     ->money('USD')
                     ->color('warning')
                     ->sortable()
@@ -104,14 +104,14 @@ class MonthlyPerformanceResource extends Resource
                     ->toggleable(),
                 
                 Tables\Columns\TextColumn::make('total_compensation')
-                    ->label('Total Salary')
+                    ->label('Total Pay')
                     ->money('USD')
                     ->color('warning')
                     ->weight('bold')
                     ->sortable(),
                 
                 Tables\Columns\TextColumn::make('calculated_at')
-                    ->label('Calculated')
+                    ->label('Updated')
                     ->dateTime('m-d H:i')
                     ->sortable()
                     ->toggleable(),
@@ -137,7 +137,7 @@ class MonthlyPerformanceResource extends Resource
                 Tables\Actions\Action::make('view_details')
                     ->label('Details')
                     ->icon('heroicon-o-eye')
-                    ->modalHeading('Performance Details')
+                    ->modalHeading('Pay Details')
                     ->modalContent(fn (MonthlyPerformance $record) => view('filament.resources.monthly-performance.details', ['record' => $record]))
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Close'),
@@ -153,7 +153,7 @@ class MonthlyPerformanceResource extends Resource
                         
                         Notification::make()
                             ->success()
-                            ->title('Performance Recalculated')
+                            ->title('Results Updated')
                             ->send();
                     }),
                 
@@ -161,7 +161,7 @@ class MonthlyPerformanceResource extends Resource
             ])
             ->headerActions([
                 Tables\Actions\Action::make('calculate_current_month')
-                    ->label('Calculate Current Month')
+                    ->label('Calculate This Month')
                     ->icon('heroicon-o-calculator')
                     ->color('primary')
                     ->requiresConfirmation()
@@ -171,7 +171,7 @@ class MonthlyPerformanceResource extends Resource
                         
                         Notification::make()
                             ->success()
-                            ->title('Calculated for ' . count($results) . ' employees')
+                            ->title('Done! ' . count($results) . ' staff updated')
                             ->send();
                     }),
             ])
