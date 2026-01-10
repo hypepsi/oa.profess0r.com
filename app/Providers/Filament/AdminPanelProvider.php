@@ -59,6 +59,8 @@ class AdminPanelProvider extends PanelProvider
                 NavigationGroup::make()
                     ->label('Workflows'),
                 NavigationGroup::make()
+                    ->label('Compensation'),
+                NavigationGroup::make()
                     ->label('Documents')
                     ->collapsed(),
                 NavigationGroup::make()

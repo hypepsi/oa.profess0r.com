@@ -26,4 +26,22 @@ class Employee extends Model
     {
         return $this->hasMany(IpAsset::class, 'sales_person_id');
     }
+
+    // 关联其他收入
+    public function incomeOtherItems()
+    {
+        return $this->hasMany(IncomeOtherItem::class, 'sales_person_id');
+    }
+
+    // 关联薪酬配置
+    public function compensation()
+    {
+        return $this->hasOne(EmployeeCompensation::class)->where('is_active', true);
+    }
+
+    // 关联月度业绩
+    public function monthlyPerformances()
+    {
+        return $this->hasMany(MonthlyPerformance::class);
+    }
 }
