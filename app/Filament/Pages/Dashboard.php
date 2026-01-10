@@ -14,11 +14,11 @@ class Dashboard extends BaseDashboard
     public function getWidgets(): array
     {
         return [
-            BackupStatusWidget::class,
             SubnetStatusStats::class,
             RevenueStatusStats::class,
             SalesPersonSubnetStats::class,
             SalesPersonRevenueStats::class,
+            BackupStatusWidget::class,
         ];
     }
 }
