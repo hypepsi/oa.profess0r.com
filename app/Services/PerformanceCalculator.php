@@ -208,13 +208,29 @@ class PerformanceCalculator
      */
     protected function calculateWorkflowDeductions(int $employeeId, int $year, int $month): array
     {
-        // TODO: 暂时返回0，等workflow添加deduction_amount字段后再实现
-        // 未来逻辑：找出该员工该月的overdue workflows，sum(deduction_amount)
+        use App\Models\Workflow;
+        
+        // 找出该员工该月创建的且标记为overdue的workflows
+        $overdueWorkflows = Workflow::whereHas('assignees', function ($query) use ($employeeId) {
+                $query->where('employee_id', $employeeId);
+            })
+            ->where('is_overdue', true)
+            ->whereYear('created_at', $year)
+            ->whereMonth('created_at', $month)
+            ->get();
+        
+        $totalDeduction = $overdueWorkflows->sum('deduction_amount');
         
         return [
-            'total' => 0,
-            'count' => 0,
-            'workflows' => [],
+            'total' => (float) $totalDeduction,
+            'count' => $overdueWorkflows->count(),
+            'workflows' => $overdueWorkflows->map(function ($workflow) {
+                return [
+                    'id' => $workflow->id,
+                    'title' => $workflow->title,
+                    'deduction' => $workflow->deduction_amount,
+                ];
+            })->toArray(),
         ];
     }
     

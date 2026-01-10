@@ -164,7 +164,30 @@ class WorkflowResource extends Resource
                         ->native(false)
                         ->required()
                         ->disabled(fn ($record) => $record && !$isAdmin)
-                        ->helperText('Current status of the workflow'),
+                        ->helperText('Current status of the workflow')
+                        ->reactive()
+                        ->afterStateUpdated(function ($state, callable $set, $get) {
+                            // Auto mark as overdue when status is overdue
+                            if ($state === 'overdue') {
+                                $set('is_overdue', true);
+                            }
+                        }),
+                    
+                    \Filament\Forms\Components\Toggle::make('is_overdue')
+                        ->label('Mark as Overdue')
+                        ->helperText('Will affect salary calculation')
+                        ->default(false)
+                        ->disabled(fn ($record) => $record && !$isAdmin)
+                        ->columnSpanFull(),
+                    
+                    \Filament\Forms\Components\TextInput::make('deduction_amount')
+                        ->label('Deduction Amount (USD)')
+                        ->numeric()
+                        ->default(0)
+                        ->prefix('$')
+                        ->helperText('Amount to deduct from salary if overdue')
+                        ->disabled(fn ($record) => $record && !$isAdmin)
+                        ->visible(fn (callable $get) => $get('is_overdue') === true),
                 ]),
 
         ]);

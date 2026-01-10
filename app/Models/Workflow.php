@@ -19,12 +19,16 @@ class Workflow extends Model
         'created_by_user_id',
         'require_evidence',
         'approved_at',
+        'deduction_amount',
+        'is_overdue',
     ];
 
     protected $casts = [
         'due_at' => 'date',
         'approved_at' => 'datetime',
         'require_evidence' => 'boolean',
+        'deduction_amount' => 'decimal:2',
+        'is_overdue' => 'boolean',
     ];
 
     public function client()
