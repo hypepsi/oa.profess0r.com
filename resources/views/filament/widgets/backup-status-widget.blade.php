@@ -63,9 +63,9 @@
                     💾 Automatic backup runs daily at 3:00 AM • 🗄️ Backups older than 30 days are automatically deleted
                 </div>
             @else
-                <div class="text-center py-8 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div class="text-center py-6 bg-gray-50 dark:bg-gray-800 rounded-lg">
                     <div class="text-gray-500 dark:text-gray-400">
-                        <svg class="mx-auto h-12 w-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="mx-auto h-8 w-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
                         </svg>
                         <p class="text-sm font-medium">No backup found</p>
