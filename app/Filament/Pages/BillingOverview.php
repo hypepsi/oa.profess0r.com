@@ -13,6 +13,8 @@ class BillingOverview extends Page
     protected static bool $shouldRegisterNavigation = false;
 
     protected static ?string $slug = 'billing/overview';
+    
+    protected static ?string $title = 'Income Overview';
 
     protected static string $view = 'filament.pages.billing-overview';
 

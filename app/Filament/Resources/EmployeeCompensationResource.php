@@ -21,6 +21,10 @@ class EmployeeCompensationResource extends Resource
     
     protected static ?string $navigationLabel = 'Salary Settings';
     
+    protected static ?string $pluralModelLabel = 'Salary Settings';
+    
+    protected static ?string $modelLabel = 'Salary Setting';
+    
     protected static ?string $navigationGroup = 'Salary';
     
     protected static ?int $navigationSort = 501;

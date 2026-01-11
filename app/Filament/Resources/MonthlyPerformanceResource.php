@@ -23,6 +23,10 @@ class MonthlyPerformanceResource extends Resource
     
     protected static ?string $navigationLabel = 'Monthly Report';
     
+    protected static ?string $pluralModelLabel = 'Monthly Reports';
+    
+    protected static ?string $modelLabel = 'Monthly Report';
+    
     protected static ?string $navigationGroup = 'Salary';
     
     protected static ?int $navigationSort = 502;

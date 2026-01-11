@@ -14,6 +14,8 @@ class ExpenseOverview extends Page
     protected static bool $shouldRegisterNavigation = false;
 
     protected static ?string $slug = 'expense/overview';
+    
+    protected static ?string $title = 'Expense Overview';
 
     protected static string $view = 'filament.pages.expense-overview';
 
