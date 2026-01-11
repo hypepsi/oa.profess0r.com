@@ -12,8 +12,8 @@
     {{-- Stats are now rendered by the ExpenseOverviewStats widget via getHeaderWidgets() --}}
     
     <div class="mb-6">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $periodLabel }}</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400">Expense overview and provider payment status</p>
+        <h2 class="oa-card-value">{{ $periodLabel }}</h2>
+        <p class="oa-subheading">Expense overview and provider payment status</p>
     </div>
 
     <div class="grid gap-6 mt-6 lg:grid-cols-2">
@@ -30,7 +30,7 @@
                                 {{ $row['provider_type'] === 'App\\Models\\Provider' ? 'IP Provider' : 'IPT Provider' }}
                             </p>
                         </div>
-                        <span class="oa-list-value text-gray-900 dark:text-gray-100 shrink-0">
+                        <span class="oa-list-value shrink-0">
                             {{ $formatCurrency($row['amount']) }}
                         </span>
                     </li>
@@ -69,26 +69,26 @@
 
             <div class="grid gap-4 md:grid-cols-4">
                 <div>
-                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Providers</p>
-                    <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    <p class="oa-card-label">Providers</p>
+                    <p class="oa-card-value">
                         {{ $previousSummary['providers_due'] ?? 0 }}
                     </p>
                 </div>
                 <div>
-                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Expected</p>
-                    <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    <p class="oa-card-label">Expected</p>
+                    <p class="oa-card-value">
                         {{ $formatCurrency($previousSummary['expected_total'] ?? 0) }}
                     </p>
                 </div>
                 <div>
-                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Paid</p>
-                    <p class="text-lg" style="color: rgb(22 101 52); font-weight: 700;">
+                    <p class="oa-card-label">Paid</p>
+                    <p class="oa-card-value" style="color: rgb(22 101 52);">
                         {{ $formatCurrency($previousSummary['paid_total'] ?? 0) }}
                     </p>
                 </div>
                 <div>
-                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Overdue</p>
-                    <p class="text-lg" style="color: {{ ($previousSummary['overdue_amount_total'] ?? 0) > 0 ? 'rgb(220 38 38)' : 'rgb(17 24 39)' }}; font-weight: 700;">
+                    <p class="oa-card-label">Overdue</p>
+                    <p class="oa-card-value" style="color: {{ ($previousSummary['overdue_amount_total'] ?? 0) > 0 ? 'rgb(220 38 38)' : 'rgb(17 24 39)' }};">
                         {{ $formatCurrency($previousSummary['overdue_amount_total'] ?? 0) }}
                     </p>
                 </div>
