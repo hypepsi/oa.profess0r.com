@@ -10,17 +10,28 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class CustomerBillingStats extends BaseWidget
 {
+    public ?int $customerId = null;
+
     protected function getStats(): array
     {
-        // Get customer from URL
-        $customerId = request()->integer('customer');
+        // Use customerId if set, otherwise try to get from request
+        $customerId = $this->customerId ?? request()->integer('customer');
+        
         if (!$customerId) {
-            return [];
+            return [
+                Stat::make('No Data', '-')
+                    ->description('Customer not found')
+                    ->color('gray'),
+            ];
         }
 
         $customer = Customer::find($customerId);
         if (!$customer) {
-            return [];
+            return [
+                Stat::make('No Data', '-')
+                    ->description('Customer not found')
+                    ->color('gray'),
+            ];
         }
 
         // Calculate stats

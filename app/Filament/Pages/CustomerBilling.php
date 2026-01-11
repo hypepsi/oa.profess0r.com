@@ -47,7 +47,9 @@ class CustomerBilling extends Page
     protected function getHeaderWidgets(): array
     {
         return [
-            \App\Filament\Widgets\CustomerBillingStats::class,
+            \App\Filament\Widgets\CustomerBillingStats::make([
+                'customerId' => $this->customer->id,
+            ]),
         ];
     }
 
