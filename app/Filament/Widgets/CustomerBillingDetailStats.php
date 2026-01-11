@@ -2,36 +2,50 @@
 
 namespace App\Filament\Widgets;
 
+use App\Models\Customer;
+use App\Services\BillingCalculator;
+use Carbon\Carbon;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Illuminate\Support\Facades\Route;
 
 class CustomerBillingDetailStats extends BaseWidget
 {
     protected function getStats(): array
     {
-        // Get data from the page (parent Livewire component)
-        $page = $this->getPage();
-        
-        if (!$page || !isset($page->snapshot)) {
-            return [
-                Stat::make('Loading', '...')
-                    ->description('Please wait')
-                    ->descriptionIcon('heroicon-o-clock')
-                    ->color('gray'),
-            ];
+        // Get customer and period from route parameters
+        $routeParams = Route::current()?->parameters() ?? [];
+        $customerId = $routeParams['customer'] ?? null;
+        $year = $routeParams['year'] ?? null;
+        $month = $routeParams['month'] ?? null;
+
+        if (!$customerId || !$year || !$month) {
+            return [];
         }
 
-        $snapshot = $page->snapshot;
-        $totalReceived = $page->getTotalReceived();
-        $waivedAmount = $page->getWaivedAmount();
+        $customer = Customer::find($customerId);
+        if (!$customer) {
+            return [];
+        }
 
-        $subnetCount = $snapshot['subnet_count'] ?? 0;
-        $subnetTotal = $snapshot['subnet_total'] ?? 0;
-        $otherTotal = $snapshot['other_total'] ?? 0;
-        $expectedTotal = $snapshot['expected_total'] ?? 0;
+        $period = Carbon::createFromDate($year, $month, 1, 'Asia/Shanghai')->startOfMonth();
+        $expected = BillingCalculator::getCustomerExpectedTotalsForMonth($customer, $period);
+
+        $payment = \App\Models\CustomerBillingPayment::firstOrCreate(
+            [
+                'customer_id' => $customer->id,
+                'billing_year' => $year,
+                'billing_month' => $month,
+            ],
+            ['is_paid' => false]
+        );
+        $payment->load('paymentRecords');
+
+        $totalReceived = (float) $payment->paymentRecords->sum('amount');
+        $waivedAmount = (float) ($payment->meta['waived_amount'] ?? 0);
 
         return [
-            Stat::make('Expected', '$' . number_format($expectedTotal, 2))
+            Stat::make('Expected', '$' . number_format($expected['expected_total'], 2))
                 ->description($waivedAmount > 0 ? '-$' . number_format($waivedAmount, 2) . ' waived' : 'Total billable')
                 ->descriptionIcon('heroicon-o-banknotes')
                 ->color('success'),
@@ -41,21 +55,16 @@ class CustomerBillingDetailStats extends BaseWidget
                 ->descriptionIcon($totalReceived > 0 ? 'heroicon-o-check-badge' : 'heroicon-o-clock')
                 ->color($totalReceived > 0 ? 'success' : 'gray'),
 
-            Stat::make('Subnets', number_format($subnetCount))
-                ->description('$' . number_format($subnetTotal, 2))
+            Stat::make('Subnets', number_format($expected['subnet_count']))
+                ->description('$' . number_format($expected['subnet_total'], 2))
                 ->descriptionIcon('heroicon-o-rectangle-stack')
                 ->color('info'),
 
-            Stat::make('Add-ons', '$' . number_format($otherTotal, 2))
+            Stat::make('Add-ons', '$' . number_format($expected['other_total'], 2))
                 ->description('Extra charges')
                 ->descriptionIcon('heroicon-o-plus-circle')
                 ->color('info'),
         ];
-    }
-
-    protected function getPage()
-    {
-        return $this->livewire;
     }
 }
 
