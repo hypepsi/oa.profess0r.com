@@ -7,58 +7,12 @@
         $formatCurrency = fn ($value) => '$' . number_format((float) $value, 2);
     @endphp
 
+    {{-- Stats are now rendered by the IncomeOverviewStats widget via getHeaderWidgets() --}}
+    
     {{-- Page Header --}}
     <div class="mb-6">
-        <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Current Month</p>
-        <h1 class="mt-1 text-lg font-semibold text-gray-950 dark:text-white">{{ $periodLabel }}</h1>
-    </div>
-
-    {{-- Stats Cards --}}
-    <div class="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <x-filament::card class="p-4">
-            <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-users" class="mt-0.5 h-5 w-5 text-primary-500" />
-                <div class="min-w-0 flex-1">
-                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Customers to Bill</p>
-                    <p class="mt-1 text-xl font-semibold text-gray-950 dark:text-white">{{ $summary['customers_due'] ?? 0 }}</p>
-                </div>
-            </div>
-        </x-filament::card>
-
-        <x-filament::card class="p-4">
-            <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-banknotes" class="mt-0.5 h-5 w-5 text-success-500" />
-                <div class="min-w-0 flex-1">
-                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Expected Revenue</p>
-                    <p class="mt-1 text-xl font-semibold text-success-600 dark:text-success-400">{{ $formatCurrency($summary['expected_total'] ?? 0) }}</p>
-                </div>
-            </div>
-        </x-filament::card>
-
-        <x-filament::card class="p-4">
-            <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-check-circle" class="mt-0.5 h-5 w-5 text-success-500" />
-                <div class="min-w-0 flex-1">
-                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Received</p>
-                    <p class="mt-1 text-xl font-semibold text-success-600 dark:text-success-400">{{ $formatCurrency($summary['received_total'] ?? 0) }}</p>
-                </div>
-            </div>
-        </x-filament::card>
-
-        <x-filament::card class="p-4 {{ count($overdueList) ? 'ring-2 ring-danger-500' : '' }}">
-            <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-exclamation-triangle" class="mt-0.5 h-5 w-5 {{ count($overdueList) ? 'text-danger-500' : 'text-gray-400' }}" />
-                <div class="min-w-0 flex-1">
-                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Overdue Amount</p>
-                    <p class="mt-1 text-xl font-semibold {{ count($overdueList) ? 'text-danger-600 dark:text-danger-400' : 'text-gray-950 dark:text-white' }}">
-                        {{ $formatCurrency($summary['overdue_amount_total'] ?? 0) }}
-                    </p>
-                    @if(count($overdueList) > 0)
-                        <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{{ count($overdueList) }} customer(s)</p>
-                    @endif
-                </div>
-            </div>
-        </x-filament::card>
+        <h1 class="text-lg font-semibold text-gray-950 dark:text-white">{{ $periodLabel }}</h1>
+        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Income overview and customer billing status</p>
     </div>
 
     {{-- Top Customers & Overdue --}}

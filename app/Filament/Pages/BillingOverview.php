@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Services\BillingCalculator;
+use App\Filament\Widgets\IncomeOverviewStats;
 use Carbon\Carbon;
 use Filament\Pages\Page;
 
@@ -39,5 +40,11 @@ class BillingOverview extends Page
         $this->summary = BillingCalculator::getOverviewForMonth($current);
         $this->previousSummary = BillingCalculator::getOverviewForMonth($previous);
     }
-
+    
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            IncomeOverviewStats::class,
+        ];
+    }
 }
