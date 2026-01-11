@@ -16,39 +16,6 @@
             || ($snapshot['period']->lessThan($now->startOfMonth()) && $paymentStatus !== 'paid' && !$payment->is_waived);
     @endphp
 
-    <x-filament::section>
-        <x-slot name="heading">
-            <div class="flex items-center justify-between">
-                <span class="text-base font-medium">Status</span>
-                @if($isOverdue)
-                    <span class="ml-2 inline-flex items-center rounded-full bg-danger-100 px-2.5 py-0.5 text-xs font-medium text-danger-800 dark:bg-danger-900/40 dark:text-danger-300">
-                        <x-filament::icon icon="heroicon-o-exclamation-triangle" class="mr-1 h-4 w-4" />
-                        Overdue
-                    </span>
-                @endif
-            </div>
-        </x-slot>
-
-        <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-            <p class="text-2xl font-bold text-{{ $paymentStatus === 'paid' ? 'success' : ($isOverdue ? 'danger' : 'gray') }}-600 dark:text-{{ $paymentStatus === 'paid' ? 'success' : ($isOverdue ? 'danger' : 'gray') }}-400">
-                {{ ucfirst(str_replace('_', ' ', $paymentStatus)) }}
-            </p>
-            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                @if($paymentStatus === 'paid')
-                    Payment completed successfully
-                @elseif($paymentStatus === 'partial_paid')
-                    Partial payment received
-                @elseif($paymentStatus === 'waived')
-                    Payment has been waived
-                @elseif($isOverdue)
-                    Payment is overdue
-                @else
-                    Awaiting payment
-                @endif
-            </p>
-        </div>
-    </x-filament::section>
-
     <div class="mb-6">
         <x-filament::button 
             color="gray" 
