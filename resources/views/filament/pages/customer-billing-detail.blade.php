@@ -16,6 +16,39 @@
             || ($snapshot['period']->lessThan($now->startOfMonth()) && $paymentStatus !== 'paid' && !$payment->is_waived);
     @endphp
 
+    <x-filament::section>
+        <x-slot name="heading">
+            <div class="flex items-center justify-between">
+                <span class="text-base font-medium">Status</span>
+                @if($isOverdue)
+                    <span class="ml-2 inline-flex items-center rounded-full bg-danger-100 px-2.5 py-0.5 text-xs font-medium text-danger-800 dark:bg-danger-900/40 dark:text-danger-300">
+                        <x-filament::icon icon="heroicon-o-exclamation-triangle" class="mr-1 h-4 w-4" />
+                        Overdue
+                    </span>
+                @endif
+            </div>
+        </x-slot>
+
+        <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+            <p class="text-2xl font-bold text-{{ $paymentStatus === 'paid' ? 'success' : ($isOverdue ? 'danger' : 'gray') }}-600 dark:text-{{ $paymentStatus === 'paid' ? 'success' : ($isOverdue ? 'danger' : 'gray') }}-400">
+                {{ ucfirst(str_replace('_', ' ', $paymentStatus)) }}
+            </p>
+            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                @if($paymentStatus === 'paid')
+                    Payment completed successfully
+                @elseif($paymentStatus === 'partial_paid')
+                    Partial payment received
+                @elseif($paymentStatus === 'waived')
+                    Payment has been waived
+                @elseif($isOverdue)
+                    Payment is overdue
+                @else
+                    Awaiting payment
+                @endif
+            </p>
+        </div>
+    </x-filament::section>
+
     <div class="mb-6">
         <x-filament::button 
             color="gray" 
@@ -25,76 +58,6 @@
         >
             Back to Billing
         </x-filament::button>
-    </div>
-
-    {{-- 区块A：统计卡片一行 --}}
-    <div class="grid gap-4 mb-8" style="grid-template-columns: repeat(4, minmax(0, 1fr));">
-        <x-filament::card class="p-4">
-            <div class="flex items-center gap-3">
-                <div class="flex-shrink-0">
-                    <x-filament::icon icon="heroicon-o-banknotes" class="w-8 h-8 text-emerald-500" />
-                </div>
-                <div class="flex-1 min-w-0">
-                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Expected Total</p>
-                    <p class="mt-1.5 text-base font-bold text-gray-900 dark:text-gray-100">
-                        {{ $formatCurrency($snapshot['expected_total']) }}
-                    </p>
-                    @if($waivedAmount > 0)
-                        <p class="text-xs text-amber-600 dark:text-amber-400 mt-1 font-medium">
-                            -{{ $formatCurrency($waivedAmount) }} waived
-                        </p>
-                    @endif
-                </div>
-            </div>
-        </x-filament::card>
-
-        <x-filament::card class="p-4">
-            <div class="flex items-center gap-3">
-                <div class="flex-shrink-0">
-                    <x-filament::icon icon="heroicon-o-currency-dollar" class="w-8 h-8 text-indigo-500" />
-                </div>
-                <div class="flex-1 min-w-0">
-                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total Received</p>
-                    <p class="mt-1.5 text-base font-bold {{ $totalReceived > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-900 dark:text-gray-100' }}">
-                        {{ $formatCurrency($totalReceived) }}
-                    </p>
-                    @if($paymentRecords->isNotEmpty())
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">
-                            {{ $paymentRecords->count() }} payment(s)
-                        </p>
-                    @endif
-                </div>
-            </div>
-        </x-filament::card>
-
-        <x-filament::card class="p-4">
-            <div class="flex items-center gap-3">
-                <div class="flex-shrink-0">
-                    <x-filament::icon icon="heroicon-o-rectangle-stack" class="w-8 h-8 text-blue-500" />
-                </div>
-                <div class="flex-1 min-w-0">
-                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Subnets</p>
-                    <p class="mt-1.5 text-base font-bold text-gray-900 dark:text-gray-100">
-                        {{ $snapshot['subnet_count'] }}
-                    </p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">{{ $formatCurrency($snapshot['subnet_total']) }}</p>
-                </div>
-            </div>
-        </x-filament::card>
-
-        <x-filament::card class="p-4">
-            <div class="flex items-center gap-3">
-                <div class="flex-shrink-0">
-                    <x-filament::icon icon="heroicon-o-plus-circle" class="w-8 h-8 text-purple-500" />
-                </div>
-                <div class="flex-1 min-w-0">
-                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Add-ons</p>
-                    <p class="mt-1.5 text-base font-bold text-gray-900 dark:text-gray-100">
-                        {{ $formatCurrency($snapshot['other_total']) }}
-                    </p>
-                </div>
-            </div>
-        </x-filament::card>
     </div>
 
     {{-- 账单详情区域 --}}

@@ -131,6 +131,13 @@ class CustomerBillingDetail extends Page
         ];
     }
 
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            \App\Filament\Widgets\CustomerBillingDetailStats::class,
+        ];
+    }
+
     public function updateInvoicedAmount(): void
     {
         $this->validate([
