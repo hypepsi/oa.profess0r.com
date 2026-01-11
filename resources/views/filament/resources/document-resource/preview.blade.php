@@ -16,39 +16,39 @@
 
 <div class="space-y-4">
     @if ($isImage)
-        {{-- 图片直接显示 --}}
-        <div class="flex justify-center bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
-            <img src="{{ $fileUrl }}" alt="{{ $record->title }}" class="max-w-full h-auto max-h-[70vh] rounded">
+        {{-- Image Preview --}}
+        <div class="flex justify-center rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
+            <img src="{{ $fileUrl }}" alt="{{ $record->title }}" class="max-h-[70vh] max-w-full rounded">
         </div>
     
     @elseif ($isPdf)
-        {{-- PDF使用iframe --}}
+        {{-- PDF Preview --}}
         <div class="w-full" style="height: 75vh;">
-            <iframe src="{{ $fileUrl }}" class="w-full h-full border-0 rounded-lg"></iframe>
+            <iframe src="{{ $fileUrl }}" class="h-full w-full rounded-lg border-0"></iframe>
         </div>
     
     @elseif ($isText)
-        {{-- 文本文件 --}}
-        <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 overflow-auto" style="max-height: 70vh;">
-            <pre class="whitespace-pre-wrap oa-body">{{ Storage::disk('public')->get($record->file_path) }}</pre>
+        {{-- Text File Preview --}}
+        <div class="max-h-[70vh] overflow-auto rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
+            <pre class="whitespace-pre-wrap text-sm text-gray-900 dark:text-white">{{ Storage::disk('public')->get($record->file_path) }}</pre>
         </div>
     
     @elseif ($isOffice)
-        {{-- Office文档用Google Docs Viewer --}}
+        {{-- Office Documents via Google Docs Viewer --}}
         <div class="w-full" style="height: 75vh;">
-            <iframe src="https://docs.google.com/viewer?url={{ urlencode($fileUrl) }}&embedded=true" class="w-full h-full border-0 rounded-lg"></iframe>
+            <iframe src="https://docs.google.com/viewer?url={{ urlencode($fileUrl) }}&embedded=true" class="h-full w-full rounded-lg border-0"></iframe>
         </div>
     
     @else
-        {{-- 不支持预览 --}}
-        <div class="text-center py-12">
+        {{-- Unsupported File Type --}}
+        <div class="py-12 text-center">
             <div class="text-gray-500 dark:text-gray-400">
-                <svg class="mx-auto h-12 w-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="mx-auto mb-4 h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                <p class="oa-card-value">Preview not available</p>
-                <p class="oa-body mt-2">This file type cannot be previewed online.</p>
-                <p class="oa-helper mt-1">Please download to view.</p>
+                <p class="text-base font-medium text-gray-900 dark:text-white">Preview not available</p>
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">This file type cannot be previewed online</p>
+                <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">Please download to view</p>
             </div>
         </div>
     @endif

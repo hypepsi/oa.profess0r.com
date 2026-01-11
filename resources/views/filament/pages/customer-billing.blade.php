@@ -5,49 +5,44 @@
         $nowMonth = $now->format('F Y');
     @endphp
 
-    <div class="grid gap-4 mb-8 md:grid-cols-2 xl:grid-cols-4">
-        <x-filament::card>
+    {{-- Stats Cards --}}
+    <div class="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <x-filament::card class="p-4">
             <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-banknotes" class="w-6 h-6 text-emerald-500" />
-                <div>
-                    <p class="oa-subheading">Expected ({{ $nowMonth }})</p>
-                    <p class="oa-card-value-lg mt-1">
-                        {{ $formatCurrency($stats['current_expected'] ?? 0) }}
-                    </p>
+                <x-filament::icon icon="heroicon-o-banknotes" class="mt-0.5 h-5 w-5 text-success-500" />
+                <div class="min-w-0 flex-1">
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Expected ({{ $nowMonth }})</p>
+                    <p class="mt-1 text-xl font-semibold text-gray-950 dark:text-white">{{ $formatCurrency($stats['current_expected'] ?? 0) }}</p>
                 </div>
             </div>
         </x-filament::card>
 
-        <x-filament::card>
+        <x-filament::card class="p-4">
             <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-check-badge" class="w-6 h-6" style="color: rgb(22 101 52);" />
-                <div>
-                    <p class="oa-subheading">Confirmed Received</p>
-                    <p class="oa-card-value-lg mt-1" style="color: rgb(22 101 52);">
-                        {{ $formatCurrency($stats['current_received'] ?? 0) }}
-                    </p>
+                <x-filament::icon icon="heroicon-o-check-badge" class="mt-0.5 h-5 w-5 text-success-500" />
+                <div class="min-w-0 flex-1">
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Received</p>
+                    <p class="mt-1 text-xl font-semibold text-success-600 dark:text-success-400">{{ $formatCurrency($stats['current_received'] ?? 0) }}</p>
                 </div>
             </div>
         </x-filament::card>
 
-        <x-filament::card>
+        <x-filament::card class="p-4">
             <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-hand-raised" class="w-6 h-6 text-amber-500" />
-                <div>
-                    <p class="oa-subheading">Waived Totals</p>
-                    <p class="oa-card-value-lg mt-1 text-amber-600 dark:text-amber-400">
-                        {{ $formatCurrency($stats['waived_total'] ?? 0) }}
-                    </p>
+                <x-filament::icon icon="heroicon-o-hand-raised" class="mt-0.5 h-5 w-5 text-warning-500" />
+                <div class="min-w-0 flex-1">
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Waived</p>
+                    <p class="mt-1 text-xl font-semibold text-warning-600 dark:text-warning-400">{{ $formatCurrency($stats['waived_total'] ?? 0) }}</p>
                 </div>
             </div>
         </x-filament::card>
 
-        <x-filament::card style="{{ ($stats['has_overdue'] ?? false) ? 'border: 3px solid rgb(220 38 38); background-color: rgb(254 226 226);' : '' }}">
+        <x-filament::card class="p-4 {{ ($stats['has_overdue'] ?? false) ? 'ring-2 ring-danger-500' : '' }}">
             <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-exclamation-triangle" class="w-6 h-6" style="color: {{ ($stats['has_overdue'] ?? false) ? 'rgb(220 38 38)' : 'rgb(156 163 175)' }};" />
-                <div>
-                    <p class="oa-subheading">Overdue Alert</p>
-                    <p class="oa-card-value-lg mt-1" style="color: {{ ($stats['has_overdue'] ?? false) ? 'rgb(220 38 38)' : 'rgb(22 101 52)' }};">
+                <x-filament::icon icon="heroicon-o-exclamation-triangle" class="mt-0.5 h-5 w-5 {{ ($stats['has_overdue'] ?? false) ? 'text-danger-500' : 'text-gray-400' }}" />
+                <div class="min-w-0 flex-1">
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Status</p>
+                    <p class="mt-1 text-xl font-semibold {{ ($stats['has_overdue'] ?? false) ? 'text-danger-600 dark:text-danger-400' : 'text-success-600 dark:text-success-400' }}">
                         {{ $stats['overdue_message'] ?? 'All good' }}
                     </p>
                 </div>
@@ -64,9 +59,9 @@
         <x-filament::section>
             <x-slot name="heading">Current Month ({{ $nowMonth }})</x-slot>
 
-            <div class="overflow-x-auto bg-white border border-gray-200 rounded-xl shadow-sm dark:bg-gray-900 dark:border-gray-700">
-                <table class="w-full text-left">
-                    <thead class="oa-table-header bg-gray-50 dark:bg-gray-800">
+            <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                <table class="w-full text-left text-sm">
+                    <thead class="border-b border-gray-200 bg-gray-50 text-xs font-medium uppercase tracking-wide text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                         <tr>
                             <th class="px-4 py-3">Month</th>
                             <th class="px-4 py-3 text-center">Subnets</th>
@@ -120,15 +115,15 @@
                                 $statusColor = $isOverdue ? 'rose' : $statusConfig['color'];
                                 $statusLabel = $isOverdue ? 'Overdue' : $statusConfig['label'];
                             @endphp
-                            <tr class="{{ $rowClasses }} hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer" onclick="window.location.href='{{ $detailUrl }}'">
-                                <td class="oa-table-cell-emphasis px-4 py-4">{{ $periodLabel }}</td>
-                                <td class="oa-table-cell px-4 py-4 text-center">{{ $snapshot['subnet_count'] }}</td>
-                                <td class="oa-table-cell px-4 py-4">{{ $formatCurrency($snapshot['subnet_total']) }}</td>
-                                <td class="oa-table-cell px-4 py-4">{{ $formatCurrency($snapshot['other_total']) }}</td>
-                                <td class="oa-table-cell-emphasis px-4 py-4">{{ $formatCurrency($snapshot['expected_total']) }}</td>
-                                <td class="oa-table-cell px-4 py-4">{{ $formatCurrency($payment->invoiced_amount ?? '-') }}</td>
+                            <tr class="{{ $rowClasses }} cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50" onclick="window.location.href='{{ $detailUrl }}'">
+                                <td class="px-4 py-4 font-medium text-gray-950 dark:text-white">{{ $periodLabel }}</td>
+                                <td class="px-4 py-4 text-center text-gray-700 dark:text-gray-300">{{ $snapshot['subnet_count'] }}</td>
+                                <td class="px-4 py-4 text-gray-700 dark:text-gray-300">{{ $formatCurrency($snapshot['subnet_total']) }}</td>
+                                <td class="px-4 py-4 text-gray-700 dark:text-gray-300">{{ $formatCurrency($snapshot['other_total']) }}</td>
+                                <td class="px-4 py-4 font-medium text-gray-950 dark:text-white">{{ $formatCurrency($snapshot['expected_total']) }}</td>
+                                <td class="px-4 py-4 text-gray-700 dark:text-gray-300">{{ $formatCurrency($payment->invoiced_amount ?? '-') }}</td>
                                 <td class="px-4 py-4">
-                                    <span class="oa-badge bg-{{ $statusColor }}-100 text-{{ $statusColor }}-800 dark:bg-{{ $statusColor }}-900/40 dark:text-{{ $statusColor }}-300">
+                                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-{{ $statusColor }}-100 text-{{ $statusColor }}-800 dark:bg-{{ $statusColor }}-900/40 dark:text-{{ $statusColor }}-300">
                                         {{ $statusLabel }}
                                     </span>
                                 </td>
@@ -144,9 +139,9 @@
         <x-filament::section>
             <x-slot name="heading">Historical Bills</x-slot>
 
-            <div class="overflow-x-auto bg-white border border-gray-200 rounded-xl shadow-sm dark:bg-gray-900 dark:border-gray-700">
-                <table class="w-full text-left">
-                    <thead class="oa-table-header bg-gray-50 dark:bg-gray-800">
+            <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                <table class="w-full text-left text-sm">
+                    <thead class="border-b border-gray-200 bg-gray-50 text-xs font-medium uppercase tracking-wide text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                         <tr>
                             <th class="px-4 py-3">Month</th>
                             <th class="px-4 py-3 text-center">Subnets</th>
@@ -196,15 +191,15 @@
                                 $statusColor = $isOverdue ? 'rose' : $statusConfig['color'];
                                 $statusLabel = $isOverdue ? 'Overdue' : $statusConfig['label'];
                             @endphp
-                            <tr class="{{ $rowClasses }} hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer" onclick="window.location.href='{{ $detailUrl }}'">
-                                <td class="oa-table-cell-emphasis px-4 py-4">{{ $periodLabel }}</td>
-                                <td class="oa-table-cell px-4 py-4 text-center">{{ $snapshot['subnet_count'] }}</td>
-                                <td class="oa-table-cell px-4 py-4">{{ $formatCurrency($snapshot['subnet_total']) }}</td>
-                                <td class="oa-table-cell px-4 py-4">{{ $formatCurrency($snapshot['other_total']) }}</td>
-                                <td class="oa-table-cell-emphasis px-4 py-4">{{ $formatCurrency($snapshot['expected_total']) }}</td>
-                                <td class="oa-table-cell px-4 py-4">{{ $formatCurrency($payment->invoiced_amount ?? '-') }}</td>
+                            <tr class="{{ $rowClasses }} cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50" onclick="window.location.href='{{ $detailUrl }}'">
+                                <td class="px-4 py-4 font-medium text-gray-950 dark:text-white">{{ $periodLabel }}</td>
+                                <td class="px-4 py-4 text-center text-gray-700 dark:text-gray-300">{{ $snapshot['subnet_count'] }}</td>
+                                <td class="px-4 py-4 text-gray-700 dark:text-gray-300">{{ $formatCurrency($snapshot['subnet_total']) }}</td>
+                                <td class="px-4 py-4 text-gray-700 dark:text-gray-300">{{ $formatCurrency($snapshot['other_total']) }}</td>
+                                <td class="px-4 py-4 font-medium text-gray-950 dark:text-white">{{ $formatCurrency($snapshot['expected_total']) }}</td>
+                                <td class="px-4 py-4 text-gray-700 dark:text-gray-300">{{ $formatCurrency($payment->invoiced_amount ?? '-') }}</td>
                                 <td class="px-4 py-4">
-                                    <span class="oa-badge bg-{{ $statusColor }}-100 text-{{ $statusColor }}-800 dark:bg-{{ $statusColor }}-900/40 dark:text-{{ $statusColor }}-300">
+                                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-{{ $statusColor }}-100 text-{{ $statusColor }}-800 dark:bg-{{ $statusColor }}-900/40 dark:text-{{ $statusColor }}-300">
                                         {{ $statusLabel }}
                                     </span>
                                 </td>
@@ -217,8 +212,8 @@
     @endif
 
     @if($currentMonthSnapshots->isEmpty() && $historicalSnapshots->isEmpty())
-        <div class="overflow-x-auto bg-white border border-gray-200 rounded-xl shadow-sm dark:bg-gray-900 dark:border-gray-700">
-            <div class="px-4 py-6 text-center oa-body">No billing history yet.</div>
+        <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
+            <div class="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">No billing history yet.</div>
         </div>
     @endif
 </x-filament-panels::page>

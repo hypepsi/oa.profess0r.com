@@ -1,18 +1,18 @@
 <x-filament-widgets::widget>
     <x-filament::section>
-        <div class="space-y-3">
+        <div class="space-y-4">
+            {{-- Header --}}
             <div class="flex items-center justify-between">
                 <div>
-                    <h3 class="oa-section-heading">System Backup</h3>
-                    <p class="oa-helper">Backup all system data to Excel</p>
+                    <h3 class="text-base font-medium text-gray-950 dark:text-white">System Backup</h3>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Automated daily backups at 3:00 AM</p>
                 </div>
                 
                 <div class="flex gap-2">
                     <x-filament::button 
                         wire:click="createBackup"
-                        color="primary"
-                        icon="heroicon-o-arrow-down-tray"
                         size="sm"
+                        icon="heroicon-o-arrow-down-tray"
                     >
                         Backup Now
                     </x-filament::button>
@@ -21,10 +21,10 @@
                         <x-filament::button 
                             wire:click="downloadLatestBackup"
                             color="success"
-                            icon="heroicon-o-cloud-arrow-down"
                             size="sm"
+                            icon="heroicon-o-cloud-arrow-down"
                         >
-                            Download Latest
+                            Download
                         </x-filament::button>
                     @endif
                 </div>
@@ -35,44 +35,40 @@
             @endphp
             
             @if($metadata)
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-                    <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
-                        <div class="oa-card-label mb-1">Last Backup Time</div>
-                        <div class="oa-body font-semibold">{{ $metadata['last_backup_time'] }}</div>
+                {{-- Stats Grid --}}
+                <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <div class="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
+                        <dt class="text-xs font-medium text-gray-500 dark:text-gray-400">Last Backup</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ $metadata['last_backup_time'] }}</dd>
                     </div>
                     
-                    <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
-                        <div class="oa-card-label mb-1">File Name</div>
-                        <div class="oa-body font-semibold truncate" title="{{ $metadata['last_backup_file'] }}">
+                    <div class="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
+                        <dt class="text-xs font-medium text-gray-500 dark:text-gray-400">Filename</dt>
+                        <dd class="mt-1 truncate text-sm text-gray-900 dark:text-white" title="{{ $metadata['last_backup_file'] }}">
                             {{ $metadata['last_backup_file'] }}
-                        </div>
+                        </dd>
                     </div>
                     
-                    <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
-                        <div class="oa-card-label mb-1">File Size</div>
-                        <div class="oa-body font-semibold">{{ number_format($metadata['last_backup_size'] / 1024 / 1024, 2) }} MB</div>
+                    <div class="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
+                        <dt class="text-xs font-medium text-gray-500 dark:text-gray-400">Size</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ number_format($metadata['last_backup_size'] / 1024 / 1024, 2) }} MB</dd>
                     </div>
                     
-                    <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
-                        <div class="oa-card-label mb-1">Storage Path</div>
-                        <div class="oa-body font-semibold truncate" title="{{ $metadata['last_backup_path'] }}">
-                            storage/app/private/backups/
-                        </div>
+                    <div class="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
+                        <dt class="text-xs font-medium text-gray-500 dark:text-gray-400">Location</dt>
+                        <dd class="mt-1 truncate text-sm text-gray-900 dark:text-white" title="{{ $metadata['last_backup_path'] }}">
+                            /backups/
+                        </dd>
                     </div>
-                </div>
-                
-                <div class="oa-helper text-center">
-                    💾 Auto backup: Daily 3:00 AM • 🗄️ Retention: 30 days
                 </div>
             @else
-                <div class="text-center py-6 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <div class="text-gray-500 dark:text-gray-400">
-                        <svg class="mx-auto h-8 w-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                        </svg>
-                        <p class="oa-body font-medium">No backup found</p>
-                        <p class="oa-helper mt-1">Click "Backup Now" to create your first backup</p>
-                    </div>
+                {{-- Empty State --}}
+                <div class="rounded-lg border-2 border-dashed border-gray-300 p-8 text-center dark:border-gray-700">
+                    <svg class="mx-auto h-10 w-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No backups yet</h3>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Click "Backup Now" to create your first backup</p>
                 </div>
             @endif
         </div>
