@@ -4,16 +4,14 @@ namespace App\Filament\Widgets;
 
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
-use Livewire\Attributes\Reactive;
 
 class CustomerBillingStats extends BaseWidget
 {
-    #[Reactive]
-    public ?array $stats = null;
-
     protected function getStats(): array
     {
-        $stats = $this->stats ?? [];
+        // Get data from the page
+        $page = $this->livewire;
+        $stats = $page->stats ?? [];
         
         if (empty($stats)) {
             return [
@@ -26,6 +24,7 @@ class CustomerBillingStats extends BaseWidget
 
         $currentExpected = $stats['current_expected'] ?? 0;
         $currentReceived = $stats['current_received'] ?? 0;
+        $waivedTotal = $stats['waived_total'] ?? 0;
         $hasOverdue = $stats['has_overdue'] ?? false;
         $overdueMessage = $stats['overdue_message'] ?? 'All good';
 
@@ -35,12 +34,17 @@ class CustomerBillingStats extends BaseWidget
                 ->descriptionIcon('heroicon-o-banknotes')
                 ->color('success'),
 
-            Stat::make('Confirmed Received', '$' . number_format($currentReceived, 2))
+            Stat::make('Received', '$' . number_format($currentReceived, 2))
                 ->description('Payments confirmed')
                 ->descriptionIcon('heroicon-o-check-badge')
-                ->color('info'),
+                ->color($currentReceived > 0 ? 'success' : 'gray'),
 
-            Stat::make('Overdue Alert', $overdueMessage)
+            Stat::make('Waived', '$' . number_format($waivedTotal, 2))
+                ->description('Waived amounts')
+                ->descriptionIcon('heroicon-o-hand-raised')
+                ->color($waivedTotal > 0 ? 'warning' : 'gray'),
+
+            Stat::make('Status', $overdueMessage)
                 ->description($hasOverdue ? 'Action required' : 'No overdue payments')
                 ->descriptionIcon($hasOverdue ? 'heroicon-o-exclamation-triangle' : 'heroicon-o-check-circle')
                 ->color($hasOverdue ? 'danger' : 'success'),

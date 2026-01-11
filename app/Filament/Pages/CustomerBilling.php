@@ -44,6 +44,12 @@ class CustomerBilling extends Page
         return 'Billing • ' . $this->customer->name;
     }
 
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            \App\Filament\Widgets\CustomerBillingStats::class,
+        ];
+    }
 
     public function waivePayment(int $paymentId): void
     {

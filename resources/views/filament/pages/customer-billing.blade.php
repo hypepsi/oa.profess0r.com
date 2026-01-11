@@ -5,51 +5,6 @@
         $nowMonth = $now->format('F Y');
     @endphp
 
-    {{-- Stats Cards --}}
-    <div class="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <x-filament::card class="p-4">
-            <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-banknotes" class="mt-0.5 h-5 w-5 text-success-500" />
-                <div class="min-w-0 flex-1">
-                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Expected ({{ $nowMonth }})</p>
-                    <p class="mt-1 text-base font-semibold text-gray-950 dark:text-white">{{ $formatCurrency($stats['current_expected'] ?? 0) }}</p>
-                </div>
-            </div>
-        </x-filament::card>
-
-        <x-filament::card class="p-4">
-            <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-check-badge" class="mt-0.5 h-5 w-5 text-success-500" />
-                <div class="min-w-0 flex-1">
-                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Received</p>
-                    <p class="mt-1 text-base font-semibold text-success-600 dark:text-success-400">{{ $formatCurrency($stats['current_received'] ?? 0) }}</p>
-                </div>
-            </div>
-        </x-filament::card>
-
-        <x-filament::card class="p-4">
-            <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-hand-raised" class="mt-0.5 h-5 w-5 text-warning-500" />
-                <div class="min-w-0 flex-1">
-                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Waived</p>
-                    <p class="mt-1 text-base font-semibold text-warning-600 dark:text-warning-400">{{ $formatCurrency($stats['waived_total'] ?? 0) }}</p>
-                </div>
-            </div>
-        </x-filament::card>
-
-        <x-filament::card class="p-4 {{ ($stats['has_overdue'] ?? false) ? 'ring-2 ring-danger-500' : '' }}">
-            <div class="flex items-start gap-3">
-                <x-filament::icon icon="heroicon-o-exclamation-triangle" class="mt-0.5 h-5 w-5 {{ ($stats['has_overdue'] ?? false) ? 'text-danger-500' : 'text-gray-400' }}" />
-                <div class="min-w-0 flex-1">
-                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Status</p>
-                    <p class="mt-1 text-base font-semibold {{ ($stats['has_overdue'] ?? false) ? 'text-danger-600 dark:text-danger-400' : 'text-success-600 dark:text-success-400' }}">
-                        {{ $stats['overdue_message'] ?? 'All good' }}
-                    </p>
-                </div>
-            </div>
-        </x-filament::card>
-    </div>
-
     @php
         $now = \Carbon\Carbon::now('Asia/Shanghai');
         $currentDay = (int) $now->day;
