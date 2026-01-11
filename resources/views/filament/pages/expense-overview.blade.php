@@ -11,18 +11,18 @@
     
     {{-- Page Header --}}
     <div class="mb-6">
-        <h1 class="text-lg font-semibold text-gray-950 dark:text-white">{{ $periodLabel }}</h1>
-        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Expense overview and provider payment status</p>
+        <h1 class="text-2xl font-semibold text-gray-950 dark:text-white">{{ $periodLabel }}</h1>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Expense overview and provider payment status</p>
     </div>
 
     {{-- Top Providers & Overdue --}}
     <div class="grid gap-6 lg:grid-cols-2">
         <x-filament::section>
             <x-slot name="heading">
-                <span class="text-sm font-medium">Top 3 Providers</span>
+                <span class="text-base font-medium">Top 3 Providers</span>
             </x-slot>
             <x-slot name="description">
-                <span class="text-xs">Highest expense amounts this month</span>
+                <span class="text-sm">Highest expense amounts this month</span>
             </x-slot>
 
             <ul class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -44,10 +44,10 @@
 
         <x-filament::section>
             <x-slot name="heading">
-                <span class="text-sm font-medium">Overdue Providers</span>
+                <span class="text-base font-medium">Overdue Providers</span>
             </x-slot>
             <x-slot name="description">
-                <span class="text-xs">Unpaid months before {{ $periodLabel }}</span>
+                <span class="text-sm">Unpaid months before {{ $periodLabel }}</span>
             </x-slot>
 
             <ul class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -70,28 +70,28 @@
     @if (!empty($previousSummary))
         <x-filament::section class="mt-6">
             <x-slot name="heading">
-                <span class="text-sm font-medium">{{ $previousPeriodLabel }} Summary</span>
+                <span class="text-base font-medium">{{ $previousPeriodLabel }} Summary</span>
             </x-slot>
             <x-slot name="description">
-                <span class="text-xs">Previous month overview</span>
+                <span class="text-sm">Previous month overview</span>
             </x-slot>
 
             <dl class="grid gap-4 sm:grid-cols-4">
                 <div>
                     <dt class="text-xs font-medium text-gray-500 dark:text-gray-400">Providers</dt>
-                    <dd class="mt-1 text-lg font-semibold text-gray-950 dark:text-white">{{ $previousSummary['providers_due'] ?? 0 }}</dd>
+                    <dd class="mt-1 text-base font-semibold text-gray-950 dark:text-white">{{ $previousSummary['providers_due'] ?? 0 }}</dd>
                 </div>
                 <div>
                     <dt class="text-xs font-medium text-gray-500 dark:text-gray-400">Expected</dt>
-                    <dd class="mt-1 text-lg font-semibold text-gray-950 dark:text-white">{{ $formatCurrency($previousSummary['expected_total'] ?? 0) }}</dd>
+                    <dd class="mt-1 text-base font-semibold text-gray-950 dark:text-white">{{ $formatCurrency($previousSummary['expected_total'] ?? 0) }}</dd>
                 </div>
                 <div>
                     <dt class="text-xs font-medium text-gray-500 dark:text-gray-400">Paid</dt>
-                    <dd class="mt-1 text-lg font-semibold text-success-600 dark:text-success-400">{{ $formatCurrency($previousSummary['paid_total'] ?? 0) }}</dd>
+                    <dd class="mt-1 text-base font-semibold text-success-600 dark:text-success-400">{{ $formatCurrency($previousSummary['paid_total'] ?? 0) }}</dd>
                 </div>
                 <div>
                     <dt class="text-xs font-medium text-gray-500 dark:text-gray-400">Overdue</dt>
-                    <dd class="mt-1 text-lg font-semibold {{ ($previousSummary['overdue_amount_total'] ?? 0) > 0 ? 'text-danger-600 dark:text-danger-400' : 'text-gray-950 dark:text-white' }}">
+                    <dd class="mt-1 text-base font-semibold {{ ($previousSummary['overdue_amount_total'] ?? 0) > 0 ? 'text-danger-600 dark:text-danger-400' : 'text-gray-950 dark:text-white' }}">
                         {{ $formatCurrency($previousSummary['overdue_amount_total'] ?? 0) }}
                     </dd>
                 </div>

@@ -36,7 +36,7 @@
                 </div>
                 <div class="flex-1 min-w-0">
                     <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Expected Total</p>
-                    <p class="mt-1.5 text-2xl font-bold text-gray-900 dark:text-gray-100">
+                    <p class="mt-1.5 text-base font-bold text-gray-900 dark:text-gray-100">
                         {{ $formatCurrency($snapshot['expected_total']) }}
                     </p>
                     @if($waivedAmount > 0)
@@ -55,7 +55,7 @@
                 </div>
                 <div class="flex-1 min-w-0">
                     <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total Received</p>
-                    <p class="mt-1.5 text-2xl font-bold {{ $totalReceived > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-900 dark:text-gray-100' }}">
+                    <p class="mt-1.5 text-base font-bold {{ $totalReceived > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-900 dark:text-gray-100' }}">
                         {{ $formatCurrency($totalReceived) }}
                     </p>
                     @if($paymentRecords->isNotEmpty())
@@ -74,7 +74,7 @@
                 </div>
                 <div class="flex-1 min-w-0">
                     <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Subnets</p>
-                    <p class="mt-1.5 text-2xl font-bold text-gray-900 dark:text-gray-100">
+                    <p class="mt-1.5 text-base font-bold text-gray-900 dark:text-gray-100">
                         {{ $snapshot['subnet_count'] }}
                     </p>
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">{{ $formatCurrency($snapshot['subnet_total']) }}</p>
@@ -89,7 +89,7 @@
                 </div>
                 <div class="flex-1 min-w-0">
                     <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Add-ons</p>
-                    <p class="mt-1.5 text-2xl font-bold text-gray-900 dark:text-gray-100">
+                    <p class="mt-1.5 text-base font-bold text-gray-900 dark:text-gray-100">
                         {{ $formatCurrency($snapshot['other_total']) }}
                     </p>
                 </div>
@@ -104,7 +104,7 @@
                 <x-slot name="heading">Add-ons Details</x-slot>
                 <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
                     <table class="w-full text-left">
-                        <thead class="oa-table-header bg-gray-50 dark:bg-gray-800">
+                        <thead class="text-xs font-medium text-gray-500 bg-gray-50 dark:bg-gray-800 dark:text-gray-400">
                             <tr>
                                 <th class="px-4 py-3.5">Title</th>
                                 <th class="px-4 py-3.5 text-right">Amount</th>
@@ -113,8 +113,8 @@
                         <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                             @foreach ($addOnsItems as $item)
                                 <tr class="bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                                    <td class="oa-table-cell-emphasis px-4 py-3.5">{{ $item->title }}</td>
-                                    <td class="oa-table-cell-emphasis px-4 py-3.5 text-right whitespace-nowrap">{{ $formatCurrency($item->amount) }}</td>
+                                    <td class="text-sm font-medium text-gray-900 dark:text-gray-100 px-4 py-3.5">{{ $item->title }}</td>
+                                    <td class="text-sm font-medium text-gray-900 dark:text-gray-100 px-4 py-3.5 text-right whitespace-nowrap">{{ $formatCurrency($item->amount) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -128,19 +128,19 @@
             <form wire:submit.prevent="updateInvoicedAmount">
                 <div class="space-y-3">
                     <div>
-                        <label class="oa-body font-medium mb-2 block">
+                        <label class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2 block">
                             Amount
                         </label>
                         <div class="flex items-center gap-2">
                             <div class="flex-1 fi-input flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2.5 focus-within:border-primary-500 focus-within:ring-1 focus-within:ring-primary-500 dark:bg-gray-900 dark:border-gray-700">
-                                <span class="text-gray-500 oa-body">$</span>
+                                <span class="text-gray-500 text-sm">$</span>
                                 <input
                                     type="number"
                                     step="0.01"
                                     min="0"
                                     wire:model="invoicedAmount"
                                     placeholder="Enter amount"
-                                    class="flex-1 bg-transparent border-0 focus:ring-0 oa-body"
+                                    class="flex-1 bg-transparent border-0 focus:ring-0 text-sm"
                                 />
                             </div>
                             <x-filament::button type="submit" color="primary" class="shrink-0">
@@ -148,9 +148,9 @@
                             </x-filament::button>
                         </div>
                         @error('invoicedAmount')
-                            <span class="oa-helper text-rose-600 mt-1.5 block">{{ $message }}</span>
+                            <span class="text-xs text-rose-600 mt-1.5 block">{{ $message }}</span>
                         @enderror
-                        <p class="oa-helper mt-1.5">
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
                             Current: {{ $formatCurrency($payment->invoiced_amount ?? $snapshot['expected_total']) }}
                         </p>
                     </div>
@@ -167,7 +167,7 @@
                 @if($paymentRecords->isNotEmpty())
                     <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
                         <table class="w-full text-left">
-                            <thead class="oa-table-header bg-gray-50 dark:bg-gray-800">
+                            <thead class="text-xs font-medium text-gray-500 bg-gray-50 dark:bg-gray-800 dark:text-gray-400">
                                 <tr>
                                     <th class="px-4 py-3.5">Date</th>
                                     <th class="px-4 py-3.5">Amount</th>
@@ -178,13 +178,13 @@
                             <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                                 @foreach ($paymentRecords as $record)
                                     <tr class="bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                                        <td class="oa-table-cell-emphasis px-4 py-3.5 whitespace-nowrap">
+                                        <td class="text-sm font-medium text-gray-900 dark:text-gray-100 px-4 py-3.5 whitespace-nowrap">
                                             {{ optional($record->paid_at)->setTimezone('Asia/Shanghai')->format('Y-m-d H:i') }}
                                         </td>
-                                        <td class="oa-table-cell-emphasis px-4 py-3.5 whitespace-nowrap text-emerald-600 dark:text-emerald-400">
+                                        <td class="text-sm font-medium text-emerald-600 dark:text-emerald-400 px-4 py-3.5 whitespace-nowrap">
                                             {{ $formatCurrency($record->amount) }}
                                         </td>
-                                        <td class="oa-table-cell px-4 py-3.5">
+                                        <td class="text-sm text-gray-600 dark:text-gray-400 px-4 py-3.5">
                                             {{ $record->recordedBy->name ?? 'Unknown' }}
                                         </td>
                                         <td class="px-4 py-3.5 text-center">
@@ -203,10 +203,10 @@
                             </tbody>
                             <tfoot class="bg-gray-50 dark:bg-gray-800 border-t-2 border-gray-200 dark:border-gray-700">
                                 <tr>
-                                    <td class="oa-table-cell-emphasis px-4 py-3.5" colspan="3">
+                                    <td class="text-sm font-medium text-gray-900 dark:text-gray-100 px-4 py-3.5" colspan="3">
                                         Total Received
                                     </td>
-                                    <td class="oa-table-cell-emphasis px-4 py-3.5 text-center whitespace-nowrap text-emerald-600 dark:text-emerald-400">
+                                    <td class="text-sm font-medium text-emerald-600 dark:text-emerald-400 px-4 py-3.5 text-center whitespace-nowrap">
                                         {{ $formatCurrency($totalReceived) }}
                                     </td>
                                 </tr>
@@ -222,22 +222,22 @@
 
             @if(!$payment->is_waived)
                 <div>
-                    <p class="oa-body font-semibold mb-4">Record New Payment</p>
+                    <p class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Record New Payment</p>
                     <form wire:submit.prevent="recordPayment" class="space-y-3">
                         <div>
-                            <label class="oa-body font-medium mb-2 block">
+                            <label class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2 block">
                                 Amount
                             </label>
                             <div class="flex items-center gap-2">
                                 <div class="flex-1 fi-input flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2.5 focus-within:border-primary-500 focus-within:ring-1 focus-within:ring-primary-500 dark:bg-gray-900 dark:border-gray-700">
-                                    <span class="text-gray-500 oa-body">$</span>
+                                    <span class="text-gray-500 text-sm">$</span>
                                     <input
                                         type="number"
                                         step="0.01"
                                         min="0.01"
                                         wire:model="paymentInput.amount"
                                         placeholder="Amount"
-                                        class="flex-1 bg-transparent border-0 focus:ring-0 oa-body"
+                                        class="flex-1 bg-transparent border-0 focus:ring-0 text-sm"
                                         required
                                     />
                                 </div>

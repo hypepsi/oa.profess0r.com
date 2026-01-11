@@ -10,8 +10,8 @@
             <div class="flex items-start gap-3">
                 <x-filament::icon icon="heroicon-o-arrow-trending-down" class="w-6 h-6 text-rose-500" />
                 <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Expected</p>
-                    <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Expected</p>
+                    <p class="mt-1 text-base font-semibold text-gray-900 dark:text-gray-100">
                         {{ $formatCurrency($stats['current_expected'] ?? 0) }}
                     </p>
                 </div>
@@ -22,8 +22,8 @@
             <div class="flex items-start gap-3">
                 <x-filament::icon icon="heroicon-o-check-badge" class="w-6 h-6" style="color: rgb(22 101 52);" />
                 <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Confirmed Paid</p>
-                    <p class="mt-1 text-2xl" style="color: rgb(22 101 52); font-weight: 700;">
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Confirmed Paid</p>
+                    <p class="mt-1 text-base font-semibold" style="color: rgb(22 101 52);">
                         {{ $formatCurrency($stats['current_paid'] ?? 0) }}
                     </p>
                 </div>
@@ -34,8 +34,8 @@
             <div class="flex items-start gap-3">
                 <x-filament::icon icon="heroicon-o-exclamation-triangle" class="w-6 h-6" style="color: {{ ($stats['has_overdue'] ?? false) ? 'rgb(220 38 38)' : 'rgb(156 163 175)' }};" />
                 <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Overdue Alert</p>
-                    <p class="mt-1 text-2xl" style="color: {{ ($stats['has_overdue'] ?? false) ? 'rgb(220 38 38)' : 'rgb(22 101 52)' }}; font-weight: 700;">
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Overdue Alert</p>
+                    <p class="mt-1 text-base font-semibold" style="color: {{ ($stats['has_overdue'] ?? false) ? 'rgb(220 38 38)' : 'rgb(22 101 52)' }};">
                         {{ $stats['overdue_message'] ?? 'All good' }}
                     </p>
                 </div>

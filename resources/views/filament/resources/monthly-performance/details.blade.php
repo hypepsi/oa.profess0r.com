@@ -3,22 +3,22 @@
     <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <div class="rounded-lg border-2 border-emerald-200 bg-emerald-50 p-4 text-center dark:border-emerald-800 dark:bg-emerald-950/20">
             <div class="text-xs font-medium uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Revenue</div>
-            <div class="mt-2 text-2xl font-semibold text-emerald-900 dark:text-emerald-100">${{ number_format($record->total_revenue, 2) }}</div>
+            <div class="mt-2 text-base font-semibold text-emerald-900 dark:text-emerald-100">${{ number_format($record->total_revenue, 2) }}</div>
         </div>
 
         <div class="rounded-lg border-2 border-red-200 bg-red-50 p-4 text-center dark:border-red-800 dark:bg-red-950/20">
             <div class="text-xs font-medium uppercase tracking-wide text-red-700 dark:text-red-400">Cost</div>
-            <div class="mt-2 text-2xl font-semibold text-red-900 dark:text-red-100">${{ number_format($record->total_cost, 2) }}</div>
+            <div class="mt-2 text-base font-semibold text-red-900 dark:text-red-100">${{ number_format($record->total_cost, 2) }}</div>
         </div>
 
         <div class="rounded-lg border-2 border-blue-200 bg-blue-50 p-4 text-center dark:border-blue-800 dark:bg-blue-950/20">
             <div class="text-xs font-medium uppercase tracking-wide text-blue-700 dark:text-blue-400">Profit</div>
-            <div class="mt-2 text-2xl font-semibold text-blue-900 dark:text-blue-100">${{ number_format($record->net_profit, 2) }}</div>
+            <div class="mt-2 text-base font-semibold text-blue-900 dark:text-blue-100">${{ number_format($record->net_profit, 2) }}</div>
         </div>
 
         <div class="rounded-lg border-2 border-amber-200 bg-amber-50 p-4 text-center dark:border-amber-800 dark:bg-amber-950/20">
             <div class="text-xs font-medium uppercase tracking-wide text-amber-700 dark:text-amber-400">Total Salary</div>
-            <div class="mt-2 text-2xl font-semibold text-amber-900 dark:text-amber-100">${{ number_format($record->total_compensation, 2) }}</div>
+            <div class="mt-2 text-base font-semibold text-amber-900 dark:text-amber-100">${{ number_format($record->total_compensation, 2) }}</div>
         </div>
     </div>
 
@@ -106,16 +106,16 @@
         <div class="mt-4 grid grid-cols-3 gap-4 text-center">
             <div>
                 <dt class="text-xs font-medium text-gray-500 dark:text-gray-400">Active Subnets</dt>
-                <dd class="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">{{ $record->active_subnet_count }}</dd>
+                <dd class="mt-1 text-base font-semibold text-gray-900 dark:text-white">{{ $record->active_subnet_count }}</dd>
                 <dd class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">of {{ $record->total_subnet_count }}</dd>
             </div>
             <div>
                 <dt class="text-xs font-medium text-gray-500 dark:text-gray-400">Active Customers</dt>
-                <dd class="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">{{ $record->active_customer_count }}</dd>
+                <dd class="mt-1 text-base font-semibold text-gray-900 dark:text-white">{{ $record->active_customer_count }}</dd>
             </div>
             <div>
                 <dt class="text-xs font-medium text-gray-500 dark:text-gray-400">Subnet Ratio</dt>
-                <dd class="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">{{ $record->total_subnet_count > 0 ? number_format($record->active_subnet_count / $record->total_subnet_count * 100, 1) : 0 }}%</dd>
+                <dd class="mt-1 text-base font-semibold text-gray-900 dark:text-white">{{ $record->total_subnet_count > 0 ? number_format($record->active_subnet_count / $record->total_subnet_count * 100, 1) : 0 }}%</dd>
             </div>
         </div>
     </div>
