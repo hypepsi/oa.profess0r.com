@@ -23,7 +23,7 @@ class IptProviderResource extends Resource
     protected static ?string $pluralModelLabel = 'IPT Providers';
     protected static ?string $modelLabel = 'IPT Provider';
     protected static ?string $navigationGroup = 'Metadata';
-    protected static ?int $navigationSort = 50;
+    protected static ?int $navigationSort = 60;
 
     public static function form(Form $form): Form
     {

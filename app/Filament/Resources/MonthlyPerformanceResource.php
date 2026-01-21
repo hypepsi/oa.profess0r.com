@@ -31,6 +31,16 @@ class MonthlyPerformanceResource extends Resource
     
     protected static ?int $navigationSort = 502;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->isAdmin() ?? false;
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return self::canViewAny();
+    }
+
     public static function form(Form $form): Form
     {
         return $form

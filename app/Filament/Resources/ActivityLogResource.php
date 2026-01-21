@@ -22,6 +22,11 @@ class ActivityLogResource extends Resource
 
     protected static ?int $navigationSort = 3;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->isAdmin() ?? false;
+    }
+
     public static function table(Table $table): Table
     {
         return $table

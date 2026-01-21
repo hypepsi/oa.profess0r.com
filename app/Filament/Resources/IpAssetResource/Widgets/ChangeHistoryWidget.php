@@ -191,5 +191,56 @@ class ChangeHistoryWidget extends Widget implements HasActions, HasForms
                 }
             });
     }
+
+    /**
+     * Generic delete history action for any field
+     */
+    public function deleteFieldHistoryAction(): Action
+    {
+        return Action::make('deleteFieldHistory')
+            ->requiresConfirmation()
+            ->modalHeading(fn (array $arguments) => 'Delete ' . ucfirst($arguments['field'] ?? 'Field') . ' Change Record')
+            ->modalDescription('Are you sure you want to delete this change history record? This action cannot be undone.')
+            ->modalSubmitActionLabel('Delete')
+            ->modalCancelActionLabel('Cancel')
+            ->color('danger')
+            ->action(function (array $arguments) {
+                $index = $arguments['index'] ?? null;
+                $field = $arguments['field'] ?? null;
+                
+                if ($index === null || $field === null) {
+                    return;
+                }
+
+                // 检查是否为管理员
+                if (auth()->user()->email !== 'admin@bunnycommunications.com') {
+                    Notification::make()
+                        ->danger()
+                        ->title('Permission Denied')
+                        ->body('Only administrators can delete change history.')
+                        ->send();
+                    return;
+                }
+
+                $meta = $this->record->meta ?? [];
+                $historyKey = $field . '_history';
+                $history = $meta[$historyKey] ?? [];
+
+                if (isset($history[$index])) {
+                    unset($history[$index]);
+                    $history = array_values($history);
+                    
+                    $meta[$historyKey] = $history;
+                    $this->record->meta = $meta;
+                    $this->record->save();
+
+                    Notification::make()
+                        ->success()
+                        ->title('Deleted')
+                        ->body(ucfirst($field) . ' change history record has been deleted.')
+                        ->send();
+                }
+            });
+    }
 }
 

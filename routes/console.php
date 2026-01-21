@@ -10,3 +10,10 @@ Artisan::command('inspire', function () {
 
 // Schedule automatic backup daily at 3:00 AM
 Schedule::command('backup:data')->dailyAt('03:00');
+
+// Schedule automatic GeoFeed sync to remote daily at 3:05 AM
+// Always syncs to geofeed.test.csv (change config URL when ready for production)
+Schedule::command('geofeed:sync-remote --mode=test')
+    ->dailyAt('03:05')
+    ->name('geofeed-sync-remote')
+    ->withoutOverlapping();

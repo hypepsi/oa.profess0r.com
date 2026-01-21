@@ -11,6 +11,11 @@ use App\Filament\Widgets\Dashboard\BackupStatusWidget;
 
 class Dashboard extends BaseDashboard
 {
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->isAdmin() ?? false;
+    }
+
     public function getWidgets(): array
     {
         return [

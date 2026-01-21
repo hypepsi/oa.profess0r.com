@@ -19,7 +19,7 @@ class DatacenterProviderResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-building-office';
     protected static ?string $navigationGroup = 'Metadata';
-    protected static ?int $navigationSort = 60;
+    protected static ?int $navigationSort = 70;
     protected static ?string $navigationLabel = 'Datacenter Providers';
     protected static ?string $pluralModelLabel = 'Datacenter Providers';
     protected static ?string $modelLabel = 'Datacenter Provider';

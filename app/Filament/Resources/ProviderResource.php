@@ -20,7 +20,7 @@ class ProviderResource extends Resource
 
     // 菜单分组
     protected static ?string $navigationGroup = 'Metadata';
-    protected static ?int $navigationSort = 40;
+    protected static ?int $navigationSort = 50;
 
     // 页面标题显示
     protected static ?string $modelLabel = 'IP Provider';

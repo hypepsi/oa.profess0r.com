@@ -7,6 +7,7 @@ use App\Models\Provider;
 use App\Models\IptProvider;
 use App\Models\DatacenterProvider;
 use App\Models\Workflow;
+use App\Filament\Resources\GeoFeedLocationResource;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;

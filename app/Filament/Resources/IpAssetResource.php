@@ -9,8 +9,11 @@ use App\Models\Customer;
 use App\Models\Location;
 use App\Models\IptProvider;
 use App\Models\Employee;
+use App\Models\GeoFeedLocation;
+use App\Services\GeoFeedService;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -36,37 +39,6 @@ class IpAssetResource extends Resource
                 ->required()
                 ->maxLength(255),
 
-            Forms\Components\Select::make('ip_provider_id')
-                ->label('IP Provider')
-                ->options(Provider::all()->pluck('name', 'id'))
-                ->searchable(),
-
-            Forms\Components\Select::make('client_id')
-                ->label('Client')
-                ->options(Customer::all()->pluck('name', 'id'))
-                ->searchable(),
-
-            Forms\Components\Select::make('sales_person_id')
-                ->label('Sales Person')
-                ->options(Employee::where('department', 'sales')->where('is_active', true)->get()->pluck('name', 'id'))
-                ->searchable()
-                ->placeholder('Select sales person'),
-
-            Forms\Components\Select::make('location_id')
-                ->label('Location')
-                ->options(Location::all()->pluck('name', 'id'))
-                ->searchable(),
-
-            Forms\Components\TextInput::make('geo_location')
-                ->label('Geo Location')
-                ->maxLength(255)
-                ->placeholder('e.g., US-West, EU-Central, Asia-Pacific'),
-
-            Forms\Components\Select::make('ipt_provider_id')
-                ->label('IPT Provider')
-                ->options(IptProvider::all()->pluck('name', 'id'))
-                ->searchable(),
-
             Forms\Components\Select::make('type')
                 ->label('Type')
                 ->options([
@@ -86,6 +58,67 @@ class IpAssetResource extends Resource
                     'Released' => 'Released',
                 ])
                 ->default('Active'),
+
+            Forms\Components\Select::make('ip_provider_id')
+                ->label('IP Provider')
+                ->options(Provider::all()->pluck('name', 'id'))
+                ->searchable(),
+
+            Forms\Components\Select::make('client_id')
+                ->label('Client')
+                ->options(Customer::all()->pluck('name', 'id'))
+                ->searchable(),
+
+            Forms\Components\Select::make('sales_person_id')
+                ->label('Sales Person')
+                ->options(function () {
+                    return Employee::where('is_active', true)
+                        ->whereIn('department', ['sales', 'owner'])
+                        ->orderByRaw("FIELD(department, 'owner', 'sales')")
+                        ->get()
+                        ->mapWithKeys(fn ($employee) => [
+                            $employee->id => $employee->name . ($employee->department === 'owner' ? ' (Owner)' : '')
+                        ]);
+                })
+                ->searchable()
+                ->placeholder('Select sales person'),
+
+            Forms\Components\Select::make('location_id')
+                ->label('Location')
+                ->options(Location::all()->pluck('name', 'id'))
+                ->searchable(),
+
+            Forms\Components\Select::make('geo_location')
+                ->label('Geo Location')
+                ->searchable()
+                ->preload()
+                ->options(function () {
+                    return GeoFeedLocation::query()
+                        ->orderBy('country_code')
+                        ->limit(50)
+                        ->get()
+                        ->mapWithKeys(fn (GeoFeedLocation $location) => [$location->label => $location->label])
+                        ->toArray();
+                })
+                ->getSearchResultsUsing(function (string $search) {
+                    return GeoFeedLocation::query()
+                        ->where('country_code', 'like', '%' . $search . '%')
+                        ->orWhere('region', 'like', '%' . $search . '%')
+                        ->orWhere('city', 'like', '%' . $search . '%')
+                        ->orWhere('postal_code', 'like', '%' . $search . '%')
+                        ->orderBy('country_code')
+                        ->limit(50)
+                        ->get()
+                        ->mapWithKeys(fn (GeoFeedLocation $location) => [$location->label => $location->label])
+                        ->toArray();
+                })
+                ->getOptionLabelUsing(fn ($value) => $value)
+                ->placeholder('Select GeoFeed location'),
+
+            Forms\Components\Select::make('ipt_provider_id')
+                ->label('IPT Provider')
+                ->options(IptProvider::all()->pluck('name', 'id'))
+                ->searchable(),
 
             Forms\Components\TextInput::make('cost')
                 ->label('Cost')
@@ -108,6 +141,34 @@ class IpAssetResource extends Resource
         return $table
             ->contentGrid(['md' => 1]) // 让表格横向撑满，避免出现滚动条
             ->headerActions([
+                Action::make('syncGeoFeed')
+                    ->label('Sync GeoFeed')
+                    ->color('gray')
+                    ->visible(fn () => auth()->user()?->isAdmin() ?? false)
+                    ->requiresConfirmation()
+                    ->modalHeading('Sync GeoFeed to Remote')
+                    ->modalDescription('Generate GeoFeed CSV from current IP assets and upload to remote server.')
+                    ->modalSubmitActionLabel('Sync Now')
+                    ->action(function () {
+                        $service = app(GeoFeedService::class);
+                        $result = $service->uploadTestFeed('geofeed.test.csv'); // 写死test.csv
+
+                        if ($result['uploaded'] ?? false) {
+                            Notification::make()
+                                ->success()
+                                ->title('GeoFeed Synced')
+                                ->body('Successfully uploaded to remote server.')
+                                ->send();
+                            return;
+                        }
+
+                        Notification::make()
+                            ->warning()
+                            ->title('Sync Failed')
+                            ->body($result['message'] ?? 'Upload failed. Check configuration.')
+                            ->send();
+                    }),
+
                 Action::make('exportCsv')
                     ->label('Export CSV')
                     ->color('primary')
@@ -191,18 +252,74 @@ class IpAssetResource extends Resource
                 Tables\Columns\TextColumn::make('cidr')->label('CIDR')->sortable()->searchable(),
                 Tables\Columns\TextColumn::make('ipProvider.name')->label('IP Provider')->searchable(),
                 Tables\Columns\TextColumn::make('client.name')->label('Client')->searchable(),
-                Tables\Columns\TextColumn::make('salesPerson.name')->label('Sales Person')->searchable(),
+                Tables\Columns\TextColumn::make('salesPerson.name')
+                    ->label('Sales Person')
+                    ->searchable()
+                    ->getStateUsing(function (IpAsset $record) {
+                        return $record->salesPerson?->name ?? '—';
+                    }),
                 Tables\Columns\TextColumn::make('location.name')->label('Location')->searchable(),
                 Tables\Columns\TextColumn::make('geo_location')
                     ->label('Geo Location')
                     ->searchable()
+                    ->getStateUsing(function (IpAsset $record) {
+                        if (!$record->geo_location) {
+                            return '—';
+                        }
+                        // Extract country code (first part before comma)
+                        $parts = explode(',', $record->geo_location);
+                        return trim($parts[0] ?? $record->geo_location);
+                    })
                     ->placeholder('—'),
                 Tables\Columns\TextColumn::make('iptProvider.name')->label('IPT Provider')->searchable(),
-                Tables\Columns\TextColumn::make('type')->label('Type')->searchable(),
                 Tables\Columns\TextColumn::make('asn')->label('ASN')->searchable(),
                 Tables\Columns\TextColumn::make('status')->label('Status')->searchable(),
-                Tables\Columns\TextColumn::make('cost')->label('Cost'),
-                Tables\Columns\TextColumn::make('price')->label('Price'),
+                Tables\Columns\TextColumn::make('geofeed_sync')
+                    ->label('GeoFeed Sync')
+                    ->badge()
+                    ->color(fn (string $state) => match ($state) {
+                        'Synced' => 'success',
+                        'Different' => 'warning',
+                        'Missing' => 'gray',
+                        'Remote Unavailable' => 'danger',
+                        'Unsupported' => 'gray',
+                        default => 'gray',
+                    })
+                    ->getStateUsing(function (IpAsset $record) {
+                        $service = app(GeoFeedService::class);
+                        $match = $service->getRemoteMatchForCidr($record->cidr);
+                        if (!$match) {
+                            return 'Remote Unavailable';
+                        }
+
+                        $status = $match['status'] ?? '';
+                        if ($status === 'unsupported') {
+                            return 'Unsupported';
+                        }
+                        if ($status === 'unavailable') {
+                            return 'Remote Unavailable';
+                        }
+                        if ($status === 'missing') {
+                            return 'Missing';
+                        }
+
+                        $local = $service->buildLocalGeoFields($record->geo_location);
+                        $remote = [
+                            'country_code' => $match['country_code'] ?? '',
+                            'region' => $match['region'] ?? '',
+                            'city' => $match['city'] ?? '',
+                            'postal_code' => $match['postal_code'] ?? '',
+                        ];
+
+                        return $service->isGeoSynced($local, $remote) ? 'Synced' : 'Different';
+                    })
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('cost')
+                    ->label('Cost')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('price')
+                    ->label('Price')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Created at')
                     ->date('Y-m-d')
