@@ -21,70 +21,64 @@ class PerformanceCalculator
         $employee = Employee::findOrFail($employeeId);
         $compensation = $employee->compensation;
         
-        // 获取或创建月度业绩记录
-        $performance = MonthlyPerformance::firstOrNew([
-            'employee_id' => $employeeId,
-            'year' => $year,
-            'month' => $month,
-        ]);
-        
         // 1. 计算收入
         $revenueData = $this->calculateRevenue($employeeId, $year, $month);
-        
+
         // 2. 计算成本
         $costData = $this->calculateCost($employeeId, $year, $month);
-        
+
         // 3. 计算workflow扣款
         $deductionData = $this->calculateWorkflowDeductions($employeeId, $year, $month);
-        
+
         // 4. 计算利润
         $totalRevenue = $revenueData['total'];
         $totalCost = $costData['total'];
         $netProfit = $totalRevenue - $totalCost;
-        
+
         // 5. 计算薪酬（利润 - 扣款）
         $baseSalary = $compensation ? $compensation->base_salary : 0;
         $commissionRate = $compensation ? $compensation->commission_rate : 0.25;
         $profitAfterDeductions = $netProfit - $deductionData['total'];
         $commissionAmount = $profitAfterDeductions > 0 ? $profitAfterDeductions * $commissionRate : 0;
         $totalCompensation = $baseSalary + $commissionAmount;
-        
-        // 6. 保存数据
-        $performance->fill([
-            'ip_asset_revenue' => $revenueData['ip_asset_revenue'],
-            'other_income' => $revenueData['other_income'],
-            'total_revenue' => $totalRevenue,
-            
-            'ip_direct_cost' => $costData['ip_direct_cost'],
-            'shared_cost' => $costData['shared_cost'],
-            'shared_cost_ratio' => $costData['shared_cost_ratio'],
-            'total_cost' => $totalCost,
-            
-            'net_profit' => $netProfit,
-            'workflow_deductions' => $deductionData['total'],
-            'overdue_workflow_count' => $deductionData['count'],
-            
-            'base_salary' => $baseSalary,
-            'commission_rate' => $commissionRate,
-            'commission_amount' => $commissionAmount,
-            'total_compensation' => $totalCompensation,
-            
-            'active_subnet_count' => $costData['active_subnet_count'],
-            'total_subnet_count' => $costData['total_subnet_count'],
-            'active_customer_count' => $revenueData['active_customer_count'],
-            
-            'calculation_details' => [
-                'revenue' => $revenueData,
-                'cost' => $costData,
-                'deductions' => $deductionData,
-                'calculated_at' => now('Asia/Shanghai')->toDateTimeString(),
-            ],
-            'calculated_at' => now('Asia/Shanghai'),
-            'calculated_by_user_id' => auth()->id(),
-        ]);
-        
-        $performance->save();
-        
+
+        // 6. 原子更新或创建，避免并发重复写入（数据库有 unique(employee_id, year, month) 约束）
+        $performance = MonthlyPerformance::updateOrCreate(
+            ['employee_id' => $employeeId, 'year' => $year, 'month' => $month],
+            [
+                'ip_asset_revenue' => $revenueData['ip_asset_revenue'],
+                'other_income' => $revenueData['other_income'],
+                'total_revenue' => $totalRevenue,
+
+                'ip_direct_cost' => $costData['ip_direct_cost'],
+                'shared_cost' => $costData['shared_cost'],
+                'shared_cost_ratio' => $costData['shared_cost_ratio'],
+                'total_cost' => $totalCost,
+
+                'net_profit' => $netProfit,
+                'workflow_deductions' => $deductionData['total'],
+                'overdue_workflow_count' => $deductionData['count'],
+
+                'base_salary' => $baseSalary,
+                'commission_rate' => $commissionRate,
+                'commission_amount' => $commissionAmount,
+                'total_compensation' => $totalCompensation,
+
+                'active_subnet_count' => $costData['active_subnet_count'],
+                'total_subnet_count' => $costData['total_subnet_count'],
+                'active_customer_count' => $revenueData['active_customer_count'],
+
+                'calculation_details' => [
+                    'revenue' => $revenueData,
+                    'cost' => $costData,
+                    'deductions' => $deductionData,
+                    'calculated_at' => now('Asia/Shanghai')->toDateTimeString(),
+                ],
+                'calculated_at' => now('Asia/Shanghai'),
+                'calculated_by_user_id' => auth()->id(),
+            ]
+        );
+
         return $performance;
     }
     

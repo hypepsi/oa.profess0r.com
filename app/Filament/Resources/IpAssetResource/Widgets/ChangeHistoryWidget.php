@@ -47,7 +47,7 @@ class ChangeHistoryWidget extends Widget implements HasActions, HasForms
                 }
 
                 // 检查是否为管理员
-                if (auth()->user()->email !== 'admin@bunnycommunications.com') {
+                if (!auth()->user()?->isAdmin()) {
                     Notification::make()
                         ->danger()
                         ->title('Permission Denied')
@@ -104,7 +104,7 @@ class ChangeHistoryWidget extends Widget implements HasActions, HasForms
                 }
 
                 // 检查是否为管理员
-                if (auth()->user()->email !== 'admin@bunnycommunications.com') {
+                if (!auth()->user()?->isAdmin()) {
                     Notification::make()
                         ->danger()
                         ->title('Permission Denied')
@@ -158,7 +158,7 @@ class ChangeHistoryWidget extends Widget implements HasActions, HasForms
                 }
 
                 // 检查是否为管理员
-                if (auth()->user()->email !== 'admin@bunnycommunications.com') {
+                if (!auth()->user()?->isAdmin()) {
                     Notification::make()
                         ->danger()
                         ->title('Permission Denied')
@@ -213,7 +213,7 @@ class ChangeHistoryWidget extends Widget implements HasActions, HasForms
                 }
 
                 // 检查是否为管理员
-                if (auth()->user()->email !== 'admin@bunnycommunications.com') {
+                if (!auth()->user()?->isAdmin()) {
                     Notification::make()
                         ->danger()
                         ->title('Permission Denied')

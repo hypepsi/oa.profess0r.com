@@ -10,9 +10,11 @@ use Filament\Forms\Components\Actions\Action as FieldAction;
 use Filament\Forms\Form;
 use Filament\Forms\Set;
 use Filament\Resources\Resource;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 
 class WorkflowResource extends Resource
 {
@@ -50,18 +52,19 @@ class WorkflowResource extends Resource
 
     public static function form(Form $form): Form
     {
-        $isAdmin = auth()->check() && auth()->user()->email === 'admin@bunnycommunications.com';
-        
+        $isAdmin = auth()->user()?->isAdmin() ?? false;
+
         return $form->schema([
             \Filament\Forms\Components\Section::make('Basic Information')
                 ->description('Enter the basic details for this workflow')
+                ->icon('heroicon-o-document-text')
                 ->schema([
                     \Filament\Forms\Components\TextInput::make('title')
                         ->label('Title')
                         ->required()
                         ->maxLength(255)
                         ->placeholder('Enter workflow title')
-                        ->disabled(fn ($record) => $record && !$isAdmin)
+                        ->disabled(fn ($record) => $record && !$isAdmin && auth()->id() !== ($record->created_by_user_id ?? null))
                         ->columnSpanFull(),
 
                     \Filament\Forms\Components\Select::make('client_id')
@@ -72,7 +75,7 @@ class WorkflowResource extends Resource
                         ->native(false)
                         ->placeholder('No client (optional)')
                         ->helperText('Optional: Select a client for this workflow')
-                        ->disabled(fn ($record) => $record && !$isAdmin),
+                        ->disabled(fn ($record) => $record && !$isAdmin && auth()->id() !== ($record->created_by_user_id ?? null)),
 
                     \Filament\Forms\Components\Select::make('assignees')
                         ->label('Assignees')
@@ -84,14 +87,14 @@ class WorkflowResource extends Resource
                         ->placeholder('Select employees')
                         ->helperText('Select one or more employees to assign this workflow')
                         ->required()
-                        ->disabled(fn ($record) => $record && !$isAdmin),
+                        ->disabled(fn ($record) => $record && !$isAdmin && auth()->id() !== ($record->created_by_user_id ?? null)),
 
                     \Filament\Forms\Components\Textarea::make('description')
                         ->label('Description')
                         ->rows(4)
                         ->placeholder('Enter workflow description')
                         ->columnSpanFull()
-                        ->disabled(fn ($record) => $record && !$isAdmin),
+                        ->disabled(fn ($record) => $record && !$isAdmin && auth()->id() !== ($record->created_by_user_id ?? null)),
 
                     \Filament\Forms\Components\DatePicker::make('due_at')
                         ->label('Due Date')
@@ -123,18 +126,19 @@ class WorkflowResource extends Resource
                         ])
                         ->default(fn () => Carbon::now('Asia/Shanghai')->addDays(3)->startOfDay())
                         ->helperText('Set the due date for this workflow (will be set to 00:00:00 on the selected day)')
-                        ->disabled(fn ($record) => $record && !$isAdmin),
-                    
+                        ->disabled(fn ($record) => $record && !$isAdmin && auth()->id() !== ($record->created_by_user_id ?? null)),
+
                     \Filament\Forms\Components\Toggle::make('require_evidence')
                         ->label('Require Evidence')
                         ->helperText('If enabled, employees must upload evidence (screenshots/files) when updating this workflow')
                         ->default(false)
-                        ->disabled(fn ($record) => $record && !$isAdmin)
+                        ->disabled(fn ($record) => $record && !$isAdmin && auth()->id() !== ($record->created_by_user_id ?? null))
                         ->columnSpanFull(),
                 ])
                 ->columns(2),
 
             \Filament\Forms\Components\Section::make('Status & Priority')
+                ->icon('heroicon-o-adjustments-horizontal')
                 ->columns(2)
                 ->schema([
                     \Filament\Forms\Components\Select::make('priority')
@@ -148,7 +152,7 @@ class WorkflowResource extends Resource
                         ->default('normal')
                         ->native(false)
                         ->required()
-                        ->disabled(fn ($record) => $record && !$isAdmin)
+                        ->disabled(fn ($record) => $record && !$isAdmin && auth()->id() !== ($record->created_by_user_id ?? null))
                         ->helperText('Set the priority level for this workflow'),
 
                     \Filament\Forms\Components\Select::make('status')
@@ -163,31 +167,29 @@ class WorkflowResource extends Resource
                         ->default('open')
                         ->native(false)
                         ->required()
-                        ->disabled(fn ($record) => $record && !$isAdmin)
+                        ->disabled(fn () => !$isAdmin)
                         ->helperText('Current status of the workflow')
                         ->reactive()
                         ->afterStateUpdated(function ($state, callable $set, $get) {
-                            // Auto mark as overdue when status is overdue
                             if ($state === 'overdue') {
                                 $set('is_overdue', true);
                             }
                         }),
-                    
+
                     \Filament\Forms\Components\Toggle::make('is_overdue')
                         ->label('Mark as Overdue')
                         ->helperText('Will affect salary calculation')
                         ->default(false)
-                        ->disabled(fn ($record) => $record && !$isAdmin)
+                        ->visible(fn () => $isAdmin)
                         ->columnSpanFull(),
-                    
+
                     \Filament\Forms\Components\TextInput::make('deduction_amount')
                         ->label('Deduction Amount (USD)')
                         ->numeric()
                         ->default(0)
                         ->prefix('$')
                         ->helperText('Amount to deduct from salary if overdue')
-                        ->disabled(fn ($record) => $record && !$isAdmin)
-                        ->visible(fn (callable $get) => $get('is_overdue') === true),
+                        ->visible(fn (callable $get) => $isAdmin && $get('is_overdue') === true),
                 ]),
 
         ]);
@@ -214,7 +216,8 @@ class WorkflowResource extends Resource
                             });
                     })
                     ->sortable()
-                    ->weight('medium')
+                    ->weight(FontWeight::Medium)
+                    ->description(fn (Workflow $record): string => Str::limit($record->description ?? '', 60))
                     ->limit(40),
                 \Filament\Tables\Columns\TextColumn::make('client.name')
                     ->label('Client')
@@ -282,19 +285,19 @@ class WorkflowResource extends Resource
                 \Filament\Tables\Columns\TextColumn::make('last_update_at')
                     ->label('Last Update')
                     ->getStateUsing(function (Workflow $record) {
-                        $lastUpdate = $record->updates()->with('user')->latest('created_at')->first();
+                        $lastUpdate = $record->updates->sortByDesc('created_at')->first();
                         if (!$lastUpdate) {
                             return null;
                         }
                         $now = Carbon::now('Asia/Shanghai');
                         $lastUpdateTime = $lastUpdate->created_at->setTimezone('Asia/Shanghai');
                         $userName = $lastUpdate->user->name ?? 'Unknown';
-                        
+
                         // Calculate hours and minutes
                         $totalMinutes = (int) $lastUpdateTime->diffInMinutes($now);
                         $hours = (int) floor($totalMinutes / 60);
                         $minutes = $totalMinutes % 60;
-                        
+
                         // Format time display in English
                         if ($totalMinutes < 1) {
                             $timeAgo = 'just now';
@@ -305,13 +308,13 @@ class WorkflowResource extends Resource
                         } else {
                             $timeAgo = $hours . ' hr' . ($hours > 1 ? 's' : '') . ' ' . $minutes . ' min' . ($minutes > 1 ? 's' : '') . ' ago';
                         }
-                        
+
                         return $userName . ' • ' . $timeAgo;
                     })
                     ->placeholder('—')
                     ->sortable()
                     ->tooltip(function (Workflow $record) {
-                        $lastUpdate = $record->updates()->with('user')->latest('created_at')->first();
+                        $lastUpdate = $record->updates->sortByDesc('created_at')->first();
                         if (!$lastUpdate) {
                             return null;
                         }
@@ -328,9 +331,9 @@ class WorkflowResource extends Resource
                     ->requiresConfirmation()
                     ->modalHeading('Approve Workflow')
                     ->modalDescription('Are you sure you want to approve this workflow? This action will mark it as completed.')
-                    ->visible(fn (Workflow $record) => 
-                        in_array($record->status, ['open', 'updated']) && 
-                        auth()->user()->email === 'admin@bunnycommunications.com'
+                    ->visible(fn (Workflow $record) =>
+                        in_array($record->status, ['open', 'updated']) &&
+                        auth()->user()?->isAdmin()
                     )
                     ->action(function (Workflow $record) {
                         $record->update([
@@ -347,7 +350,7 @@ class WorkflowResource extends Resource
                     ->icon('heroicon-o-pencil'),
                 \Filament\Tables\Actions\DeleteAction::make()
                     ->icon('heroicon-o-trash')
-                    ->visible(fn () => auth()->user()->email === 'admin@bunnycommunications.com'),
+                    ->visible(fn () => auth()->user()?->isAdmin()),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([

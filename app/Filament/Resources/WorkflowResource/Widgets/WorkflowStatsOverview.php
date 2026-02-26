@@ -41,16 +41,17 @@ class WorkflowStatsOverview extends BaseWidget
         }
         
         // Apply employee filter if not admin (same logic as ListWorkflowsByMonth)
-        if (auth()->check() && auth()->user()->email !== 'admin@bunnycommunications.com') {
+        if (auth()->check() && !auth()->user()->isAdmin()) {
+            $userId = auth()->id();
             $employee = Employee::where('email', auth()->user()->email)->first();
-            if ($employee) {
-                $query->whereHas('assignees', function ($q) use ($employee) {
-                    $q->where('employees.id', $employee->id);
-                });
-            } else {
-                // If no employee record found, return empty results
-                $query->whereRaw('1 = 0');
-            }
+            $query->where(function ($q) use ($userId, $employee) {
+                $q->where('created_by_user_id', $userId);
+                if ($employee) {
+                    $q->orWhereHas('assignees', function ($q2) use ($employee) {
+                        $q2->where('employees.id', $employee->id);
+                    });
+                }
+            });
         }
         
         $counts = $query

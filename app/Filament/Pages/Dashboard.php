@@ -13,7 +13,19 @@ class Dashboard extends BaseDashboard
 {
     public static function canAccess(): bool
     {
-        return auth()->user()?->isAdmin() ?? false;
+        // Allow all authenticated users to hit this route;
+        // non-admins are redirected in mount() before any widgets load.
+        return auth()->check();
+    }
+
+    public function mount(): void
+    {
+        if (!auth()->user()?->isAdmin()) {
+            $now = \Illuminate\Support\Carbon::now('Asia/Shanghai');
+            $this->redirect("/admin/workflows/month/{$now->year}/{$now->month}");
+            return;
+        }
+        parent::mount();
     }
 
     public function getWidgets(): array

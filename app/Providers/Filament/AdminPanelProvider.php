@@ -36,6 +36,15 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->homeUrl(function (): string {
+                $user = auth()->user();
+                if ($user && $user->isAdmin()) {
+                    return '/admin';
+                }
+                // Employee: redirect to current month's workflow page
+                $now = \Illuminate\Support\Carbon::now('Asia/Shanghai');
+                return "/admin/workflows/month/{$now->year}/{$now->month}";
+            })
             ->brandName('Bunny Communications OA')
             ->colors([
                 'primary' => Color::Amber,

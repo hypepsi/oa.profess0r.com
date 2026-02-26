@@ -8,6 +8,7 @@ use App\Models\Customer;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -49,18 +50,23 @@ class CustomerResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->label('Name')
+                    ->weight(FontWeight::Medium)
                     ->sortable()
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('contact_email')
                     ->label('Contact Email')
                     ->sortable()
-                    ->searchable(),
+                    ->searchable()
+                    ->copyable()
+                    ->copyMessage('Copied!'),
 
                 Tables\Columns\TextColumn::make('abuse_email')
                     ->label('Abuse Email')
                     ->sortable()
-                    ->searchable(),
+                    ->searchable()
+                    ->copyable()
+                    ->copyMessage('Copied!'),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Created at')

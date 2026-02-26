@@ -131,7 +131,7 @@ class UpdatesRelationManager extends RelationManager
                     ->form([]),
                 Tables\Actions\DeleteAction::make()
                     ->requiresConfirmation()
-                    ->visible(fn () => auth()->user()->email === 'admin@bunnycommunications.com'),
+                    ->visible(fn () => auth()->user()?->isAdmin()),
             ])
             ->emptyStateHeading('No updates yet')
             ->emptyStateDescription('Add an update to track progress on this workflow.')

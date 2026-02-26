@@ -1,247 +1,181 @@
-# OA Management System
+# Bunny Communications OA
 
-企业级 OA 管理系统，基于 Laravel 12 和 Filament 3 构建。
+Bunny Communications 内部运营管理系统，负责管理 IP 资产、客户计费、供应商支出、员工绩效和工单流程。
+
+**线上地址**：https://oa.profess0r.com
+
+---
 
 ## 技术栈
 
-- **Backend**: Laravel 12
-- **Admin Panel**: Filament 3
-- **Database**: MySQL 8.0
-- **CSS Framework**: Tailwind CSS 3
-- **PHP**: 8.2+
+| 层级 | 技术 | 版本 |
+|------|------|------|
+| 后端框架 | Laravel | 12.x |
+| 管理面板 | Filament | 3.x |
+| 响应式组件 | Livewire | 3.x |
+| CSS 框架 | Tailwind CSS | 4.x |
+| 前端构建 | Vite | 7.x |
+| PHP | PHP | 8.3 |
+| 数据库 | MySQL | 8.0 |
+| Excel 导出 | Maatwebsite Excel | 3.x |
 
 ---
 
-## 🎨 UI/UX 设计规范
+## 核心功能模块
 
-> **重要提示**：所有 AI 工具在修改或新增页面时，必须严格遵循以下规范！
+### IP 资产管理
+- 管理公司持有的 IP 地址块（CIDR），支持 BGP / ISP ASN 类型
+- 状态跟踪：Active / Reserved / Released
+- 变更历史自动记录（客户归属、成本、价格变更）
+- **IP 地址搜索**：搜索栏直接输入单个 IP（如 `192.168.1.1`），自动匹配所属子网
+- GeoFeed（RFC 8805）自动同步至远端服务器
 
-### 核心原则
+### 客户计费（Income）
+- 月度账单自动生成（基于活跃 IP 价格）
+- 附加项（Add-ons）管理
+- 其他收入记录（支持 CNY/USD 双币种）
+- 逾期判定（当月 20 日后）
 
-#### 1. 使用原生 Tailwind CSS
+### 供应商支出（Expense）
+- 三类供应商：IP 供应商 / 线路供应商（IPT）/ 数据中心
+- 月度支出记录与付款流水
 
-**✅ DO（推荐做法）**
-```blade
-<div class="text-sm text-gray-500 font-medium">
-    Employee Name
-</div>
-```
+### 员工绩效与薪酬
+- 薪酬配置：底薪 + 提成比例
+- 月度绩效自动计算：收入 - 成本 - 工单扣款 = 净利润
+- 总薪酬 = 净利润 × 提成比例 + 底薪
 
-**❌ DON'T（禁止做法）**
-```blade
-<!-- 不要创建自定义 CSS 类 -->
-<div class="oa-card-title">Employee Name</div>
+### 工单系统（Workflows）
+- 优先级：Low / Normal / High / Urgent
+- 状态流转：Open → Updated → Approved / Overdue / Cancelled
+- 多人指派，支持证据附件上传
+- 逾期工单可配置薪资扣款
 
-<!-- 不要在 app.css 中定义自定义样式 -->
-.oa-card-title { ... }
-```
-
-#### 2. 遵循 Filament 设计语言
-
-- 所有页面必须与 Filament Admin 的默认风格保持一致
-- 优先使用 Filament 内置组件（Widget、InfoList、Section 等）
-- 避免过度自定义样式，保持"原生感"
-
-#### 3. 视觉层级规范
-
-**使用颜色和字号区分层级，避免过度使用粗体**
-
-```blade
-<!-- 主标题 -->
-<h2 class="text-lg font-semibold text-gray-900">Main Title</h2>
-
-<!-- 次要标题 -->
-<h3 class="text-base font-medium text-gray-700">Subtitle</h3>
-
-<!-- 普通内容 -->
-<p class="text-sm text-gray-600">Content</p>
-
-<!-- 元数据/辅助信息 -->
-<span class="text-xs text-gray-500">Meta info</span>
-```
-
-**字体大小标准**
-- `text-lg` (18px): 页面主标题
-- `text-base` (16px): 次级标题、重要数据
-- `text-sm` (14px): 正文、标签
-- `text-xs` (12px): 辅助信息、时间戳
-
-**颜色标准**
-- `text-gray-900`: 主要内容
-- `text-gray-700`: 次要内容
-- `text-gray-600`: 普通内容
-- `text-gray-500`: 辅助信息
-- `text-gray-400`: 占位符
-
-#### 4. 统计卡片规范
-
-**必须使用 Filament Widget**
-
-```php
-// ✅ 正确：使用 StatsOverviewWidget
-protected function getHeaderWidgets(): array
-{
-    return [
-        \App\Filament\Widgets\CustomerBillingStats::class,
-    ];
-}
-```
-
-```blade
-<!-- ❌ 错误：手动写卡片 HTML -->
-<div class="grid grid-cols-4 gap-4">
-    <div class="bg-white p-4">...</div>
-</div>
-```
-
-**卡片布局要求**
-- 统计卡片必须横向显示（默认 4 列布局）
-- 使用 `Stat::make()` 构建
-- 保持与 Filament 默认卡片样式一致
-
-#### 5. 导航与标题一致性
-
-**导航标签必须与页面标题完全一致**
-
-```php
-// ✅ 正确
-protected static ?string $navigationLabel = 'Salary Settings';
-protected static ?string $pluralModelLabel = 'Salary Settings';
-protected static ?string $title = 'Salary Settings';
-```
-
-```php
-// ❌ 错误
-protected static ?string $navigationLabel = 'Salary Settings';
-protected static ?string $title = 'Employee Compensations'; // 不一致！
-```
-
-### 组件使用规范
-
-#### 表单字段对齐
-
-```php
-Forms\Components\Section::make('Basic Information')
-    ->schema([
-        Forms\Components\Select::make('employee_id')
-            ->columnSpanFull(), // 全宽字段
-
-        Forms\Components\TextInput::make('base_salary'),
-        Forms\Components\TextInput::make('commission_rate'),
-    ])
-    ->columns(2); // 两列布局
-```
-
-#### Widget 数据传递
-
-```php
-// ✅ 正确：通过 ::make() 传递数据
-protected function getHeaderWidgets(): array
-{
-    return [
-        CustomerBillingStats::make([
-            'customerId' => $this->customer->id,
-        ]),
-    ];
-}
-
-// 在 Widget 中接收
-public ?int $customerId = null;
-
-protected function getStats(): array
-{
-    $customer = Customer::find($this->customerId);
-    // ...
-}
-```
-
-```php
-// ❌ 错误：使用 #[Reactive]
-#[Reactive]
-public ?int $customerId = null; // Livewire 中不工作
-```
-
-### 常见错误与修正
-
-| 错误做法 | 正确做法 |
-|---------|---------|
-| 创建 `oa-*` 自定义类 | 直接使用 Tailwind utilities |
-| 手写 HTML 卡片 | 使用 Filament Widget |
-| 过度使用 `font-bold` | 用 `font-medium` + 颜色区分层级 |
-| 导航与标题不一致 | 确保所有地方命名统一 |
-| 统计卡片竖向排列 | 使用 Widget 确保横向显示 |
-
-### 开发检查清单
-
-在提交代码前，请确认：
-
-- [ ] 没有在 `app.css` 中添加自定义 CSS 类
-- [ ] 所有统计卡片都使用 Filament Widget
-- [ ] 字体大小符合规范（lg/base/sm/xs）
-- [ ] 导航标签与页面标题一致
-- [ ] 视觉层级清晰（颜色 + 字号，不是加粗）
-- [ ] 样式与 Filament 原生组件保持一致
+### 其他
+- 文档管理（PDF、Office、图片、压缩包，50MB 上限）
+- GeoFeed 地理位置库管理
+- 操作审计日志（Activity Log，90 天自动清理）
+- 数据备份导出（Excel）
 
 ---
 
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+## 用户权限
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+| 角色 | 权限 |
+|------|------|
+| `admin` | 全部功能，含薪酬、绩效、审计日志、审批工单 |
+| `employee` | Workflows、IP Assets、Customers、Documents、Providers、Locations |
 
-## About Laravel
+> User 账号通过 **email** 与 Employee 档案关联（非外键）。
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 本地部署
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 环境要求
 
-## Learning Laravel
+- PHP 8.3+（需要 `ext-bcmath`、`ext-mbstring`、`ext-pdo_mysql`）
+- MySQL 8.0+
+- Node.js 20+
+- Composer 2.x
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 安装步骤
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+```bash
+# 1. 克隆项目
+git clone https://github.com/hypepsi/oa.profess0r.com.git
+cd oa.profess0r.com
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+# 2. 安装依赖
+composer install
+npm install
 
-## Laravel Sponsors
+# 3. 配置环境
+cp .env.example .env
+php artisan key:generate
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+# 4. 配置数据库（编辑 .env 填入 DB_* 参数）
 
-### Premium Partners
+# 5. 迁移数据库
+php artisan migrate
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+# 6. 创建管理员账号
+php artisan make:filament-user
 
-## Contributing
+# 7. 构建前端
+npm run build
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+# 8. 配置 storage 权限
+php artisan storage:link
+chmod -R 775 storage bootstrap/cache
+```
 
-## Code of Conduct
+### 定时任务
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+# 添加到 crontab
+* * * * * cd /var/www/oa && php artisan schedule:run >> /dev/null 2>&1
+```
 
-## Security Vulnerabilities
+| 任务 | 时间 | 说明 |
+|------|------|------|
+| `backup:data` | 每天 03:00 | 全量数据备份至 Excel |
+| `geofeed:sync-remote --mode=test` | 每天 03:05 | 同步 GeoFeed 至远端服务器 |
+| `activity-logs:clean` | 每天 02:00 | 清理 90 天前的审计日志 |
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+---
 
-## License
+## 常用命令
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+# 清理所有缓存
+php artisan optimize:clear
+
+# 手动触发数据备份
+php artisan backup:data
+
+# 手动同步 GeoFeed（测试模式）
+php artisan geofeed:sync-remote --mode=test
+
+# 手动同步 GeoFeed（生产模式）
+php artisan geofeed:sync-remote --mode=production
+
+# 查看定时任务列表
+php artisan schedule:list
+
+# 查看最新错误日志
+tail -100 storage/logs/laravel.log
+```
+
+---
+
+## GeoFeed
+
+当前运行于 **Test 模式**，同步至 `geofeed.test.csv`。
+
+切换生产模式只需修改 `.env`：
+
+```env
+GEOFEED_REMOTE_URL=https://bunnycommunications.com/geofeed.csv
+GEOFEED_UPLOAD_URL=https://bunnycommunications.com/geofeed-upload-prod.php?token=xxx
+```
+
+同时将 `routes/console.php` 中的 `--mode=test` 改为 `--mode=production`。
+
+---
+
+## 开发规范
+
+详见 [CLAUDE.md](./CLAUDE.md)，包含：
+- 权限判断规范（统一使用 `isAdmin()`，禁止邮件硬编码）
+- Filament 写法规范（字体、Badge 颜色语义、Section 格式）
+- 样式规范（原生 Tailwind，禁止自定义 CSS 类）
+- 排错流程
+
+---
+
+## 服务器信息
+
+- **路径**：`/var/www/oa`
+- **Web Server**：Nginx + PHP 8.3-FPM
+- **PHP 配置**：`memory_limit=256M`，`max_execution_time=300`

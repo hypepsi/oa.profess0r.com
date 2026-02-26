@@ -290,7 +290,6 @@ class EmployeesSheet implements \Maatwebsite\Excel\Concerns\FromCollection, \Maa
             'ID' => $e->id,
             'Name' => $e->name,
             'Department' => $e->department ?? '—',
-            'Position' => $e->position ?? '—',
             'Is Active' => $e->is_active ? 'Yes' : 'No',
             'Created At' => $e->created_at?->format('Y-m-d H:i:s'),
         ]);
@@ -298,7 +297,7 @@ class EmployeesSheet implements \Maatwebsite\Excel\Concerns\FromCollection, \Maa
 
     public function headings(): array
     {
-        return ['ID', 'Name', 'Department', 'Position', 'Is Active', 'Created At'];
+        return ['ID', 'Name', 'Department', 'Is Active', 'Created At'];
     }
 }
 

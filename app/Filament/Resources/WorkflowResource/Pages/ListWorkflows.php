@@ -15,11 +15,8 @@ class ListWorkflows extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        $isAdmin = $this->isAdmin();
-        
         return [
-            Actions\CreateAction::make()
-                ->visible(fn () => $isAdmin),
+            Actions\CreateAction::make(),
         ];
     }
 
@@ -34,17 +31,18 @@ class ListWorkflows extends ListRecords
     {
         $query = parent::getTableQuery();
         
-        // If not admin, only show workflows assigned to current user
+        // If not admin, show workflows assigned to OR created by current user
         if (!$this->isAdmin()) {
+            $userId = auth()->id();
             $employee = Employee::where('email', auth()->user()->email)->first();
-            if ($employee) {
-                $query->whereHas('assignees', function ($q) use ($employee) {
-                    $q->where('employees.id', $employee->id);
-                });
-            } else {
-                // If no employee record found, return empty results
-                $query->whereRaw('1 = 0');
-            }
+            $query->where(function ($q) use ($userId, $employee) {
+                $q->where('created_by_user_id', $userId);
+                if ($employee) {
+                    $q->orWhereHas('assignees', function ($q2) use ($employee) {
+                        $q2->where('employees.id', $employee->id);
+                    });
+                }
+            });
         }
         
         return $query;
@@ -67,6 +65,6 @@ class ListWorkflows extends ListRecords
 
     protected function isAdmin(): bool
     {
-        return auth()->user()->email === 'admin@bunnycommunications.com';
+        return auth()->user()?->isAdmin() ?? false;
     }
 }

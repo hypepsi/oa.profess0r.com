@@ -15,9 +15,11 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
+use Filament\Support\Enums\FontFamily;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Actions\Action;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Response;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -249,7 +251,27 @@ class IpAssetResource extends Resource
                     }),
             ])
             ->columns([
-                Tables\Columns\TextColumn::make('cidr')->label('CIDR')->sortable()->searchable(),
+                Tables\Columns\TextColumn::make('cidr')
+                    ->label('CIDR')
+                    ->sortable()
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        // 输入是合法 IPv4 地址时，用子网包含计算检索所属 CIDR
+                        if (filter_var($search, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+                            return $query->whereRaw(
+                                "LOCATE('/', cidr) > 0
+                                 AND INET_ATON(?) BETWEEN
+                                     INET_ATON(SUBSTRING_INDEX(cidr, '/', 1))
+                                     AND (INET_ATON(SUBSTRING_INDEX(cidr, '/', 1))
+                                          + POW(2, 32 - CAST(SUBSTRING_INDEX(cidr, '/', -1) AS UNSIGNED)) - 1)",
+                                [$search]
+                            );
+                        }
+                        // 其他情况（CIDR 前缀、关键词）保持原 LIKE 搜索
+                        return $query->where('cidr', 'like', "%{$search}%");
+                    })
+                    ->fontFamily(FontFamily::Mono)
+                    ->copyable()
+                    ->copyMessage('Copied!'),
                 Tables\Columns\TextColumn::make('ipProvider.name')->label('IP Provider')->searchable(),
                 Tables\Columns\TextColumn::make('client.name')->label('Client')->searchable(),
                 Tables\Columns\TextColumn::make('salesPerson.name')
@@ -266,14 +288,25 @@ class IpAssetResource extends Resource
                         if (!$record->geo_location) {
                             return '—';
                         }
-                        // Extract country code (first part before comma)
                         $parts = explode(',', $record->geo_location);
                         return trim($parts[0] ?? $record->geo_location);
                     })
                     ->placeholder('—'),
                 Tables\Columns\TextColumn::make('iptProvider.name')->label('IPT Provider')->searchable(),
-                Tables\Columns\TextColumn::make('asn')->label('ASN')->searchable(),
-                Tables\Columns\TextColumn::make('status')->label('Status')->searchable(),
+                Tables\Columns\TextColumn::make('asn')
+                    ->label('ASN')
+                    ->searchable()
+                    ->fontFamily(FontFamily::Mono),
+                Tables\Columns\TextColumn::make('status')
+                    ->label('Status')
+                    ->searchable()
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'Active' => 'success',
+                        'Reserved' => 'warning',
+                        'Released' => 'gray',
+                        default => 'gray',
+                    }),
                 Tables\Columns\TextColumn::make('geofeed_sync')
                     ->label('GeoFeed Sync')
                     ->badge()
@@ -316,9 +349,13 @@ class IpAssetResource extends Resource
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('cost')
                     ->label('Cost')
+                    ->fontFamily(FontFamily::Mono)
+                    ->prefix('$')
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('price')
                     ->label('Price')
+                    ->fontFamily(FontFamily::Mono)
+                    ->prefix('$')
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Created at')

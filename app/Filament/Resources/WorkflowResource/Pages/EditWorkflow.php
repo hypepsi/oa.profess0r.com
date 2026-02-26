@@ -46,16 +46,16 @@ class EditWorkflow extends EditRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        // Employees cannot edit fields, only view
-        if (!$this->isAdmin()) {
+        // Disable all fields if not admin AND not the creator
+        if (!$this->isAdmin() && auth()->id() !== $this->record->created_by_user_id) {
             $this->form->disabled();
         }
-        
+
         return $data;
     }
 
     protected function isAdmin(): bool
     {
-        return auth()->user()->email === 'admin@bunnycommunications.com';
+        return auth()->user()?->isAdmin() ?? false;
     }
 }
