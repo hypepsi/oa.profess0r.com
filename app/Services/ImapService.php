@@ -127,6 +127,10 @@ class ImapService
             $from      = $message->getFrom();
             $fromName  = $from[0]?->personal ?? null;
             $fromEmail = $from[0]?->mail ?? null;
+            // Decode RFC 2047 MIME encoded sender name
+            if ($fromName && str_contains($fromName, '=?')) {
+                $fromName = mb_decode_mimeheader($fromName);
+            }
 
             $toAddresses = $this->parseAddresses($message->getTo());
             $ccAddresses = $this->parseAddresses($message->getCc());
