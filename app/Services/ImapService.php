@@ -141,6 +141,10 @@ class ImapService
             if (is_object($subject) && method_exists($subject, '__toString')) {
                 $subject = (string) $subject;
             }
+            // Decode RFC 2047 MIME encoded-words (e.g. =?UTF-8?B?...?=)
+            if ($subject && str_contains($subject, '=?')) {
+                $subject = mb_decode_mimeheader($subject);
+            }
 
             $record = EmailMessage::create([
                 'email_account_id' => $account->id,
@@ -219,8 +223,13 @@ class ImapService
         $result = [];
         foreach ((array) $addresses as $addr) {
             if (!$addr) continue;
+            $name = $addr->personal ?? null;
+            // Decode RFC 2047 MIME encoded display names
+            if ($name && str_contains($name, '=?')) {
+                $name = mb_decode_mimeheader($name);
+            }
             $result[] = [
-                'name'  => $addr->personal ?? null,
+                'name'  => $name,
                 'email' => $addr->mail ?? null,
             ];
         }

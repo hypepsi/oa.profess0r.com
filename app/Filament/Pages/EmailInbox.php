@@ -9,7 +9,6 @@ use App\Services\DeepSeekService;
 use App\Services\SmtpMailService;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Url;
 
@@ -39,15 +38,14 @@ class EmailInbox extends Page
     public ?int $selectedMessageId = null;
 
     // Compose state
-    public bool   $isComposing   = false;
-    public string $composeTo     = '';
+    public bool   $isComposing    = false;
+    public string $composeTo      = '';
     public string $composeSubject = '';
-    public string $composeBody   = '';
-    public ?int   $replyToId     = null;
+    public string $composeBody    = '';
+    public ?int   $replyToId      = null;
 
     // AI state
-    public bool   $aiLoading  = false;
-    public string $aiSummary  = '';
+    public string $aiSummary = '';
 
     // Search
     public string $searchQuery = '';
@@ -58,7 +56,6 @@ class EmailInbox extends Page
 
     public function mount(): void
     {
-        // Auto-select first account of active company if not set
         if (!$this->activeAccountId) {
             $account = EmailAccount::where('company', $this->activeCompany)
                 ->where('is_active', true)
@@ -68,7 +65,7 @@ class EmailInbox extends Page
     }
 
     // =========================================================================
-    // Navigation: show per-company items
+    // Navigation: one item per company
     // =========================================================================
 
     public static function getNavigationItems(): array
@@ -100,7 +97,10 @@ class EmailInbox extends Page
     }
 
     // =========================================================================
-    // Data accessors (for Blade)
+    // Data accessors for Blade
+    // NOTE: Do NOT name any method getMessages() — Livewire's WithValidation
+    //       trait calls $this->getMessages() internally for custom error bags,
+    //       causing a type conflict with a paginator return value.
     // =========================================================================
 
     public function getAccountsForCompany(): \Illuminate\Database\Eloquent\Collection
@@ -110,11 +110,19 @@ class EmailInbox extends Page
             ->get();
     }
 
-    public function getMessages(): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    /** Returns paginated email list. Named fetchMessages() to avoid Livewire conflict. */
+    public function fetchMessages(): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
-        $query = EmailMessage::where('email_account_id', $this->activeAccountId)
-            ->where('folder', $this->activeFolder)
-            ->orderBy('sent_at', 'desc');
+        $query = EmailMessage::where('email_account_id', $this->activeAccountId);
+
+        // Starred is a virtual cross-folder view, not a real folder
+        if ($this->activeFolder === 'Starred') {
+            $query->where('is_starred', true);
+        } else {
+            $query->where('folder', $this->activeFolder);
+        }
+
+        $query->orderBy('sent_at', 'desc');
 
         if ($this->searchQuery) {
             $query->where(function ($q) {
@@ -131,6 +139,21 @@ class EmailInbox extends Page
     {
         if (!$this->selectedMessageId) return null;
         return EmailMessage::with('attachments')->find($this->selectedMessageId);
+    }
+
+    public function getInboxStats(): array
+    {
+        if (!$this->activeAccountId) {
+            return ['unread' => 0, 'total' => 0, 'starred' => 0];
+        }
+        return [
+            'unread'  => EmailMessage::where('email_account_id', $this->activeAccountId)
+                ->where('folder', 'INBOX')->where('is_read', false)->count(),
+            'total'   => EmailMessage::where('email_account_id', $this->activeAccountId)
+                ->where('folder', 'INBOX')->count(),
+            'starred' => EmailMessage::where('email_account_id', $this->activeAccountId)
+                ->where('is_starred', true)->count(),
+        ];
     }
 
     // =========================================================================
@@ -157,17 +180,14 @@ class EmailInbox extends Page
         $this->aiSummary         = '';
         $this->isComposing       = false;
 
-        // Mark as read
-        EmailMessage::where('id', $messageId)
-            ->where('is_read', false)
-            ->update(['is_read' => true]);
+        EmailMessage::where('id', $messageId)->where('is_read', false)->update(['is_read' => true]);
     }
 
     public function toggleStar(int $messageId): void
     {
-        $message = EmailMessage::find($messageId);
-        if ($message) {
-            $message->update(['is_starred' => !$message->is_starred]);
+        $msg = EmailMessage::find($messageId);
+        if ($msg) {
+            $msg->update(['is_starred' => !$msg->is_starred]);
         }
     }
 
@@ -177,11 +197,7 @@ class EmailInbox extends Page
         $account = EmailAccount::find($this->activeAccountId);
         if ($account) {
             SyncEmailAccountJob::dispatch($account);
-            Notification::make()
-                ->title('Syncing email...')
-                ->body('New emails will appear shortly.')
-                ->info()
-                ->send();
+            Notification::make()->title('Syncing…')->body('New emails will appear shortly.')->info()->send();
         }
     }
 
@@ -209,8 +225,9 @@ class EmailInbox extends Page
         $this->replyToId   = null;
     }
 
-    public function sendEmail(): void
+    public function doSendEmail(): void
     {
+        // Named doSendEmail() to avoid any future naming conflicts
         $this->validate([
             'composeTo'      => 'required|email',
             'composeSubject' => 'required|string|max:255',
@@ -221,27 +238,22 @@ class EmailInbox extends Page
         if (!$account) return;
 
         try {
+            Log::info("[SMTP:{$account->email}] Sending to {$this->composeTo} subject: {$this->composeSubject}");
+
             app(SmtpMailService::class)->send(
                 $account,
                 $this->composeTo,
                 $this->composeSubject,
                 nl2br(e($this->composeBody)),
-                $this->replyToId ? (string) $this->replyToId : null
             );
 
-            Notification::make()
-                ->title('Email sent')
-                ->success()
-                ->send();
-
+            Log::info("[SMTP:{$account->email}] Send success");
+            Notification::make()->title('Email sent')->success()->send();
             $this->closeCompose();
 
         } catch (\Exception $e) {
-            Notification::make()
-                ->title('Failed to send email')
-                ->body($e->getMessage())
-                ->danger()
-                ->send();
+            Log::error("[SMTP:{$account->email}] Send failed: " . $e->getMessage());
+            Notification::make()->title('Failed to send')->body($e->getMessage())->danger()->send();
         }
     }
 
@@ -250,25 +262,21 @@ class EmailInbox extends Page
         $message = $this->getSelectedMessage();
         if (!$message) return;
 
-        // Use cached summary if available
+        // Return cached summary immediately
         if ($message->ai_summary) {
             $this->aiSummary = $message->ai_summary;
             return;
         }
 
-        $this->aiLoading = true;
+        Log::info("[DeepSeek] Summarizing message id={$message->id} subject={$message->subject}");
 
         try {
             $this->aiSummary = app(DeepSeekService::class)->summarizeEmail($message);
+            Log::info("[DeepSeek] Summary generated, length=" . mb_strlen($this->aiSummary));
         } catch (\Exception $e) {
-            Notification::make()
-                ->title('AI summarization failed')
-                ->body($e->getMessage())
-                ->danger()
-                ->send();
+            Log::error("[DeepSeek] Summarize failed: " . $e->getMessage());
+            Notification::make()->title('AI failed')->body($e->getMessage())->danger()->send();
             $this->aiSummary = '';
-        } finally {
-            $this->aiLoading = false;
         }
     }
 

@@ -29,20 +29,14 @@ class DeepSeekService
         $body = mb_substr($body, 0, 8000); // Limit to avoid token overflow
 
         $prompt = <<<PROMPT
-请对以下邮件进行分析和总结，用中文输出：
+请用1-2句中文简明概括以下邮件的核心内容，不要分条列举，不要废话：
 
-**发件人**：{$message->from_display}
-**主题**：{$message->subject}
-**时间**：{$message->sent_at?->format('Y-m-d H:i')}
-
-**邮件正文**：
-{$body}
-
-请提供：
-1. **核心内容摘要**（2-3句话概括邮件主要内容）
-2. **关键信息提取**（列出重要日期、金额、联系方式、行动项等）
-3. **建议回复方向**（如需要回复，给出简洁的回复建议）
+发件人：{$message->from_display}
+主题：{$message->subject}
+正文：{$body}
 PROMPT;
+
+        Log::info("[DeepSeek] Calling API model={$this->model} message_id={$message->id}");
 
         try {
             $response = Http::withToken($this->apiKey)
@@ -53,19 +47,21 @@ PROMPT;
                     'messages'    => [
                         [
                             'role'    => 'system',
-                            'content' => '你是一个专业的邮件助理，擅长分析商务邮件并用清晰的中文进行总结。',
+                            'content' => '你是邮件摘要助手，只输出1-2句中文摘要，不分条，不废话。',
                         ],
                         [
                             'role'    => 'user',
                             'content' => $prompt,
                         ],
                     ],
-                    'max_tokens'  => 1000,
+                    'max_tokens'  => 150,
                     'temperature' => 0.3,
                 ]);
 
+            Log::info("[DeepSeek] API responded status=" . $response->status());
+
             if (!$response->successful()) {
-                Log::error('DeepSeek API error: ' . $response->body());
+                Log::error('[DeepSeek] API error: ' . $response->body());
                 throw new \RuntimeException('AI service returned an error: ' . $response->status());
             }
 
