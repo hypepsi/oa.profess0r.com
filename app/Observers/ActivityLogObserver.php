@@ -2,51 +2,53 @@
 
 namespace App\Observers;
 
+use App\Models\ActivityLog;
 use App\Services\ActivityLogger;
 use Illuminate\Database\Eloquent\Model;
 
 class ActivityLogObserver
 {
-    /**
-     * Handle the Model "created" event.
-     */
     public function created(Model $model): void
     {
-        ActivityLogger::log('created', $model);
+        ActivityLogger::log('created', $model, null, $this->resolveCategory($model, 'created'));
     }
 
-    /**
-     * Handle the Model "updated" event.
-     */
     public function updated(Model $model): void
     {
-        // 只记录有实际变更的情况
         if ($model->wasChanged()) {
-            ActivityLogger::log('updated', $model);
+            ActivityLogger::log('updated', $model, null, $this->resolveCategory($model, 'updated'));
         }
     }
 
-    /**
-     * Handle the Model "deleted" event.
-     */
     public function deleted(Model $model): void
     {
-        ActivityLogger::log('deleted', $model);
+        ActivityLogger::log('deleted', $model, null, $this->resolveCategory($model, 'deleted'));
     }
 
-    /**
-     * Handle the Model "restored" event.
-     */
     public function restored(Model $model): void
     {
-        ActivityLogger::log('restored', $model);
+        ActivityLogger::log('restored', $model, null, $this->resolveCategory($model, 'restored'));
     }
 
-    /**
-     * Handle the Model "force deleted" event.
-     */
     public function forceDeleted(Model $model): void
     {
-        ActivityLogger::log('force_deleted', $model);
+        ActivityLogger::log('force_deleted', $model, null, $this->resolveCategory($model, 'force_deleted'));
+    }
+
+    // -------------------------------------------------------------------------
+    // Category resolution
+    //
+    // Models using the Loggable trait can declare their own category via
+    // getActivityLogCategory(). All other models fall back to auto-detection.
+    // -------------------------------------------------------------------------
+
+    private function resolveCategory(Model $model, string $action): ?string
+    {
+        if (method_exists($model, 'getActivityLogCategory')) {
+            return $model->getActivityLogCategory();
+        }
+
+        // Returning null lets ActivityLogger::log() call detectCategory() itself.
+        return null;
     }
 }

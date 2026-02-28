@@ -25,7 +25,6 @@ class Dashboard extends BaseDashboard
             $this->redirect("/admin/workflows/month/{$now->year}/{$now->month}");
             return;
         }
-        parent::mount();
     }
 
     public function getWidgets(): array

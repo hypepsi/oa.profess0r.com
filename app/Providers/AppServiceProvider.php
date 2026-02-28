@@ -64,7 +64,20 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * 注册需要记录活动日志的模型 Observer
+     * Register ActivityLogObserver on all models that should be tracked.
+     *
+     * ─── FOR NEW MODELS ───────────────────────────────────────────────────────
+     * Prefer adding `use \App\Models\Concerns\Loggable;` to the new model class
+     * instead of adding it here.  The trait auto-registers the observer and lets
+     * the model declare its own category / identifier without touching this file.
+     *
+     * Only add a model HERE if:
+     *   • You cannot / don't want to modify the model file, OR
+     *   • The model is a third-party / vendor model.
+     *
+     * ⚠️  Do NOT add a model both here AND via the Loggable trait — that would
+     *     register the observer twice and produce duplicate log entries.
+     * ─────────────────────────────────────────────────────────────────────────
      */
     protected function registerActivityLogObservers(): void
     {
@@ -73,26 +86,26 @@ class AppServiceProvider extends ServiceProvider
             IpAsset::class,
             Device::class,
             Location::class,
-            
+
             // People & Organizations
             Customer::class,
             Employee::class,
-            
+
             // Providers
             Provider::class,
             IptProvider::class,
             DatacenterProvider::class,
-            
+
             // Workflows
             Workflow::class,
             WorkflowUpdate::class,
-            
+
             // Income
             BillingOtherItem::class,
             IncomeOtherItem::class,
             CustomerBillingPayment::class,
             BillingPaymentRecord::class,
-            
+
             // Expense
             ProviderExpensePayment::class,
             \App\Models\ExpensePaymentRecord::class,

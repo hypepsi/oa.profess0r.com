@@ -103,10 +103,52 @@
 - **模型**：`Document` — 支持 PDF、Office 文档、图片、压缩包，50MB 上限
 - 分类：Contract、Invoice、Agreement、Policy、Report、Certificate、Other
 
-### 7. 审计日志
-- **模型**：`ActivityLog` — 记录所有用户操作，含 IP、User Agent
-- `ActivityLogObserver` 全局监听模型变更
+### 7. 审计日志（Activity Log）
+
+#### 架构概述
+- **模型**：`ActivityLog` — 记录所有用户操作，含 IP、User Agent、**category 分类字段**
+- **Observer**：`ActivityLogObserver` 监听模型 CRUD，自动写入日志
+- **服务**：`ActivityLogger`（通用）、`BillingActivityLogger`（计费专用）
+- **Widget**：`ActivityLogStatsWidget` — 日志总数、今日、本周、最早记录
 - Admin 专属查看，员工不可见
+
+#### 分类体系（7 个分类）
+| 分类常量 | 值 | 说明 |
+|---|---|---|
+| `CATEGORY_AUTH` | `auth` | 登录/登出 |
+| `CATEGORY_INCOME` | `income` | 收款/账单操作 |
+| `CATEGORY_EXPENSE` | `expense` | 供应商支出 |
+| `CATEGORY_IP_ASSETS` | `ip_assets` | IP 资产、设备、位置 |
+| `CATEGORY_WORKFLOWS` | `workflows` | 工单操作 |
+| `CATEGORY_DOCUMENTS` | `documents` | 文档上传/管理 |
+| `CATEGORY_SYSTEM` | `system` | 其他系统操作 |
+
+#### 单一配置入口
+`ActivityLog::categoryRegistry()`（私有静态方法）是**分类的唯一来源**，包含每个分类的 label / color / icon。`getCategoryOptions()`、`getCategoryColor()`、`getCategoryIcon()` 全部从这里派生，Tab 也自动生成，**无需在多处重复维护**。
+
+#### 为新功能模块接入日志（两步）
+
+**场景 A：新 Model，使用已有分类**
+```php
+// 1. Model 文件加 trait（自动注册 Observer，无需动 AppServiceProvider）
+use App\Models\Concerns\Loggable;
+class MyModel extends Model {
+    use Loggable;
+    public function getActivityLogCategory(): string  { return ActivityLog::CATEGORY_WORKFLOWS; }
+    public function getActivityLogIdentifier(): string { return $this->title ?? "ID: {$this->id}"; }
+}
+// 2. ActivityLog::detectCategory() 的 match 里加一行映射
+'MyModel' => self::CATEGORY_WORKFLOWS,
+```
+
+**场景 B：新 Model + 全新分类**
+只改 `app/Models/ActivityLog.php` 一个文件：
+1. 加 `const CATEGORY_XXX = 'xxx';`
+2. 在 `categoryRegistry()` 加一行（label + color + icon）
+3. 在 `detectCategory()` 加检测规则
+> Tab 会自动出现，无需改 `ListActivityLogs.php`。
+
+**⚠️ 注意**：`Loggable` trait 仅用于新 Model。已在 `AppServiceProvider::registerActivityLogObservers()` 列表中的现有 Model 不要加此 trait（会重复注册 Observer，产生双重日志）。
 
 ---
 
@@ -135,7 +177,7 @@
 | `employee_compensations` | 薪酬配置 |
 | `monthly_performances` | 月度绩效计算结果 |
 | `documents` | 文档文件库 |
-| `activity_logs` | 操作审计日志 |
+| `activity_logs` | 操作审计日志（含 `category` 分类索引字段） |
 | `geofeed_locations` | RFC 8805 地理位置库 |
 
 ---
