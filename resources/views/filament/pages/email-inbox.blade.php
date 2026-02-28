@@ -8,45 +8,45 @@
     $companyIcon  = \App\Models\EmailAccount::companyIcon($activeCompany);
 @endphp
 
-{{-- ── Stats bar ── --}}
-<div class="grid grid-cols-3 gap-3 mb-3">
-    <div class="flex items-center gap-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-4 py-3 shadow-sm">
-        <div class="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center flex-shrink-0">
-            <x-filament::icon icon="heroicon-o-envelope" class="w-4 h-4 text-primary-600 dark:text-primary-400" />
-        </div>
-        <div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 leading-none mb-0.5">Unread</p>
-            <p class="text-xl font-bold text-gray-900 dark:text-white leading-none">{{ $stats['unread'] }}</p>
-        </div>
-    </div>
-    <div class="flex items-center gap-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-4 py-3 shadow-sm">
-        <div class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-            <x-filament::icon icon="heroicon-o-inbox" class="w-4 h-4 text-gray-500 dark:text-gray-400" />
-        </div>
-        <div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 leading-none mb-0.5">Total in Inbox</p>
-            <p class="text-xl font-bold text-gray-900 dark:text-white leading-none">{{ $stats['total'] }}</p>
+{{-- ── Stats (Filament native style) ── --}}
+<div class="fi-wi-stats-overview-stats-ctn grid gap-6 md:grid-cols-3 mb-6">
+    <div class="fi-wi-stats-overview-stat relative rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
+        <div class="grid gap-y-2">
+            <div class="flex items-center gap-x-2">
+                <x-filament::icon icon="heroicon-o-envelope" class="fi-wi-stats-overview-stat-icon h-5 w-5 text-gray-400 dark:text-gray-500" />
+                <span class="fi-wi-stats-overview-stat-label text-sm font-medium text-gray-500 dark:text-gray-400">Unread</span>
+            </div>
+            <div class="fi-wi-stats-overview-stat-value text-3xl font-semibold tracking-tight text-gray-950 dark:text-white">{{ $stats['unread'] }}</div>
         </div>
     </div>
-    <div class="flex items-center gap-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-4 py-3 shadow-sm">
-        <div class="w-8 h-8 rounded-lg bg-warning-100 dark:bg-warning-900/40 flex items-center justify-center flex-shrink-0">
-            <x-filament::icon icon="heroicon-o-star" class="w-4 h-4 text-warning-600 dark:text-warning-400" />
+    <div class="fi-wi-stats-overview-stat relative rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
+        <div class="grid gap-y-2">
+            <div class="flex items-center gap-x-2">
+                <x-filament::icon icon="heroicon-o-inbox" class="fi-wi-stats-overview-stat-icon h-5 w-5 text-gray-400 dark:text-gray-500" />
+                <span class="fi-wi-stats-overview-stat-label text-sm font-medium text-gray-500 dark:text-gray-400">Total in Inbox</span>
+            </div>
+            <div class="fi-wi-stats-overview-stat-value text-3xl font-semibold tracking-tight text-gray-950 dark:text-white">{{ $stats['total'] }}</div>
         </div>
-        <div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 leading-none mb-0.5">Starred</p>
-            <p class="text-xl font-bold text-gray-900 dark:text-white leading-none">{{ $stats['starred'] }}</p>
+    </div>
+    <div class="fi-wi-stats-overview-stat relative rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
+        <div class="grid gap-y-2">
+            <div class="flex items-center gap-x-2">
+                <x-filament::icon icon="heroicon-o-star" class="fi-wi-stats-overview-stat-icon h-5 w-5 text-gray-400 dark:text-gray-500" />
+                <span class="fi-wi-stats-overview-stat-label text-sm font-medium text-gray-500 dark:text-gray-400">Starred</span>
+            </div>
+            <div class="fi-wi-stats-overview-stat-value text-3xl font-semibold tracking-tight text-gray-950 dark:text-white">{{ $stats['starred'] }}</div>
         </div>
     </div>
 </div>
 
 {{-- ── Three-Column Email Client ── --}}
-<div class="flex h-[calc(100vh-16rem)] min-h-[500px] rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm">
+<div class="flex h-[calc(100vh-26rem)] min-h-[440px] rounded-xl overflow-hidden ring-1 ring-gray-950/5 dark:ring-white/10 shadow-sm">
 
     {{-- ───── Column 1: Sidebar ───── --}}
     <aside class="w-48 flex-shrink-0 bg-gray-50 dark:bg-gray-800/80 border-r border-gray-200 dark:border-gray-700 flex flex-col">
 
         {{-- Company header --}}
-        <div class="px-3 py-2.5 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2 bg-white dark:bg-gray-800">
+        <div class="px-3 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2 bg-white dark:bg-gray-900">
             <x-filament::icon icon="{{ $companyIcon }}" class="w-4 h-4 text-primary-500 flex-shrink-0" />
             <span class="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{{ $companyLabel }}</span>
         </div>
@@ -60,7 +60,7 @@
             </button>
         </div>
 
-        {{-- Multiple accounts (if any) --}}
+        {{-- Account info --}}
         @if ($accounts->count() > 1)
             <div class="px-3 pt-2 pb-0.5 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Accounts</div>
             @foreach ($accounts as $account)
@@ -74,11 +74,11 @@
             @endforeach
             <div class="mx-3 my-1 border-t border-gray-200 dark:border-gray-700"></div>
         @elseif ($accounts->count() === 1)
-            <div class="px-3 py-1.5">
+            <div class="px-3 py-2">
                 <div class="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">{{ $accounts->first()->name }}</div>
                 <div class="text-xs text-gray-400 truncate">{{ $accounts->first()->email }}</div>
             </div>
-            <div class="mx-3 mb-1 border-t border-gray-200 dark:border-gray-700"></div>
+            <div class="mx-3 border-t border-gray-200 dark:border-gray-700"></div>
         @else
             <div class="px-3 py-3 text-xs text-gray-400 italic">No accounts configured.</div>
         @endif
@@ -86,9 +86,9 @@
         {{-- Folders --}}
         <nav class="flex-1 px-2 py-1 space-y-0.5 overflow-y-auto">
             @foreach ([
-                'INBOX'   => ['icon' => 'heroicon-o-inbox',          'label' => 'Inbox'],
-                'Sent'    => ['icon' => 'heroicon-o-paper-airplane',  'label' => 'Sent'],
-                'Starred' => ['icon' => 'heroicon-o-star',            'label' => 'Starred'],
+                'INBOX'   => ['icon' => 'heroicon-o-inbox',         'label' => 'Inbox'],
+                'Sent'    => ['icon' => 'heroicon-o-paper-airplane', 'label' => 'Sent'],
+                'Starred' => ['icon' => 'heroicon-o-star',           'label' => 'Starred'],
             ] as $folder => $cfg)
                 <button wire:click="selectFolder('{{ $folder }}')"
                     class="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs rounded-lg transition-colors
@@ -100,7 +100,7 @@
                     @if ($folder === 'INBOX' && $stats['unread'] > 0)
                         <span class="text-xs font-bold text-white bg-danger-500 rounded-full px-1.5 py-px leading-none">{{ $stats['unread'] }}</span>
                     @elseif ($folder === 'Starred' && $stats['starred'] > 0)
-                        <span class="text-xs font-bold text-gray-500 dark:text-gray-400">{{ $stats['starred'] }}</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ $stats['starred'] }}</span>
                     @endif
                 </button>
             @endforeach
@@ -122,30 +122,30 @@
         {{-- Search --}}
         <div class="px-2 py-2 border-b border-gray-200 dark:border-gray-700">
             <div class="relative">
-                <x-filament::icon icon="heroicon-o-magnifying-glass" class="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+                <x-filament::icon icon="heroicon-o-magnifying-glass" class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
                 <input type="text" wire:model.live.debounce.400ms="searchQuery" placeholder="Search…"
-                    class="w-full pl-7 pr-2 py-1.5 text-xs bg-gray-100 dark:bg-gray-800 border-0 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:outline-none" />
+                    class="w-full pl-8 pr-2 py-1.5 text-xs bg-gray-100 dark:bg-gray-800 border-0 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:outline-none" />
             </div>
         </div>
 
-        {{-- Message rows --}}
+        {{-- Message list --}}
         <div class="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800">
             @if (!$activeAccountId)
-                <div class="flex flex-col items-center justify-center h-full text-center p-6">
+                <div class="flex flex-col items-center justify-center h-full p-6 text-center">
                     <x-filament::icon icon="heroicon-o-envelope" class="w-8 h-8 text-gray-300 dark:text-gray-600 mb-2" />
                     <p class="text-xs text-gray-400">No account selected</p>
                 </div>
             @else
                 @forelse ($messages as $msg)
                     <div wire:click="selectMessage({{ $msg->id }})"
-                        class="relative cursor-pointer px-3 py-2.5 transition-colors group
+                        class="relative cursor-pointer px-3 py-2.5 transition-colors
                             {{ $selectedMessageId === $msg->id
                                 ? 'bg-primary-50 dark:bg-primary-900/20 border-l-2 border-l-primary-500'
                                 : 'hover:bg-gray-50 dark:hover:bg-gray-800/60 border-l-2 border-l-transparent' }}">
 
                         {{-- Unread dot --}}
                         @if (!$msg->is_read)
-                            <span class="absolute left-0.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-primary-500"></span>
+                            <span class="absolute left-0.5 top-3.5 w-1.5 h-1.5 rounded-full bg-primary-500"></span>
                         @endif
 
                         {{-- Sender + date --}}
@@ -163,10 +163,10 @@
                             {{ $msg->subject ?: '(No Subject)' }}
                         </div>
 
-                        {{-- Preview + icons --}}
+                        {{-- Icons row --}}
                         <div class="flex items-center justify-between mt-0.5">
-                            <span class="text-xs text-gray-400 dark:text-gray-600 truncate leading-snug">
-                                {{ mb_substr(strip_tags($msg->body_html ?? $msg->body_text ?? ''), 0, 60) }}
+                            <span class="text-xs text-gray-400 dark:text-gray-600 truncate">
+                                {{ mb_substr(strip_tags($msg->body_html ?? $msg->body_text ?? ''), 0, 55) }}
                             </span>
                             <div class="flex items-center gap-1 ml-1 flex-shrink-0">
                                 @if ($msg->is_starred)
@@ -182,7 +182,7 @@
                         </div>
                     </div>
                 @empty
-                    <div class="flex flex-col items-center justify-center h-full text-center p-6">
+                    <div class="flex flex-col items-center justify-center h-full p-6 text-center">
                         <x-filament::icon icon="heroicon-o-inbox" class="w-8 h-8 text-gray-300 dark:text-gray-600 mb-2" />
                         <p class="text-xs text-gray-400">No messages in {{ $activeFolder }}</p>
                     </div>
@@ -192,14 +192,14 @@
     </div>
 
     {{-- ───── Column 3: Detail / Compose ───── --}}
-    <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-white dark:bg-gray-900">
+    <div class="flex-1 flex flex-col min-w-0 bg-white dark:bg-gray-900">
 
         {{-- ─── Compose Panel ─── --}}
         @if ($isComposing)
             <div class="flex flex-col h-full">
 
-                {{-- Compose toolbar (sticky top) --}}
-                <div class="flex items-center justify-between px-5 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex-shrink-0">
+                {{-- Compose toolbar --}}
+                <div class="flex items-center justify-between px-5 py-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                     <h2 class="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                         <x-filament::icon icon="heroicon-o-pencil-square" class="w-4 h-4 text-primary-500" />
                         {{ $replyToId ? 'Reply' : 'New Message' }}
@@ -219,7 +219,7 @@
                 </div>
 
                 {{-- Compose fields --}}
-                <div class="flex-1 flex flex-col overflow-y-auto px-5 py-3 gap-3">
+                <div class="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3">
                     <div>
                         <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">To</label>
                         <input type="email" wire:model="composeTo" placeholder="recipient@example.com"
@@ -232,10 +232,10 @@
                             class="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent focus:outline-none" />
                         @error('composeSubject') <p class="text-xs text-danger-500 mt-1">{{ $message }}</p> @enderror
                     </div>
-                    <div class="flex-1 flex flex-col">
+                    <div class="flex-1 flex flex-col min-h-0">
                         <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">Message</label>
-                        <textarea wire:model="composeBody" placeholder="Write your message here…" rows="16"
-                            class="flex-1 w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent focus:outline-none resize-none leading-relaxed"></textarea>
+                        <textarea wire:model="composeBody" placeholder="Write your message here…"
+                            class="flex-1 w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent focus:outline-none resize-none leading-relaxed min-h-[200px]"></textarea>
                         @error('composeBody') <p class="text-xs text-danger-500 mt-1">{{ $message }}</p> @enderror
                     </div>
                 </div>
@@ -243,12 +243,12 @@
 
         {{-- ─── Email Detail ─── --}}
         @elseif ($selectedMessageId && $email)
-            <div class="flex flex-col h-full overflow-hidden">
+            <div class="flex flex-col h-full min-h-0">
 
-                {{-- Header toolbar --}}
+                {{-- Header --}}
                 <div class="flex items-start justify-between gap-4 px-5 py-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                     <div class="flex-1 min-w-0">
-                        <h2 class="text-base font-semibold text-gray-900 dark:text-white leading-snug truncate mb-1">
+                        <h2 class="text-base font-semibold text-gray-900 dark:text-white leading-snug mb-1 break-words">
                             {{ $email->subject ?: '(No Subject)' }}
                         </h2>
                         <div class="text-xs text-gray-500 dark:text-gray-400 flex flex-wrap items-center gap-x-3 gap-y-0.5">
@@ -284,9 +284,9 @@
                     </div>
                 </div>
 
-                {{-- Attachments (if any) --}}
+                {{-- Attachments --}}
                 @if ($email->has_attachments && $email->attachments->count() > 0)
-                    <div class="flex flex-wrap items-center gap-2 px-5 py-2 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                    <div class="flex flex-wrap items-center gap-2 px-5 py-2 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex-shrink-0">
                         <x-filament::icon icon="heroicon-o-paper-clip" class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                         @foreach ($email->attachments as $att)
                             <a href="{{ route('email.attachment.download', $att->id) }}"
@@ -298,7 +298,7 @@
                     </div>
                 @endif
 
-                {{-- AI Summary panel --}}
+                {{-- AI Summary --}}
                 <div class="flex-shrink-0 border-b border-violet-200 dark:border-violet-800/50 bg-violet-50 dark:bg-violet-900/10">
                     <div class="flex items-center justify-between px-5 py-2">
                         <div class="flex items-center gap-1.5">
@@ -322,14 +322,14 @@
                     @endif
                 </div>
 
-                {{-- Email body --}}
-                <div class="flex-1 overflow-y-auto px-5 py-4">
+                {{-- Email body — overflow-x: auto so wide tables scroll instead of overflow --}}
+                <div class="flex-1 overflow-y-auto overflow-x-hidden px-5 py-4 min-h-0">
                     @if ($email->body_html)
-                        <div class="email-body text-sm text-gray-800 dark:text-gray-200 leading-relaxed max-w-none">
+                        <div class="email-body text-sm text-gray-800 dark:text-gray-200 leading-relaxed">
                             {!! $email->body_html !!}
                         </div>
                     @elseif ($email->body_text)
-                        <pre class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-sans leading-relaxed">{{ $email->body_text }}</pre>
+                        <pre class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-sans leading-relaxed break-words">{{ $email->body_text }}</pre>
                     @else
                         <p class="text-sm text-gray-400 italic">No content.</p>
                     @endif
@@ -350,8 +350,14 @@
 </div>
 
 <style>
-    .email-body img { max-width: 100%; height: auto; }
-    .email-body a { color: #2563eb; text-decoration: underline; word-break: break-all; }
-    .email-body table { max-width: 100%; overflow-x: auto; display: block; }
+    /* Force HTML email content to respect container bounds */
+    .email-body { overflow-x: auto; overflow-wrap: break-word; word-break: break-word; }
+    .email-body img { max-width: 100% !important; height: auto !important; }
+    .email-body a { color: #2563eb; text-decoration: underline; }
+    .email-body table { max-width: 100%; border-collapse: collapse; }
+    /* Wide tables get a horizontal scrollbar instead of overflowing */
+    .email-body > table,
+    .email-body > div > table,
+    .email-body > center > table { display: block; overflow-x: auto; }
 </style>
 </x-filament-panels::page>
