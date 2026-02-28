@@ -82,8 +82,7 @@ class EmailInbox extends Page
                 ->icon(EmailAccount::companyIcon($key))
                 ->group('Emails')
                 ->sort(array_search($key, array_keys($companies)) + 10)
-                ->badge(fn () => static::getUnreadBadge($key))
-                ->badgeColor('danger')
+                ->badge(fn () => static::getUnreadBadge($key), 'danger')
                 ->isActiveWhen(fn () => request()->query('activeCompany', 'bunnycommunications') === $key
                     && request()->routeIs('filament.admin.pages.email-inbox'));
         }
