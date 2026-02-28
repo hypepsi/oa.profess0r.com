@@ -78,7 +78,6 @@ class EmailAccountResource extends Resource
                         ->label('Password')
                         ->password()
                         ->revealable()
-                        ->dehydrated(false)  // not persisted via fillable directly
                         ->required(fn ($operation) => $operation === 'create')
                         ->helperText('Leave blank to keep existing password.')
                         ->maxLength(255),
