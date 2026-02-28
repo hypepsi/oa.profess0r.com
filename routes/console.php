@@ -17,3 +17,10 @@ Schedule::command('geofeed:sync-remote --mode=test')
     ->dailyAt('03:05')
     ->name('geofeed-sync-remote')
     ->withoutOverlapping();
+
+// Sync all active email accounts every 5 minutes
+Schedule::command('email:sync-all')
+    ->everyFiveMinutes()
+    ->name('email-sync-all')
+    ->withoutOverlapping()
+    ->runInBackground();

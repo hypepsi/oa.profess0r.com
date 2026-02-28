@@ -103,6 +103,43 @@
 - **模型**：`Document` — 支持 PDF、Office 文档、图片、压缩包，50MB 上限
 - 分类：Contract、Invoice、Agreement、Policy、Report、Certificate、Other
 
+### 8. 邮件系统（Email）
+
+#### 架构概述
+- **导航分组**：`Emails`，含 Inbox（主 UI）+ Account Settings（Admin 专属）
+- **三公司分类**：BunnyCommunications / Nexustel / Infratel（均通过 PrivateEmail 托管）
+- **收件**：IMAP over SSL（mail.privateemail.com:993），`webklex/laravel-imap` 包
+- **发件**：SMTP over SSL（mail.privateemail.com:465），Laravel 内置 Mailer
+- **同步机制**：Queue Worker（supervisor，2 workers，database 驱动）+ 定时任务每 5 分钟触发
+
+#### 核心文件
+| 文件 | 用途 |
+|------|------|
+| `app/Models/EmailAccount.php` | 账号配置模型，密码 `Crypt::encryptString()` 加密 |
+| `app/Models/EmailMessage.php` | 邮件消息，含 AI 摘要字段 |
+| `app/Models/EmailAttachment.php` | 附件（存 `storage/app/email-attachments/`） |
+| `app/Services/ImapService.php` | IMAP 连接、同步新邮件 |
+| `app/Services/SmtpMailService.php` | SMTP 发件（按账号动态切换配置） |
+| `app/Services/DeepSeekService.php` | DeepSeek AI 调用（摘要、起草回复） |
+| `app/Jobs/SyncEmailAccountJob.php` | 单账号同步 Job（重试 3 次，超时 120s） |
+| `app/Console/Commands/SyncAllEmailsCommand.php` | `email:sync-all` 命令，批量 dispatch jobs |
+| `app/Filament/Pages/EmailInbox.php` | 主邮件 UI（Livewire 全功能，含 AI 按钮） |
+| `app/Filament/Resources/EmailAccountResource.php` | Admin 账号管理（含连接测试、手动同步） |
+
+#### Queue Worker（Supervisor）
+- 配置文件：`/etc/supervisor/conf.d/bunny-oa-queue.conf`
+- 2 个 worker 进程，用户：www-data，日志：`storage/logs/queue-worker.log`
+- 管理命令：`supervisorctl status | restart bunny-oa-queue:*`
+
+#### AI 功能（DeepSeek）
+- API Key 配置在 `.env`：`DEEPSEEK_API_KEY`、`DEEPSEEK_BASE_URL`、`DEEPSEEK_MODEL`
+- 服务配置在 `config/services.php` → `deepseek` key
+- 邮件详情页点击「Summarize with AI」→ 调用 DeepSeek → 输出中文摘要 + 结构化总结
+- 摘要缓存在 `email_messages.ai_summary` 字段，避免重复调用
+
+#### 添加新公司邮箱
+只需在 `EmailAccount::companyOptions()` 增加 key-value，图标/颜色在同类方法更新。无需修改其他文件。
+
 ### 7. 审计日志（Activity Log）
 
 #### 架构概述
@@ -179,6 +216,9 @@ class MyModel extends Model {
 | `documents` | 文档文件库 |
 | `activity_logs` | 操作审计日志（含 `category` 分类索引字段） |
 | `geofeed_locations` | RFC 8805 地理位置库 |
+| `email_accounts` | 邮箱账号配置（密码 AES-256 加密存储） |
+| `email_messages` | 邮件消息（含 AI 摘要字段） |
+| `email_attachments` | 邮件附件（本地磁盘存储） |
 
 ---
 
@@ -305,6 +345,7 @@ use Illuminate\Support\Str;              // Str::limit() 用于 description 截�
 |------|------|------|
 | `activity-logs:clean` | 每天 02:00 | 清理 90 天前的审计日志 |
 | `geofeed:sync-remote --mode=test` | 每天 03:05 | 自动同步 GeoFeed 到远端（当前为 test 模式） |
+| `email:sync-all` | 每 5 分钟 | 同步所有活跃邮箱账号（dispatch Job） |
 
 查看任务列表：`php artisan schedule:list`
 
@@ -339,6 +380,9 @@ GEOFEED_UPLOAD_URL=https://bunnycommunications.com/geofeed-upload-prod.php?token
   - `upload_max_filesize = 10M` / `post_max_size = 20M`
 - **PHP-FPM 配置**：`/etc/php/8.3/fpm/pool.d/www.conf`
   - `pm.max_children = 10`，`pm.start_servers = 3`
+- **Supervisor（Queue Worker）**：
+  - 配置：`/etc/supervisor/conf.d/bunny-oa-queue.conf`
+  - 2 个 worker 进程，database 队列驱动，日志在 `storage/logs/queue-worker.log`
 
 ---
 
@@ -365,6 +409,15 @@ php artisan geofeed:sync-remote --mode=test
 
 # GeoFeed 手动同步到 production
 php artisan geofeed:sync-remote --mode=production
+
+# 手动触发邮件同步（所有活跃账号）
+php artisan email:sync-all
+
+# 查看 Queue Worker 状态
+supervisorctl status
+
+# 重启 Queue Worker
+supervisorctl restart bunny-oa-queue:*
 ```
 
 ---
@@ -377,3 +430,4 @@ php artisan geofeed:sync-remote --mode=production
 - **Compensation**（薪酬）：Salary Settings（薪酬配置，admin 专属）、Monthly Performance（绩效，admin 专属）
 - **Documents**（文档）：Registration Docs
 - **Metadata**（元数据）：Clients、Employees、IP Providers、IPT Providers、Datacenter Providers、Locations、Devices、IP Assets、GeoFeed Locations
+- **Emails**（邮件）：BunnyCommunications、Nexustel、Infratel（三公司收件箱）+ Account Settings（Admin 专属账号管理）

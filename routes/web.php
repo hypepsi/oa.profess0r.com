@@ -1,6 +1,8 @@
 <?php
 
+use App\Models\EmailAttachment;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 /*
 |--------------------------------------------------------------------------
@@ -13,3 +15,10 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return redirect()->to('/admin');
 })->name('home.redirect');
+
+// Email attachment download (requires auth)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/email/attachments/{attachment}/download', function (EmailAttachment $attachment) {
+        return Storage::disk($attachment->disk)->download($attachment->path, $attachment->filename);
+    })->name('email.attachment.download');
+});
