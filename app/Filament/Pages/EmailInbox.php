@@ -103,11 +103,6 @@ class EmailInbox extends Page
     // Data accessors (for Blade)
     // =========================================================================
 
-    public function getCompanies(): array
-    {
-        return EmailAccount::companyOptions();
-    }
-
     public function getAccountsForCompany(): \Illuminate\Database\Eloquent\Collection
     {
         return EmailAccount::where('company', $this->activeCompany)
@@ -141,19 +136,6 @@ class EmailInbox extends Page
     // =========================================================================
     // Actions
     // =========================================================================
-
-    public function selectCompany(string $company): void
-    {
-        $this->activeCompany     = $company;
-        $this->activeFolder      = 'INBOX';
-        $this->selectedMessageId = null;
-        $this->aiSummary         = '';
-
-        $account = EmailAccount::where('company', $company)
-            ->where('is_active', true)
-            ->first();
-        $this->activeAccountId = $account?->id;
-    }
 
     public function selectAccount(int $accountId): void
     {

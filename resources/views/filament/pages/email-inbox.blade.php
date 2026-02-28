@@ -1,50 +1,35 @@
 <x-filament-panels::page>
     {{-- =====================================================================
          Email Client — Three-Column Layout
+         Company is selected via left-nav (activeCompany URL param).
+         No redundant tab bar here.
          ===================================================================== --}}
 
-    {{-- Company Tab Bar --}}
-    <div class="flex items-center gap-1 mb-4 border-b border-gray-200 dark:border-gray-700 pb-0">
-        @foreach ($this->getCompanies() as $key => $label)
-            <button
-                wire:click="selectCompany('{{ $key }}')"
-                class="px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-colors
-                    {{ $activeCompany === $key
-                        ? 'border-primary-600 text-primary-600 dark:text-primary-400 dark:border-primary-400 bg-primary-50 dark:bg-primary-900/20'
-                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200' }}"
-            >
-                <x-filament::icon icon="{{ \App\Models\EmailAccount::companyIcon($key) }}" class="inline w-4 h-4 mr-1 -mt-0.5" />
-                {{ $label }}
-
-                {{-- Unread count badge --}}
-                @php
-                    $unread = \App\Models\EmailMessage::whereHas('account', fn($q) => $q->where('company', $key))
-                        ->where('is_read', false)->where('folder', 'INBOX')->count();
-                @endphp
-                @if ($unread > 0)
-                    <span class="ml-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold bg-danger-500 text-white rounded-full">
-                        {{ $unread }}
-                    </span>
-                @endif
-            </button>
-        @endforeach
-    </div>
-
     {{-- Main 3-Column Layout --}}
-    <div class="flex gap-0 h-[calc(100vh-14rem)] rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-900">
+    <div class="flex gap-0 h-[calc(100vh-11rem)] rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-900">
 
         {{-- ── Column 1: Sidebar (accounts + folders) ── --}}
         <aside class="w-52 flex-shrink-0 bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
 
+            {{-- Company header --}}
+            @php
+                $companyLabel = \App\Models\EmailAccount::companyOptions()[$activeCompany] ?? $activeCompany;
+                $companyIcon  = \App\Models\EmailAccount::companyIcon($activeCompany);
+            @endphp
+            <div class="px-3 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2">
+                <x-filament::icon icon="{{ $companyIcon }}" class="w-4 h-4 text-primary-500 flex-shrink-0" />
+                <span class="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{{ $companyLabel }}</span>
+            </div>
+
             {{-- Sync button --}}
-            <div class="p-3 border-b border-gray-200 dark:border-gray-700">
+            <div class="p-2 border-b border-gray-200 dark:border-gray-700">
                 <button
                     wire:click="syncNow"
                     wire:loading.attr="disabled"
-                    class="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors disabled:opacity-50"
+                    class="w-full flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors disabled:opacity-50"
                 >
                     <x-filament::icon icon="heroicon-o-arrow-path" class="w-4 h-4" wire:loading.class="animate-spin" wire:target="syncNow" />
-                    Sync Email
+                    Sync Now
                 </button>
             </div>
 
