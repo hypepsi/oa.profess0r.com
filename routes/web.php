@@ -8,17 +8,32 @@ use Illuminate\Support\Facades\Storage;
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
-| 访问根路径时，直接跳转到 Filament 后台（/admin）
-| 其它（如 Filament 自己注册的 /admin 路由）保持不变。
 */
 
 Route::get('/', function () {
     return redirect()->to('/admin');
 })->name('home.redirect');
 
-// Email attachment download (requires auth)
-Route::middleware(['auth'])->group(function () {
-    Route::get('/email/attachments/{attachment}/download', function (EmailAttachment $attachment) {
-        return Storage::disk($attachment->disk)->download($attachment->path, $attachment->filename);
+// Email attachment download (protected by Filament's auth middleware)
+Route::middleware(['web', 'auth'])->group(function () {
+    Route::get('/email/attachments/{id}/download', function ($id) {
+        $attachment = EmailAttachment::findOrFail($id);
+        $disk = Storage::disk($attachment->disk);
+        if (!$disk->exists($attachment->path)) {
+            abort(404, 'Attachment file not found on disk.');
+        }
+        
+        // Ensure inline display for images and pdfs, download for others
+        $mime = $attachment->mime_type;
+        $inlineMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+        
+        if (in_array($mime, $inlineMimes)) {
+            return response()->file($disk->path($attachment->path), [
+                'Content-Type' => $mime,
+                'Content-Disposition' => 'inline; filename="' . $attachment->filename . '"'
+            ]);
+        }
+        
+        return $disk->download($attachment->path, $attachment->filename);
     })->name('email.attachment.download');
 });
