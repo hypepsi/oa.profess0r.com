@@ -50,6 +50,9 @@ class EmailInbox extends Page
     // Search
     public string $searchQuery = '';
 
+    // Pagination
+    public int $page = 1;
+
     // =========================================================================
     // Lifecycle
     // =========================================================================
@@ -132,7 +135,24 @@ class EmailInbox extends Page
             });
         }
 
-        return $query->paginate(30);
+        return $query->paginate(30, ['*'], 'msg_page', $this->page);
+    }
+
+    public function nextPage(): void
+    {
+        $this->page++;
+    }
+
+    public function prevPage(): void
+    {
+        if ($this->page > 1) {
+            $this->page--;
+        }
+    }
+
+    public function updatedSearchQuery(): void
+    {
+        $this->page = 1;
     }
 
     public function getSelectedMessage(): ?EmailMessage
@@ -165,6 +185,7 @@ class EmailInbox extends Page
         $this->activeAccountId   = $accountId;
         $this->selectedMessageId = null;
         $this->aiSummary         = '';
+        $this->page              = 1;
     }
 
     public function selectFolder(string $folder): void
@@ -172,6 +193,7 @@ class EmailInbox extends Page
         $this->activeFolder      = $folder;
         $this->selectedMessageId = null;
         $this->aiSummary         = '';
+        $this->page              = 1;
     }
 
     public function selectMessage(int $messageId): void
@@ -189,6 +211,21 @@ class EmailInbox extends Page
         if ($msg) {
             $msg->update(['is_starred' => !$msg->is_starred]);
         }
+    }
+
+    public function markAllAsRead(): void
+    {
+        if (!$this->activeAccountId) return;
+
+        $updated = EmailMessage::where('email_account_id', $this->activeAccountId)
+            ->where('folder', $this->activeFolder)
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
+
+        Notification::make()
+            ->title($updated > 0 ? "Marked {$updated} messages as read" : 'No unread messages')
+            ->success()
+            ->send();
     }
 
     public function syncNow(): void

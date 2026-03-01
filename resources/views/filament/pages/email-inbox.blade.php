@@ -81,8 +81,7 @@
         @if ($accounts->count() === 1)
         <div class="px-4 py-2.5 border-b border-gray-100 dark:border-gray-800 flex-shrink-0 overflow-hidden">
             <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-0.5">Account</p>
-            <p class="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">{{ $accounts->first()->name }}</p>
-            <p class="text-[11px] text-gray-400 truncate">{{ $accounts->first()->email }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ $accounts->first()->email }}</p>
         </div>
         @elseif ($accounts->count() > 1)
         <div class="px-4 pt-2.5 pb-1 flex-shrink-0">
@@ -128,19 +127,29 @@
          ────────────────────────── --}}
     <div class="w-72 flex-shrink-0 flex flex-col border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
 
-        {{-- Search --}}
-        <div class="px-3 py-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-            <x-filament::input.wrapper prefixIcon="heroicon-o-magnifying-glass">
-                <x-filament::input
-                    type="text"
-                    wire:model.live.debounce.400ms="searchQuery"
-                    placeholder="Search…"
-                />
-            </x-filament::input.wrapper>
+        {{-- Search + Mark all read --}}
+        <div class="px-3 py-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 flex items-center gap-2">
+            <div class="flex-1 min-w-0">
+                <x-filament::input.wrapper prefixIcon="heroicon-o-magnifying-glass">
+                    <x-filament::input
+                        type="text"
+                        wire:model.live.debounce.400ms="searchQuery"
+                        placeholder="Search…"
+                    />
+                </x-filament::input.wrapper>
+            </div>
+            <x-filament::icon-button
+                wire:click="markAllAsRead"
+                icon="heroicon-o-check-circle"
+                color="gray"
+                size="sm"
+                tooltip="Mark all as read"
+                label="Mark all read"
+            />
         </div>
 
         {{-- Messages --}}
-        <div class="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800">
+        <div class="flex-1 min-h-0 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800">
 
             @if (!$activeAccountId)
             <div class="h-full flex flex-col items-center justify-center p-8 text-center">
@@ -205,6 +214,36 @@
 
             @endif
         </div>
+
+        {{-- Pagination --}}
+        @if ($messages->hasPages())
+        <div class="flex items-center justify-between px-4 py-2 border-t border-gray-100 dark:border-gray-800 flex-shrink-0">
+            <button
+                wire:click="prevPage"
+                @if ($messages->onFirstPage()) disabled @endif
+                class="flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors
+                    {{ $messages->onFirstPage()
+                        ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                        : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
+                <x-filament::icon icon="heroicon-o-chevron-left" class="w-3.5 h-3.5" />
+                Prev
+            </button>
+            <span class="text-xs text-gray-400">
+                {{ $messages->currentPage() }} / {{ $messages->lastPage() }}
+            </span>
+            <button
+                wire:click="nextPage"
+                @if (!$messages->hasMorePages()) disabled @endif
+                class="flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors
+                    {{ !$messages->hasMorePages()
+                        ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                        : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800' }}">
+                Next
+                <x-filament::icon icon="heroicon-o-chevron-right" class="w-3.5 h-3.5" />
+            </button>
+        </div>
+        @endif
+
     </div>
 
     {{-- ──────────────────────────

@@ -44,8 +44,8 @@ class EmailAccountResource extends Resource
         return $form->schema([
             Section::make('Account Identity')
                 ->icon('heroicon-o-identification')
-                ->description('Display name, email address, and which company this account belongs to.')
-                ->columns(2)
+                ->compact()
+                ->columns(4)
                 ->schema([
                     TextInput::make('name')
                         ->label('Account Name')
@@ -66,13 +66,14 @@ class EmailAccountResource extends Resource
                         ->searchable(),
 
                     Toggle::make('is_active')
-                        ->label('Active (auto-sync enabled)')
-                        ->default(true),
+                        ->label('Active')
+                        ->default(true)
+                        ->inline(false),
                 ]),
 
             Section::make('Credentials')
                 ->icon('heroicon-o-key')
-                ->description('Password is encrypted with AES-256-GCM before storage.')
+                ->compact()
                 ->schema([
                     TextInput::make('password_plain')
                         ->label('Password')
@@ -83,50 +84,50 @@ class EmailAccountResource extends Resource
                         ->maxLength(255),
                 ]),
 
-            Section::make('IMAP Settings')
-                ->icon('heroicon-o-arrow-down-on-square')
-                ->description('Incoming mail server — PrivateEmail defaults are pre-filled.')
-                ->columns(3)
+            Section::make('Server Settings')
+                ->icon('heroicon-o-server')
+                ->compact()
+                ->columns(6)
                 ->schema([
                     TextInput::make('imap_host')
                         ->label('IMAP Host')
                         ->default('mail.privateemail.com')
-                        ->required(),
+                        ->required()
+                        ->columnSpan(2),
 
                     TextInput::make('imap_port')
-                        ->label('Port')
+                        ->label('IMAP Port')
                         ->numeric()
                         ->default(993)
-                        ->required(),
+                        ->required()
+                        ->columnSpan(1),
 
                     Select::make('imap_encryption')
-                        ->label('Encryption')
+                        ->label('IMAP Enc.')
                         ->options(['ssl' => 'SSL', 'tls' => 'TLS', 'starttls' => 'STARTTLS'])
                         ->default('ssl')
-                        ->required(),
-                ]),
+                        ->required()
+                        ->columnSpan(1),
 
-            Section::make('SMTP Settings')
-                ->icon('heroicon-o-paper-airplane')
-                ->description('Outgoing mail server — PrivateEmail defaults are pre-filled.')
-                ->columns(3)
-                ->schema([
                     TextInput::make('smtp_host')
                         ->label('SMTP Host')
                         ->default('mail.privateemail.com')
-                        ->required(),
+                        ->required()
+                        ->columnSpan(2),
 
                     TextInput::make('smtp_port')
-                        ->label('Port')
+                        ->label('SMTP Port')
                         ->numeric()
                         ->default(465)
-                        ->required(),
+                        ->required()
+                        ->columnSpan(1),
 
                     Select::make('smtp_encryption')
-                        ->label('Encryption')
+                        ->label('SMTP Enc.')
                         ->options(['ssl' => 'SSL', 'tls' => 'TLS', 'starttls' => 'STARTTLS'])
                         ->default('ssl')
-                        ->required(),
+                        ->required()
+                        ->columnSpan(1),
                 ]),
         ]);
     }
@@ -181,6 +182,8 @@ class EmailAccountResource extends Resource
                     ->label('Test Connection')
                     ->icon('heroicon-o-wifi')
                     ->color('gray')
+                    ->iconButton()
+                    ->tooltip('Test IMAP Connection')
                     ->action(function (EmailAccount $record) {
                         try {
                             app(ImapService::class)->testConnection($record);
@@ -202,6 +205,8 @@ class EmailAccountResource extends Resource
                     ->label('Sync Now')
                     ->icon('heroicon-o-arrow-path')
                     ->color('primary')
+                    ->iconButton()
+                    ->tooltip('Sync Now')
                     ->action(function (EmailAccount $record) {
                         SyncEmailAccountJob::dispatch($record);
                         Notification::make()
