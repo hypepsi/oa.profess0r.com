@@ -447,22 +447,40 @@
                 @endif
             </div>
 
-            {{-- Email Body --}}
-            <div class="flex-1 min-h-0 overflow-y-auto">
-                <div wire:key="body-{{ $email->id }}" class="max-w-3xl mx-auto px-8 py-6">
-                    @if ($email->body_html)
-                        <div class="email-body text-sm text-gray-800 dark:text-gray-200 leading-relaxed">
-                            {!! $email->body_html !!}
+            {{-- Email Body — isolated in iframe to prevent CSS leakage --}}
+            <div class="flex-1 min-h-0 relative overflow-hidden">
+                @if ($email->body_html)
+                    @php
+                        $bodyHtml    = $email->body_html;
+                        $isFullDoc   = stripos($bodyHtml, '<!doctype') !== false || stripos($bodyHtml, '<html') !== false;
+                        $baseStyles  = 'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:14px;line-height:1.6;color:#1f2937;margin:0;padding:20px 28px;word-break:break-word;overflow-wrap:break-word;}'
+                                     . 'img{max-width:100%!important;height:auto!important;}'
+                                     . 'a{color:#2563eb;}'
+                                     . 'table{border-collapse:collapse;}'
+                                     . 'pre,code{white-space:pre-wrap;word-break:break-all;}';
+
+                        $iframeDoc = $isFullDoc
+                            ? $bodyHtml
+                            : '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>' . $baseStyles . '</style></head><body>' . $bodyHtml . '</body></html>';
+                    @endphp
+                    <iframe
+                        wire:key="iframe-{{ $email->id }}"
+                        srcdoc="{{ $iframeDoc }}"
+                        class="absolute inset-0 w-full h-full border-0"
+                        sandbox="allow-popups allow-popups-to-escape-sandbox"
+                    ></iframe>
+                @elseif ($email->body_text)
+                    <div class="h-full overflow-y-auto">
+                        <div class="max-w-3xl mx-auto px-8 py-6">
+                            <pre class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-sans leading-relaxed break-words">{{ $email->body_text }}</pre>
                         </div>
-                    @elseif ($email->body_text)
-                        <pre class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-sans leading-relaxed break-words">{{ $email->body_text }}</pre>
-                    @else
-                        <div class="py-16 flex flex-col items-center text-center">
-                            <x-filament::icon icon="heroicon-o-document" class="w-8 h-8 text-gray-200 dark:text-gray-700 mb-3" />
-                            <p class="text-sm text-gray-400 italic">No readable content.</p>
-                        </div>
-                    @endif
-                </div>
+                    </div>
+                @else
+                    <div class="h-full flex flex-col items-center justify-center text-center">
+                        <x-filament::icon icon="heroicon-o-document" class="w-8 h-8 text-gray-200 dark:text-gray-700 mb-3" />
+                        <p class="text-sm text-gray-400 italic">No readable content.</p>
+                    </div>
+                @endif
             </div>
 
         </div>
@@ -484,15 +502,5 @@
 
 </div>{{-- end panel --}}
 
-<style>
-.email-body { word-break: break-word; overflow-wrap: break-word; }
-.email-body img { max-width: 100% !important; height: auto !important; }
-.email-body a { color: #2563eb; text-decoration: underline; word-break: break-all; }
-.email-body table { border-collapse: collapse; max-width: 100%; }
-.email-body > table,
-.email-body > div > table,
-.email-body > center > table,
-.email-body > center { display: block; overflow-x: auto; }
-</style>
 
 </x-filament-panels::page>
